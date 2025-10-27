@@ -1,0 +1,7 @@
+{
+    "functions": {
+        "api/**/*.[jt]s": {
+            "includeFiles": "node_modules/@sparticuz/chromium/**"
+        }
+    }
+}
