@@ -260,27 +260,38 @@ export default function Payments({ data }) {
         }
     }, [getPaymentProperty]);
 
-    const handleReceiptAction = useCallback(async (paymentId, action) => {
+    const handleReceiptAction = useCallback(async (bookingId, action) => {
         try {
-            const safePaymentId = safeToString(paymentId);
+            const response = await fetch(`/api/receipt/${bookingId}`);
 
-            // Directly open or download using the server endpoint
-            const url = `/api/receipt/${safePaymentId}`;
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const blob = await response.blob();
+            const pdfUrl = URL.createObjectURL(blob);
 
             if (action === 'view') {
-                // Open in a new tab
-                window.open(url, '_blank');
+                // Open in new tab
+                const newWindow = window.open(pdfUrl, '_blank');
+                if (!newWindow) {
+                    alert('Please allow pop-ups for this site');
+                }
             } else if (action === 'download') {
-                // Force download by creating a temporary anchor
+                // Download file
                 const a = document.createElement('a');
-                a.href = url;
-                a.download = `Rooms4U_Receipt_${safePaymentId}.pdf`;
+                a.href = pdfUrl;
+                a.download = `Rooms4U_Receipt_${bookingId}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
             }
+
+            // Clean up
+            setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
+
         } catch (error) {
-            console.error(error);
+            console.error('Receipt error:', error);
             alert('Failed to generate receipt. Please try again.');
         }
     }, []);

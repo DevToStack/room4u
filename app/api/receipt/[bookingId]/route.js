@@ -28,7 +28,7 @@ export async function GET(req, { params }) {
       JOIN apartments a ON b.apartment_id = a.id
       JOIN users u ON b.user_id = u.id
       LEFT JOIN payments p ON b.id = p.booking_id
-      WHERE b.id = ?
+      WHERE p.id = ?
     `, [bookingId]);
 
     if (rows.length === 0) {
