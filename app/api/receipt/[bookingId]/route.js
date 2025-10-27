@@ -608,33 +608,36 @@ export async function GET(req, { params }) {
     </html>
 `;
 
-    // 🧩 Launch Puppeteer using @sparticuz/chromium
-    const executablePath = await chromium.executablePath();
+    // // 🧩 Launch Puppeteer using @sparticuz/chromium
+    // const executablePath = await chromium.executablePath();
 
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath,
-      headless: chromium.headless,
-    });
+    // const browser = await puppeteer.launch({
+    //   args: chromium.args,
+    //   defaultViewport: chromium.defaultViewport,
+    //   executablePath,
+    //   headless: chromium.headless,
+    // });
 
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    // const page = await browser.newPage();
+    // await page.setContent(html, { waitUntil: "networkidle0" });
 
-    const pdf = await page.pdf({
-      format: "A5",
-      printBackground: true,
-      margin: { top: "0", bottom: "0", left: "0", right: "0" },
-    });
+    // const pdf = await page.pdf({
+    //   format: "A5",
+    //   printBackground: true,
+    //   margin: { top: "0", bottom: "0", left: "0", right: "0" },
+    // });
 
-    await browser.close();
+    // await browser.close();
 
-    return new NextResponse(pdf, {
-      status: 200,
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="Rooms4U_${bookingId}.pdf"`,
-      },
+    // return new NextResponse(pdf, {
+    //   status: 200,
+    //   headers: {
+    //     "Content-Type": "application/pdf",
+    //     "Content-Disposition": `inline; filename="Rooms4U_${bookingId}.pdf"`,
+    //   },
+    // });
+    return new NextResponse(html, {
+      headers: { "Content-Type": "text/html" },
     });
   } catch (error) {
     console.error("Receipt generation error:", error);

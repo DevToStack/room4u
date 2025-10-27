@@ -262,39 +262,33 @@ export default function Payments({ data }) {
 
     const handleReceiptAction = useCallback(async (bookingId, action) => {
         try {
-            const response = await fetch(`/api/receipt/${bookingId}`);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const blob = await response.blob();
-            const pdfUrl = URL.createObjectURL(blob);
+            const url = `/api/receipt/${bookingId}`;
 
             if (action === 'view') {
-                // Open in new tab
-                const newWindow = window.open(pdfUrl, '_blank');
+                // Open receipt in a new tab
+                const newWindow = window.open(url, '_blank');
+                if (!newWindow) alert('Please allow pop-ups for this site');
+            }
+            else if (action === 'download') {
+                // Open in new tab and trigger print for PDF download
+                const newWindow = window.open(url, '_blank');
                 if (!newWindow) {
                     alert('Please allow pop-ups for this site');
+                    return;
                 }
-            } else if (action === 'download') {
-                // Download file
-                const a = document.createElement('a');
-                a.href = pdfUrl;
-                a.download = `Rooms4U_Receipt_${bookingId}.pdf`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
+
+                // Wait a moment for content to load, then print
+                newWindow.onload = () => {
+                    newWindow.focus();
+                    newWindow.print();
+                };
             }
-
-            // Clean up
-            setTimeout(() => URL.revokeObjectURL(pdfUrl), 1000);
-
         } catch (error) {
             console.error('Receipt error:', error);
             alert('Failed to generate receipt. Please try again.');
         }
     }, []);
+      
       
     const handleRefundAction = useCallback((paymentId) => {
         try {
