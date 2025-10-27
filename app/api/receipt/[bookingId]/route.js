@@ -1,12 +1,16 @@
-import puppeteer from "puppeteer";
+import chromium from "@sparticuz/chromium";
+import puppeteer from "puppeteer-core";
 import connection from "@/lib/db";
 import { NextResponse } from "next/server";
+
+export const dynamic = "force-dynamic"; // ensure not statically rendered
 
 export async function GET(req, { params }) {
   const { bookingId } = await params;
 
   try {
-    const [rows] = await connection.query(`
+    const [rows] = await connection.query(
+      `
       SELECT 
         b.id AS bookingId,
         b.start_date AS checkIn,
@@ -29,7 +33,9 @@ export async function GET(req, { params }) {
       JOIN users u ON b.user_id = u.id
       LEFT JOIN payments p ON b.id = p.booking_id
       WHERE p.id = ?
-    `, [bookingId]);
+      `,
+      [bookingId]
+    );
 
     if (rows.length === 0) {
       return NextResponse.json({ error: "Booking not found" }, { status: 404 });
@@ -602,67 +608,34 @@ export async function GET(req, { params }) {
     </html>
 `;
 
-    // Generate PDF with better timeout handling
+    // 🧩 Launch Puppeteer using @sparticuz/chromium
+    const executablePath = await chromium.executablePath();
+
     const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu'
-      ],
-      timeout: 60000 // Increase launch timeout
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath,
+      headless: chromium.headless,
     });
 
-    try {
-      const page = await browser.newPage();
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle0" });
 
-      // Set longer timeouts
-      await page.setDefaultNavigationTimeout(60000);
-      await page.setDefaultTimeout(60000);
+    const pdf = await page.pdf({
+      format: "A5",
+      printBackground: true,
+      margin: { top: "0", bottom: "0", left: "0", right: "0" },
+    });
 
-      // Set viewport to A5 size
-      await page.setViewport({ width: 148, height: 210 });
+    await browser.close();
 
-      // Use waitUntil: 'domcontentloaded' instead of 'networkidle0'
-      await page.setContent(html, {
-        waitUntil: 'domcontentloaded',
-        timeout: 60000
-      });
-
-      // Optional: Wait for specific elements to ensure content is loaded
-      await page.waitForSelector('.receipt-container', { timeout: 30000 });
-
-      const pdf = await page.pdf({
-        format: 'A5',
-        printBackground: true,
-        margin: {
-          top: '0',
-          right: '0',
-          bottom: '0',
-          left: '0',
-        },
-      });
-
-      await browser.close();
-
-      return new NextResponse(pdf, {
-        status: 200,
-        headers: {
-          "Content-Type": "application/pdf",
-          "Content-Disposition": `inline; filename="Rooms4U_${bookingId}.pdf"`,
-        },
-      });
-    } catch (error) {
-      // Ensure browser is closed even if there's an error
-      if (browser) {
-        await browser.close();
-      }
-      throw error;
-    }
+    return new NextResponse(pdf, {
+      status: 200,
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `inline; filename="Rooms4U_${bookingId}.pdf"`,
+      },
+    });
   } catch (error) {
     console.error("Receipt generation error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
