@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import RegisterForm from './RegisterForm';
 import LoginForm from './Login';
 
-export default function AuthModal({ isOpen, onClose, activeTab }) {
+export default function AuthModal({ isOpen, onClose, activeTab, onTabChange }) {
     return (
         <AnimatePresence>
             {isOpen && (
@@ -23,6 +23,7 @@ export default function AuthModal({ isOpen, onClose, activeTab }) {
                         className="bg-neutral-900 rounded-2xl p-6 sm:p-8 w-full max-w-md relative"
                         onClick={(e) => e.stopPropagation()}
                     >
+                        {/* Close Button */}
                         <button
                             className="absolute top-4 right-4 text-gray-300 hover:text-teal-400 text-xl w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-800 transition-colors"
                             onClick={onClose}
@@ -34,19 +35,19 @@ export default function AuthModal({ isOpen, onClose, activeTab }) {
                         <div className="flex border-b border-neutral-700 mb-6">
                             <button
                                 className={`flex-1 py-3 font-semibold text-sm transition-colors ${activeTab === 'login'
-                                    ? 'text-teal-400 border-b-2 border-teal-400'
-                                    : 'text-gray-400 hover:text-gray-200'
+                                        ? 'text-teal-400 border-b-2 border-teal-400'
+                                        : 'text-gray-400 hover:text-gray-200'
                                     }`}
-                                onClick={() => setActiveTab('login')}
+                                onClick={() => onTabChange('login')}   // ✅ changed here
                             >
                                 Login
                             </button>
                             <button
                                 className={`flex-1 py-3 font-semibold text-sm transition-colors ${activeTab === 'register'
-                                    ? 'text-teal-400 border-b-2 border-teal-400'
-                                    : 'text-gray-400 hover:text-gray-200'
+                                        ? 'text-teal-400 border-b-2 border-teal-400'
+                                        : 'text-gray-400 hover:text-gray-200'
                                     }`}
-                                onClick={() => setActiveTab('register')}
+                                onClick={() => onTabChange('register')}  // ✅ changed here
                             >
                                 Register
                             </button>
@@ -64,7 +65,7 @@ export default function AuthModal({ isOpen, onClose, activeTab }) {
                                 {activeTab === 'login' ? (
                                     <LoginForm isModal />
                                 ) : (
-                                    <RegisterForm isModal />
+                                    <RegisterForm isModal setTab={onTabChange}/>
                                 )}
                             </motion.div>
                         </AnimatePresence>

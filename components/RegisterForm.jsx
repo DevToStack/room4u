@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faLock, faPaperPlane, faUser, faPhone, faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { faEnvelope, faLock, faPaperPlane, faUser, faPhone, faEye, faEyeSlash, faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { useRouter } from 'next/navigation';
 
-export default function RegisterForm({ isModal = false }) {
+export default function RegisterForm({ isModal = false, setTab }) {
     const [step, setStep] = useState(1);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
@@ -18,6 +18,15 @@ export default function RegisterForm({ isModal = false }) {
     const [attemptsLeft, setAttemptsLeft] = useState(3);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [passwordStrength, setPasswordStrength] = useState({
+        isValid: false,
+        checks: {
+            length: false,
+            hasNumber: false,
+            hasSymbol: false,
+            hasUppercase: false,
+        }
+    });
     const router = useRouter();
     const [timer, setTimer] = useState(0);
     const otpRefs = useRef([]);
@@ -33,6 +42,37 @@ export default function RegisterForm({ isModal = false }) {
     useEffect(() => {
         if (step === 2 && otpRefs.current[0]) otpRefs.current[0].focus();
     }, [step]);
+
+    // Password strength validation
+    useEffect(() => {
+        validatePasswordStrength(password);
+    }, [password]);
+
+    const validatePasswordStrength = (pwd) => {
+        const checks = {
+            length: pwd.length >= 8,
+            hasNumber: /\d/.test(pwd),
+            hasSymbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd),
+            hasUppercase: /[A-Z]/.test(pwd),
+        };
+
+        const isValid = checks.length && checks.hasNumber && checks.hasSymbol && checks.hasUppercase;
+
+        setPasswordStrength({
+            isValid,
+            checks
+        });
+    };
+
+    const isFormValid = () => {
+        return name &&
+            email &&
+            phone &&
+            password &&
+            confirmPassword &&
+            passwordStrength.isValid &&
+            password === confirmPassword;
+    };
 
     const handleOtpChange = (value, index) => {
         if (/^\d*$/.test(value)) {
@@ -56,13 +96,13 @@ export default function RegisterForm({ isModal = false }) {
     const handleSendOtp = async (e) => {
         e.preventDefault();
 
-        // Basic validation
+        // Enhanced validation
         if (password !== confirmPassword) {
             return setMessage('Passwords do not match!');
         }
 
-        if (password.length < 8) {
-            return setMessage('Password must be at least 8 characters long!');
+        if (!passwordStrength.isValid) {
+            return setMessage('Please create a stronger password!');
         }
 
         setLoading(true);
@@ -118,7 +158,7 @@ export default function RegisterForm({ isModal = false }) {
             if (res.ok) {
                 setMessage('Registration successful! Redirecting to login...');
                 setTimeout(() => {
-                    router.push('/signin');
+                    setTab('login');
                 }, 2000);
             } else {
                 setMessage(data.message || 'Registration failed.');
@@ -142,6 +182,25 @@ export default function RegisterForm({ isModal = false }) {
         setShowConfirmPassword(!showConfirmPassword);
     };
 
+    const getPasswordStrengthColor = () => {
+        if (!password) return 'text-gray-400';
+        const passedChecks = Object.values(passwordStrength.checks).filter(Boolean).length;
+        if (passedChecks === 0) return 'text-red-500';
+        if (passedChecks === 1) return 'text-red-400';
+        if (passedChecks === 2) return 'text-yellow-400';
+        return 'text-green-500';
+    };
+
+    const getPasswordStrengthText = () => {
+        if (!password) return 'Enter a password';
+        const passedChecks = Object.values(passwordStrength.checks).filter(Boolean).length;
+        if (passedChecks === 0) return 'Very Weak';
+        if (passedChecks === 1) return 'Weak';
+        if (passedChecks === 2) return 'Medium';
+        if (passedChecks === 3) return 'Basic';
+        return 'Strong';
+    };
+
     return (
         <div className={`min-h-full flex flex-col ${isModal ? '' : 'items-center justify-center'} text-gray-200`}>
             <h2 className="text-2xl font-bold text-center text-teal-400 mb-6">
@@ -149,7 +208,7 @@ export default function RegisterForm({ isModal = false }) {
             </h2>
 
             {step === 1 && (
-                <form onSubmit={handleSendOtp} className="space-y-4">
+                <form onSubmit={handleSendOtp} className="space-y-4 relative">
                     {[
                         { icon: faUser, placeholder: "Full Name", value: name, setter: setName },
                         { icon: faEnvelope, placeholder: "Email", value: email, setter: setEmail },
@@ -168,50 +227,100 @@ export default function RegisterForm({ isModal = false }) {
                         </div>
                     ))}
 
-                    {/* Password field with eye icon */}
-                    <div className="flex items-center border rounded-lg px-3 py-2 bg-neutral-800">
-                        <FontAwesomeIcon icon={faLock} className="text-teal-400 mr-2" />
-                        <input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Password"
-                            className="flex-1 bg-neutral-800 outline-none text-gray-100"
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            required
-                        />
-                        <button
-                            type="button"
-                            onClick={togglePasswordVisibility}
-                            className="text-teal-400 hover:text-teal-300 focus:outline-none"
-                        >
-                            <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-                        </button>
+                    {/* Password field with strength indicator */}
+                    <div className="space-y-2 relative">
+                        <div className="flex items-center border rounded-lg px-3 py-2 bg-neutral-800">
+                            <FontAwesomeIcon icon={faLock} className="text-teal-400 mr-2" />
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                placeholder="Password"
+                                className="flex-1 bg-neutral-800 outline-none text-gray-100"
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={togglePasswordVisibility}
+                                className="text-teal-400 hover:text-teal-300 focus:outline-none"
+                            >
+                                <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
+                            </button>
+                        </div>
+
+                        {/* Password Strength Indicator - Absolute positioned */}
+                        {password && getPasswordStrengthText() !== 'Strong' && (
+                            <div className="absolute top-full left-0 right-0 z-10 mt-1">
+                                <div className="space-y-2 p-3 bg-neutral-900 rounded-lg border border-neutral-700 shadow-lg">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm">Password Strength:</span>
+                                        <span className={`text-sm font-medium ${getPasswordStrengthColor()}`}>
+                                            {getPasswordStrengthText()}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        {[
+                                            { key: 'length', text: 'At least 8 characters' },
+                                            { key: 'hasNumber', text: 'Contains at least one number' },
+                                            { key: 'hasSymbol', text: 'Contains at least one symbol' },
+                                            { key: 'hasUppercase', text: 'Contains at least one Uppercase' },
+                                        ].map((req) => (
+                                            <div key={req.key} className="flex items-center text-sm">
+                                                <FontAwesomeIcon
+                                                    icon={passwordStrength.checks[req.key] ? faCheck : faTimes}
+                                                    className={`mr-2 ${passwordStrength.checks[req.key] ? 'text-green-500' : 'text-red-500'}`}
+                                                />
+                                                <span className={passwordStrength.checks[req.key] ? 'text-green-400' : 'text-gray-400'}>
+                                                    {req.text}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Confirm Password field with eye icon */}
-                    <div className="flex items-center border rounded-lg px-3 py-2 bg-neutral-800">
-                        <FontAwesomeIcon icon={faLock} className="text-teal-400 mr-2" />
-                        <input
-                            type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm Password"
-                            className="flex-1 bg-neutral-800 outline-none text-gray-100"
-                            value={confirmPassword}
-                            onChange={e => setConfirmPassword(e.target.value)}
-                            required
-                        />
-                        <button
-                            type="button"
-                            onClick={toggleConfirmPasswordVisibility}
-                            className="text-teal-400 hover:text-teal-300 focus:outline-none"
-                        >
-                            <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
-                        </button>
+                    {/* Confirm Password field */}
+                    <div className="space-y-2">
+                        <div className="flex items-center border rounded-lg px-3 py-2 bg-neutral-800">
+                            <FontAwesomeIcon icon={faLock} className="text-teal-400 mr-2" />
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                placeholder="Confirm Password"
+                                className="flex-1 bg-neutral-800 outline-none text-gray-100"
+                                value={confirmPassword}
+                                onChange={e => setConfirmPassword(e.target.value)}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={toggleConfirmPasswordVisibility}
+                                className="text-teal-400 hover:text-teal-300 focus:outline-none"
+                            >
+                                <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} />
+                            </button>
+                        </div>
+
+                        {/* Password Match Indicator */}
+                        {confirmPassword && (
+                            <div className="flex items-center text-sm">
+                                <FontAwesomeIcon
+                                    icon={password === confirmPassword ? faCheck : faTimes}
+                                    className={`mr-2 ${password === confirmPassword ? 'text-green-500' : 'text-red-500'}`}
+                                />
+                                <span className={password === confirmPassword ? 'text-green-400' : 'text-red-400'}>
+                                    {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+                                </span>
+                            </div>
+                        )}
                     </div>
 
                     <button
                         type="submit"
-                        disabled={loading}
-                        className="w-full bg-teal-400 text-neutral-900 py-2 rounded-lg flex items-center justify-center hover:bg-teal-500 disabled:opacity-50"
+                        disabled={loading || !isFormValid()}
+                        className="w-full bg-teal-400 text-neutral-900 py-2 rounded-lg flex items-center justify-center hover:bg-teal-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         {loading ? 'Sending...' : <><FontAwesomeIcon icon={faPaperPlane} className="mr-2" /> Send OTP</>}
                     </button>
@@ -263,8 +372,7 @@ export default function RegisterForm({ isModal = false }) {
             )}
 
             {message && (
-                <p className={`mt-4 text-center text-sm ${message.includes('successful') ? 'text-green-500' : 'text-red-500'
-                    }`}>
+                <p className={`mt-4 text-center text-sm ${message.includes('successful') ? 'text-green-500' : 'text-red-500'}`}>
                     {message}
                 </p>
             )}
