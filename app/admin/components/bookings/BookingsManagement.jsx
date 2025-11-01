@@ -6,6 +6,7 @@ import BookingDetails from './BookingDetails';
 import BookingsStats from './BookingsStats';
 import BookingFilters from './BookingFilters';
 import Toast from '@/components/toast';
+import { set } from 'zod';
 
 const BookingsManagement = () => {
     const [bookings, setBookings] = useState([]);
@@ -13,6 +14,7 @@ const BookingsManagement = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [openFilters, setFiltersOpen] = useState(false);
     const [filters, setFilters] = useState({
         page: 1,
         limit: 10,
@@ -28,7 +30,9 @@ const BookingsManagement = () => {
         pages: 0,
     });
     const [view, setView] = useState('list'); // 'list', 'details', 'stats'
-
+    const handleOpenFilters = () => {
+        setFiltersOpen(!openFilters);
+    }
     // Fetch bookings
     const fetchBookings = async () => {
         try {
@@ -152,6 +156,18 @@ const BookingsManagement = () => {
                     >
                         Statistics
                     </button>
+                    {view === 'list' && (
+                        <button
+                            onClick={() => handleOpenFilters()}
+                            className={`px-4 py-2 rounded-lg transition ${openFilters
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
+                                }`}
+                        >
+                            Filters
+                        </button>
+                    )}
+                    
                 </div>
             </div>
 
@@ -161,8 +177,10 @@ const BookingsManagement = () => {
 
             {view === 'list' && (
                 <>
-                    <BookingFilters filters={filters} onFilterChange={handleFilterChange} />
-
+                    {
+                        openFilters && (<BookingFilters filters={filters} onFilterChange={handleFilterChange} />
+                    )}
+                    
                     <BookingsList
                         bookings={bookings}
                         loading={loading}

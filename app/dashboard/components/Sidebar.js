@@ -1,4 +1,3 @@
-// app/dashboard/components/Sidebar.js
 'use client';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -10,23 +9,61 @@ import {
     faQuestionCircle,
     faRightFromBracket,
     faBars,
-    faXmark
+    faXmark,
+    faBuilding,
+    faExclamationCircle
 } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
-export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) {
+export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
+    const pathname = usePathname();
+    const [loading, setLoading] = useState(false);
+
     const menuItems = [
-        { id: 'overview', label: 'Overview', icon: faChartSimple },
-        { id: 'bookings', label: 'Bookings', icon: faCalendarCheck },
-        { id: 'payments', label: 'Payments', icon: faCreditCard },
-        { id: 'settings', label: 'Settings', icon: faGear },
+        { id: 'overview', label: 'Overview', icon: faChartSimple, href: '/dashboard' },
+        { id: 'bookings', label: 'Bookings', icon: faCalendarCheck, href: '/dashboard/bookings' },
+        { id: 'payments', label: 'Payments', icon: faCreditCard, href: '/dashboard/payments' },
+        { id: 'settings', label: 'Settings', icon: faGear, href: '/dashboard/settings' },
     ];
 
     const quickLinks = [
-        { label: 'Home', icon: faHouse },
-        { label: 'Bookings Page', icon: faCalendarCheck },
-        { label: 'Payments Page', icon: faCreditCard },
-        { label: 'Help', icon: faQuestionCircle },
+        { label: 'Home', icon: faHouse, href: '/' },
+        { label: 'Apartments', icon: faBuilding, href: '/apartments' },
+        { label: 'About Us', icon: faExclamationCircle, href: '/about' },
+        { label: 'Help', icon: faQuestionCircle, href: '/help' },
     ];
+
+    const isActive = (href) => {
+        if (href === '/dashboard') {
+            return pathname === '/dashboard';
+        }
+        return pathname.startsWith(href);
+    };
+
+    const handleLogout = async () => {
+        try {
+            setLoading(true);
+
+            const res = await fetch('/api/auth/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (!res.ok) {
+                throw new Error('Logout failed');
+            }
+
+            // Redirect after logout
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Logout Error:', error);
+            alert('Something went wrong while logging out.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <>
@@ -40,12 +77,12 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
 
             {/* Sidebar */}
             <div className={`
-                fixed inset-y-0 left-0 z-50 w-64 bg-neutral-900 shadow-xl transform transition-transform duration-300 ease-in-out
+                fixed inset-y-0 left-0 z-50 w-64 bg-neutral-900 border-r border-neutral-700 shadow-xl transform transition-transform duration-300 ease-in-out
                 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:inset-0
             `}>
                 <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-neutral-700">
+                    <div className="flex items-center justify-between lg:justify-start gap-4 p-4 border-b border-neutral-700">
                         <div className='flex justify-center items-center rounded-full bg-emerald-400 h-10 w-10 font-bold text-neutral-900'>
                             R4U
                         </div>
@@ -62,23 +99,18 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
                     <nav className="flex-1 p-4">
                         <div className="space-y-2">
                             {menuItems.map((item) => (
-                                <button
+                                <Link
                                     key={item.id}
-                                    onClick={() => {
-                                        setActiveTab(item.id);
-                                        setSidebarOpen(false);
-                                    }}
-                                    className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${activeTab === item.id
+                                    href={item.href}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={`w-full flex items-center px-4 py-3 rounded-xl text-left transition-all duration-200 ${isActive(item.href)
                                             ? 'bg-emerald-500 text-white shadow-lg'
                                             : 'text-neutral-300 hover:bg-neutral-800 hover:text-white'
                                         }`}
                                 >
-                                    <FontAwesomeIcon
-                                        icon={item.icon}
-                                        className="w-5 h-5 mr-3"
-                                    />
+                                    <FontAwesomeIcon icon={item.icon} className="w-5 h-5 mr-3" />
                                     <span className="font-medium">{item.label}</span>
-                                </button>
+                                </Link>
                             ))}
                         </div>
 
@@ -89,13 +121,15 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
                             </h3>
                             <div className="space-y-2">
                                 {quickLinks.map((link, index) => (
-                                    <button
+                                    <Link
                                         key={index}
+                                        href={link.href}
+                                        onClick={() => setSidebarOpen(false)}
                                         className="w-full flex items-center px-4 py-3 rounded-xl text-neutral-300 hover:bg-neutral-800 hover:text-white transition-all duration-200"
                                     >
                                         <FontAwesomeIcon icon={link.icon} className="w-4 h-4 mr-3" />
                                         <span className="font-medium">{link.label}</span>
-                                    </button>
+                                    </Link>
                                 ))}
                             </div>
                         </div>
@@ -103,9 +137,17 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
 
                     {/* Footer */}
                     <div className="p-4 border-t border-neutral-700">
-                        <button className="w-full flex items-center justify-center px-4 py-3 bg-red-900/30 text-red-300 rounded-xl hover:bg-red-800/40 hover:text-red-200 transition-all duration-200 font-medium border border-red-800/30">
+                        <button
+                            onClick={handleLogout}
+                            disabled={loading}
+                            className={`w-full flex items-center justify-center px-4 py-3 rounded-xl transition-all duration-200 font-medium border border-red-800/30
+                                ${loading
+                                    ? 'bg-red-900/50 text-red-200 cursor-not-allowed'
+                                    : 'bg-red-900/30 text-red-300 hover:bg-red-800/40 hover:text-red-200'}
+                            `}
+                        >
                             <FontAwesomeIcon icon={faRightFromBracket} className="w-5 h-5 mr-2" />
-                            Logout
+                            {loading ? 'Logging out...' : 'Logout'}
                         </button>
                     </div>
                 </div>
@@ -119,7 +161,9 @@ export default function Sidebar({ activeTab, setActiveTab, sidebarOpen, setSideb
                 >
                     <FontAwesomeIcon icon={faBars} className="text-neutral-300" />
                 </button>
-                <h2 className="text-lg font-semibold text-neutral-100">Dashboard</h2>
+                <h2 className="text-lg font-semibold text-neutral-100 ml-4">
+                    {menuItems.find(item => isActive(item.href))?.label || 'Dashboard'}
+                </h2>
             </div>
         </>
     );

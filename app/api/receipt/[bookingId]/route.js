@@ -2,6 +2,8 @@ import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import connection from "@/lib/db";
 import { NextResponse } from "next/server";
+import { verifyToken } from "@/lib/jwt"; // Assuming you have an auth utility
+import { cookies} from "next/headers";
 
 export const dynamic = "force-dynamic"; // ensure not statically rendered
 
@@ -9,6 +11,34 @@ export async function GET(req, { params }) {
   const { bookingId } = await params;
 
   try {
+    const cookieStore = cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized - No token provided" }, { status: 401 });
+    }
+
+    const tokenResult = verifyToken(token);
+    if (!tokenResult.valid) {
+      return NextResponse.json(
+        { error: 'Invalid or expired session', code: 'UNAUTHORIZED' },
+        { status: 401 }
+      );
+    }
+
+    const userId = tokenResult.decoded.id;
+    //check user is exists
+    const [user] = await connection.query(`
+        SELECT id FROM users WHERE id = ?
+    `, [userId]);
+    if (user.length === 0) {
+      return NextResponse.json(
+        { error: 'User not found', code: 'USER_NOT_FOUND' },
+        { status: 404 }
+      );
+    }
+
+    // 🔍 AUTHORIZATION: Verify user owns the booking
     const [rows] = await connection.query(
       `
       SELECT 
@@ -18,6 +48,7 @@ export async function GET(req, { params }) {
         b.nights,
         b.guests,
         b.status AS bookingStatus,
+        b.user_id,  
         a.title AS apartment,
         a.price_per_night,
         p.amount AS total,
@@ -42,6 +73,16 @@ export async function GET(req, { params }) {
     }
 
     const data = rows[0];
+
+    // 🛡️ SECURITY CHECK: Verify the authenticated user owns this booking
+    if (data.user_id !== userId) {
+      return NextResponse.json({ error: "Forbidden - Access denied" }, { status: 403 });
+    }
+
+    // Optional: Additional security - verify payment was actually made
+    if (data.paymentStatus !== 'paid') {
+      return NextResponse.json({ error: "Payment not completed" }, { status: 403 });
+    }
 
     const html = `
     <!DOCTYPE html>
@@ -639,8 +680,15 @@ export async function GET(req, { params }) {
     return new NextResponse(html, {
       headers: { "Content-Type": "text/html" },
     });
+
   } catch (error) {
     console.error("Receipt generation error:", error);
+
+    // Don't leak sensitive error information
+    if (error.name === 'JsonWebTokenError') {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

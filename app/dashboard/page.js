@@ -1,16 +1,9 @@
-// app/dashboard/page.js
-import { Suspense } from 'react';
-import DashboardClient from './components/DashboardClient';
-import { getDashboardData } from '@/lib/data';
+import Overview from './components/Overview';
 
-export default async function DashboardPage() {
-    const initialData = await getDashboardData();
-
+export default function DashboardPage() {
     return (
-        <div className="min-h-screen bg-gray-50">
-            <Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading...</div>}>
-                <DashboardClient initialData={initialData} />
-            </Suspense>
+        <div className="min-h-screen min-sm:p-6">
+            <Overview />
         </div>
     );
 }

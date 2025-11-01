@@ -134,7 +134,7 @@ const BookingsStats = ({ onBack }) => {
                     {recentBookings.length === 0 ? (
                         <p className="text-neutral-400 text-center py-4">No recent bookings</p>
                     ) : (
-                        <div className="space-y-4">
+                            <div className="space-y-4 max-h-[50vh] overflow-y-auto">
                                 {recentBookings.map((booking, index) => (
                                     <div
                                         key={`${booking.id}-${index}`} // ensures uniqueness

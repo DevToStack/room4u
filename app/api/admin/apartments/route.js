@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/mysql-wrapper';
-import { verifyToken } from '@/lib/jwt';
+import { verifyAdmin } from '@/lib/adminAuth';
 
 // ✅ Cookie parser
-function parseCookies(cookieHeader) {
+export function parseCookies(cookieHeader) {
     if (!cookieHeader) return {};
     return Object.fromEntries(
         cookieHeader.split(';').map(c => {
@@ -11,15 +11,6 @@ function parseCookies(cookieHeader) {
             return [k, decodeURIComponent(v)];
         })
     );
-}
-
-// 🔒 Admin verification middleware
-function verifyAdmin(token) {
-    const { valid, decoded, error } = verifyToken(token);
-    if (!valid || decoded.role !== 'admin') {
-        return { error: error || 'Unauthorized' };
-    }
-    return { admin: decoded };
 }
 
 // Helper to process array data for related tables
@@ -61,74 +52,98 @@ async function fetchRelatedData(apartmentId) {
 // ----------------------
 // GET - fetch all or single
 // ----------------------
+
 export async function GET(req) {
     try {
-        const cookieHeader = req.headers.get('cookie');
+        const cookieHeader = req.headers.get("cookie");
         const cookies = parseCookies(cookieHeader);
         const token = cookies.token;
 
+        // 🔒 Admin validation
         const adminCheck = verifyAdmin(token);
         if (adminCheck.error) {
             return NextResponse.json({ error: adminCheck.error }, { status: 401 });
         }
 
         const url = new URL(req.url);
-        const id = url.searchParams.get('id');
+        const id = url.searchParams.get("id");
 
+        // ✅ If single apartment (id provided)
         if (id) {
-            const sql = 'SELECT * FROM apartments WHERE id = ?';
+            const sql = "SELECT * FROM apartments WHERE id = ?";
             const results = await query(sql, [id]);
             if (results.length === 0)
-                return NextResponse.json({ error: 'Apartment not found' }, { status: 404 });
+                return NextResponse.json({ error: "Apartment not found" }, { status: 404 });
 
             const apartment = results[0];
             const relatedData = await fetchRelatedData(id);
 
-            // ✅ Safely handle both string and object types
-            if (apartment.location_data) {
-                if (typeof apartment.location_data === 'string') {
-                    try {
-                        apartment.location_data = JSON.parse(apartment.location_data);
-                    } catch (err) {
-                        console.error('Invalid JSON in location_data:', apartment.location_data);
-                        apartment.location_data = null;
-                    }
+            // 🧠 Parse location_data JSON safely
+            if (apartment.location_data && typeof apartment.location_data === "string") {
+                try {
+                    apartment.location_data = JSON.parse(apartment.location_data);
+                } catch (err) {
+                    console.error("Invalid JSON in location_data:", apartment.location_data);
+                    apartment.location_data = null;
                 }
             }
 
+            // 🏠 Construct readable location if missing
             if (!apartment.location && apartment.location_data) {
                 const loc = apartment.location_data;
                 apartment.location = [loc.address1, loc.city, loc.state, loc.pincode, loc.country]
                     .filter(Boolean)
-                    .join(', ');
+                    .join(", ");
             }
+
+            // 📸 Fetch image URL
+            const [img] = await query(
+                "SELECT image_url FROM apartment_gallery WHERE is_primary = TRUE AND apartment_id = ? LIMIT 1",
+                [id]
+            );
+            apartment.image_url = img ? img.image_url : null;
 
             return NextResponse.json({ apartment: { ...apartment, ...relatedData } }, { status: 200 });
-        } else {
-            const sql = 'SELECT * FROM apartments ORDER BY created_at DESC';
-            const results = await query(sql);
+        }
 
-            for (const apt of results) {
-                if (apt.location_data) {
-                    if (typeof apt.location_data === "string") {
-                        try {
-                            apt.location_data = JSON.parse(apt.location_data);
-                        } catch (err) {
-                            console.error("Invalid JSON in location_data:", apt.location_data);
-                            apt.location_data = null;
-                        }
-                    }
+        // ✅ If fetching all apartments
+        const apartments = await query("SELECT * FROM apartments ORDER BY created_at DESC");
+
+        // Fetch image for each apartment
+        for (const apt of apartments) {
+            // Parse location_data JSON safely
+            if (apt.location_data && typeof apt.location_data === "string") {
+                try {
+                    apt.location_data = JSON.parse(apt.location_data);
+                } catch (err) {
+                    console.error("Invalid JSON in location_data:", apt.location_data);
+                    apt.location_data = null;
                 }
-                
             }
 
-            return NextResponse.json({ apartments: results }, { status: 200 });
+            // Get image URL for each apartment
+            const [img] = await query(
+                "SELECT image_url FROM apartment_gallery WHERE is_primary = TRUE AND apartment_id = ? LIMIT 1",
+                [apt.id]
+            );
+            apt.image_url = img ? img.image_url : null;
+
+            // Construct readable location if missing
+            if (!apt.location && apt.location_data) {
+                const loc = apt.location_data;
+                apt.location = [loc.address1, loc.city, loc.state, loc.pincode, loc.country]
+                    .filter(Boolean)
+                    .join(", ");
+            }
         }
+
+        return NextResponse.json({ apartments }, { status: 200 });
     } catch (err) {
-        console.error('❌ Admin apartment fetch error:', err);
-        return NextResponse.json({ error: 'Failed to fetch apartments' }, { status: 500 });
+        console.error("❌ Admin apartment fetch error:", err);
+        return NextResponse.json({ error: "Failed to fetch apartments" }, { status: 500 });
     }
 }
+
 
 // ----------------------
 // POST - create new apartment

@@ -1,12 +1,10 @@
 'use client';
 
-import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RegisterForm from './RegisterForm';
 import LoginForm from './Login';
 
 export default function AuthModal({ isOpen, onClose, activeTab }) {
-
     return (
         <AnimatePresence>
             {isOpen && (
@@ -36,8 +34,8 @@ export default function AuthModal({ isOpen, onClose, activeTab }) {
                         <div className="flex border-b border-neutral-700 mb-6">
                             <button
                                 className={`flex-1 py-3 font-semibold text-sm transition-colors ${activeTab === 'login'
-                                        ? 'text-teal-400 border-b-2 border-teal-400'
-                                        : 'text-gray-400 hover:text-gray-200'
+                                    ? 'text-teal-400 border-b-2 border-teal-400'
+                                    : 'text-gray-400 hover:text-gray-200'
                                     }`}
                                 onClick={() => setActiveTab('login')}
                             >
@@ -45,8 +43,8 @@ export default function AuthModal({ isOpen, onClose, activeTab }) {
                             </button>
                             <button
                                 className={`flex-1 py-3 font-semibold text-sm transition-colors ${activeTab === 'register'
-                                        ? 'text-teal-400 border-b-2 border-teal-400'
-                                        : 'text-gray-400 hover:text-gray-200'
+                                    ? 'text-teal-400 border-b-2 border-teal-400'
+                                    : 'text-gray-400 hover:text-gray-200'
                                     }`}
                                 onClick={() => setActiveTab('register')}
                             >

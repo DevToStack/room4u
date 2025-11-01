@@ -11,7 +11,8 @@ import {
     faCreditCard,
     faTrash,
     faCalendar,
-    faRupeeSign
+    faRupeeSign,
+    faTimes
 } from '@fortawesome/free-solid-svg-icons';
 import FilterPills from './FilterPills';
 import Card from './Card';
@@ -25,8 +26,8 @@ const getSafeData = (data) => {
     return { bookings: Array.isArray(data.bookings) ? data.bookings : [] };
 };
 
-export default function Bookings({ data }) {
-    const [bookingsData, setBookingsData] = useState(getSafeData(data));
+export default function Bookings() {
+    const [bookingsData, setBookingsData] = useState(DEFAULT_DATA);
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setModalOpen] = useState(false);
@@ -40,6 +41,13 @@ export default function Bookings({ data }) {
     // ✅ For payment processing
     const [processingPayment, setProcessingPayment] = useState(null);
     const [paymentMessage, setPaymentMessage] = useState("");
+
+    // ✅ For date range filter
+    const [dateRange, setDateRange] = useState({
+        startDate: '',
+        endDate: ''
+    });
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     // ✅ Initialize Razorpay
     useEffect(() => {
@@ -81,6 +89,7 @@ export default function Bookings({ data }) {
             setTimeout(() => setPaymentMessage(""), 1000);
         }
     };
+
     // ✅ Razorpay payment handler
     const handlePayment = async (booking) => {
         setProcessingPayment(booking.id);
@@ -182,7 +191,7 @@ export default function Bookings({ data }) {
             if (res.ok && result.success) {
                 setResendMessage(`✅ Email resent successfully for Booking #${booking.id}`);
             } else {
-                setResendMessage(`⚠️ ${result.message || "Could not resend email"}`);
+                setResendMessage(`⚠️ ${result.error || "Could not resend email"}`);
             }
         } catch (error) {
             console.error("Error resending email:", error);
@@ -218,11 +227,38 @@ export default function Bookings({ data }) {
     };
 
     useEffect(() => {
-        if (!data?.bookings?.length) fetchBookings();
-    }, [data?.bookings?.length]);
+        fetchBookings();
+    }, []);
 
     const handleUpdateSuccess = async () => {
         await fetchBookings();
+    };
+
+    // ✅ Date range filter functions
+    const handleDateRangeApply = () => {
+        setShowDatePicker(false);
+    };
+
+    const handleDateRangeClear = () => {
+        setDateRange({ startDate: '', endDate: '' });
+        setShowDatePicker(false);
+    };
+
+    const isDateInRange = (dateString, startDate, endDate) => {
+        if (!startDate && !endDate) return true;
+
+        const date = new Date(dateString);
+        const start = startDate ? new Date(startDate) : null;
+        const end = endDate ? new Date(endDate) : null;
+
+        if (start && end) {
+            return date >= start && date <= end;
+        } else if (start) {
+            return date >= start;
+        } else if (end) {
+            return date <= end;
+        }
+        return true;
     };
 
     const filters = [
@@ -235,13 +271,23 @@ export default function Bookings({ data }) {
 
     const filteredBookings = bookingsData.bookings.filter((b) => {
         if (!b || typeof b !== 'object') return false;
+
+        // Filter by status
         const matchesFilter = filter === 'all' || b.status === filter;
+
+        // Filter by search term
         const searchLower = searchTerm.toLowerCase();
         const matchesSearch =
             !searchLower ||
             (b.apartment && b.apartment.toLowerCase().includes(searchLower)) ||
             (b.guestName && b.guestName.toLowerCase().includes(searchLower));
-        return matchesFilter && matchesSearch;
+
+        // Filter by date range
+        const matchesDateRange =
+            isDateInRange(b.checkIn, dateRange.startDate, dateRange.endDate) ||
+            isDateInRange(b.checkOut, dateRange.startDate, dateRange.endDate);
+
+        return matchesFilter && matchesSearch && matchesDateRange;
     });
 
     const getStatusColor = (status) => {
@@ -323,15 +369,16 @@ export default function Bookings({ data }) {
                 show: status === 'expired',
             },
         ];
-          
 
         return buttons.filter(button => button.show);
     };
 
     if (loading) {
         return (
-            <div className="text-center py-12 text-gray-400">
-                Loading bookings...
+            <div className="h-screen text-white p-6 flex items-center justify-center"
+                style={{ maxHeight: 'calc(100vh - 96px)' }}
+            >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
         );
     }
@@ -359,20 +406,113 @@ export default function Bookings({ data }) {
                         />
                     </div>
 
-                    <button
-                        className="flex items-center justify-center px-4 py-2 border border-gray-700 rounded-2xl hover:bg-neutral-800 text-gray-200 transition-all duration-300 hover:border-gray-600 hover:scale-105 active:scale-95 group"
-                        type="button"
-                    >
-                        <FontAwesomeIcon
-                            icon={faFilter}
-                            className="text-gray-400 mr-2 group-hover:text-teal-400 transition-colors duration-300"
-                        />
-                        Date Range
-                    </button>
+                    {/* Date Range Filter */}
+                    <div className="relative">
+                        <button
+                            className="flex items-center justify-center px-4 py-2 border border-gray-700 rounded-2xl hover:bg-neutral-800 text-gray-200 transition-all duration-300 hover:border-gray-600 hover:scale-105 active:scale-95 group"
+                            type="button"
+                            onClick={() => setShowDatePicker(!showDatePicker)}
+                        >
+                            <FontAwesomeIcon
+                                icon={faFilter}
+                                className="text-gray-400 mr-2 group-hover:text-teal-400 transition-colors duration-300"
+                            />
+                            Date Range
+                            {(dateRange.startDate || dateRange.endDate) && (
+                                <span className="ml-2 w-2 h-2 bg-teal-500 rounded-full"></span>
+                            )}
+                        </button>
+
+                        {/* Date Range Picker Dropdown */}
+                        {showDatePicker && (
+                            <div className="absolute top-full right-0 mt-2 bg-neutral-800 border border-gray-700 rounded-2xl p-4 shadow-2xl z-50 min-w-80 backdrop-blur-sm">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="text-gray-200 font-semibold">Filter by Date Range</h3>
+                                    <button
+                                        onClick={() => setShowDatePicker(false)}
+                                        className="text-gray-400 hover:text-gray-200 transition-colors duration-200"
+                                    >
+                                        <FontAwesomeIcon icon={faTimes} />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-sm text-gray-400 mb-1">From Date</label>
+                                        <input
+                                            type="date"
+                                            value={dateRange.startDate}
+                                            onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-gray-600 rounded-xl bg-neutral-700 text-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm text-gray-400 mb-1">To Date</label>
+                                        <input
+                                            type="date"
+                                            value={dateRange.endDate}
+                                            onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                                            className="w-full px-3 py-2 border border-gray-600 rounded-xl bg-neutral-700 text-gray-200 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all duration-300"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 mt-4 pt-3 border-t border-gray-700">
+                                    <button
+                                        onClick={handleDateRangeClear}
+                                        className="flex-1 px-4 py-2 text-sm border border-gray-600 text-gray-300 hover:bg-neutral-700 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95"
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        onClick={handleDateRangeApply}
+                                        className="flex-1 px-4 py-2 text-sm bg-teal-600 text-white hover:bg-teal-500 rounded-xl transition-all duration-300 hover:scale-105 active:scale-95"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+
+                                {/* Active Filter Indicator */}
+                                {(dateRange.startDate || dateRange.endDate) && (
+                                    <div className="mt-3 p-2 bg-teal-900/20 border border-teal-700/30 rounded-lg">
+                                        <p className="text-xs text-teal-400 text-center">
+                                            {dateRange.startDate && dateRange.endDate
+                                                ? `Showing bookings between ${dateRange.startDate} and ${dateRange.endDate}`
+                                                : dateRange.startDate
+                                                    ? `Showing bookings from ${dateRange.startDate} onwards`
+                                                    : `Showing bookings until ${dateRange.endDate}`
+                                            }
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             <FilterPills filters={filters} activeFilter={filter} onFilterChange={setFilter} />
+
+            {/* Active Date Range Filter Pill */}
+            {(dateRange.startDate || dateRange.endDate) && (
+                <div className="flex items-center gap-2 bg-teal-900/20 border border-teal-700/30 rounded-full px-4 py-2 w-fit">
+                    <span className="text-teal-400 text-sm">
+                        {dateRange.startDate && dateRange.endDate
+                            ? `${dateRange.startDate} to ${dateRange.endDate}`
+                            : dateRange.startDate
+                                ? `From ${dateRange.startDate}`
+                                : `Until ${dateRange.endDate}`
+                        }
+                    </span>
+                    <button
+                        onClick={handleDateRangeClear}
+                        className="text-teal-400 hover:text-teal-300 transition-colors duration-200"
+                    >
+                        <FontAwesomeIcon icon={faTimes} className="text-xs" />
+                    </button>
+                </div>
+            )}
 
             {/* Bookings List */}
             {filteredBookings.length === 0 ? (
@@ -388,8 +528,19 @@ export default function Bookings({ data }) {
                             No bookings found
                         </h3>
                         <p className="text-gray-400 text-sm leading-relaxed group-hover:text-gray-300 transition-colors duration-500">
-                            Try adjusting your search criteria or filters to find what you&apos;re looking for.
+                            {dateRange.startDate || dateRange.endDate
+                                ? "Try adjusting your date range or search criteria."
+                                : "Try adjusting your search criteria or filters to find what you're looking for."
+                            }
                         </p>
+                        {(dateRange.startDate || dateRange.endDate) && (
+                            <button
+                                onClick={handleDateRangeClear}
+                                className="mt-4 px-4 py-2 text-teal-400 hover:text-teal-300 text-sm transition-colors duration-300"
+                            >
+                                Clear date filter
+                            </button>
+                        )}
                     </div>
                 </Card>
             ) : (
@@ -480,8 +631,6 @@ export default function Bookings({ data }) {
                     })}
                 </div>
             )}
-            
-
 
             {/* Messages */}
             {resendMessage && (

@@ -118,7 +118,24 @@ export async function POST(request) {
     try {
         const body = await request.json();
         const { apartment_id, start_date, end_date, guests, total_amount } = body;
-        const userId = 1; // Replace with actual user ID from auth/session
+        const cookieStore = await cookies(); // ✅ await required in Next.js 13+
+        const sessionToken = cookieStore.get('token')?.value;
+        if (!sessionToken) {
+            return NextResponse.json(
+                { error: 'Authentication required', code: 'UNAUTHORIZED' },
+                { status: 401 }
+            );
+        }
+
+        const tokenResult = verifyToken(sessionToken);
+        if (!tokenResult.valid) {
+            return NextResponse.json(
+                { error: 'Invalid or expired session', code: 'UNAUTHORIZED' },
+                { status: 401 }
+            );
+        }
+
+        const userId = tokenResult.decoded.id;
 
         if (!apartment_id || !start_date || !end_date || !guests || !total_amount) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

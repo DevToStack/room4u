@@ -1,5 +1,8 @@
 import Razorpay from "razorpay";
 import pool from "@/lib/db";
+import { verifyToken } from "@/lib/jwt";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
     const { booking_id } = await req.json();
@@ -8,6 +11,38 @@ export async function POST(req) {
 
     const connection = await pool.getConnection();
     try {
+        // === 2. AUTHENTICATION ===
+        const cookieStore = await cookies(); // ✅ await required in Next.js 13+
+        const sessionToken = cookieStore.get('token')?.value;
+        if (!sessionToken) {
+            return NextResponse.json(
+                { error: 'Authentication required', code: 'UNAUTHORIZED' },
+                { status: 401 }
+            );
+        }
+
+        const tokenResult = verifyToken(sessionToken);
+        if (!tokenResult.valid) {
+            return NextResponse.json(
+                { error: 'Invalid or expired session', code: 'UNAUTHORIZED' },
+                { status: 401 }
+            );
+        }
+        
+        const userId = tokenResult.decoded.id;
+        
+        //check user is exists
+        const [user] = await connection.query(`
+            SELECT id FROM users WHERE id = ?
+        `, [userId]);
+
+        if (user.length === 0) {    
+            return NextResponse.json(
+                { error: 'User not found', code: 'USER_NOT_FOUND' },
+                { status: 404 }
+            );
+        }
+
         const [row] = await connection.query(`
             SELECT status FROM payments WHERE booking_id = ?
         `, [booking_id]);

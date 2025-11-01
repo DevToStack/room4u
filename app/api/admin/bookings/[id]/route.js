@@ -1,10 +1,29 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/mysql-wrapper';
+import { verifyAdmin } from '@/lib/adminAuth';
+
+// ✅ Cookie parser
+function parseCookies(cookieHeader) {
+    if (!cookieHeader) return {};
+    return Object.fromEntries(
+        cookieHeader.split(';').map(c => {
+            const [k, v] = c.trim().split('=');
+            return [k, decodeURIComponent(v)];
+        })
+    );
+}
 
 export async function GET(request, { params }) {
     try {
         const { id } = params;
+        const cookieHeader = request.headers.get('cookie');
+        const cookies = parseCookies(cookieHeader);
+        const token = cookies.token;
 
+        const adminCheck = verifyAdmin(token);
+        if (adminCheck.error) {
+            return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+        }
         const bookingQuery = `
             SELECT 
                 b.*,
@@ -60,6 +79,14 @@ export async function DELETE(request, { params }) {
     try {
         const { id } = params;
 
+        const cookieHeader = request.headers.get('cookie');
+        const cookies = parseCookies(cookieHeader);
+        const token = cookies.token;
+
+        const adminCheck = verifyAdmin(token);
+        if (adminCheck.error) {
+            return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+        }
         // Check if booking exists
         const bookings = await query('SELECT * FROM bookings WHERE id = ?', [id]);
 

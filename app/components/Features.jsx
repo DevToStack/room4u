@@ -42,7 +42,7 @@ export default function Features() {
                 {/* Header */}
                 <div className="text-center mb-20">
                     <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-                        Why Choose <span className="text-teal-400">LuxStay</span>?
+                        Why Choose <span className="text-teal-400">Rooms4U</span>?
                     </h2>
                     <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto">
                         We provide the best apartment booking experience with premium features for both guests and hosts.

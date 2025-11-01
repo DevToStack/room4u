@@ -6,8 +6,8 @@ const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 export async function middleware(req) {
     const path = req.nextUrl.pathname;
 
-    // Check only protected routes
-    if (path.startsWith("/admin") || path.startsWith("/api/admin")) {
+    // Check protected routes (admin and dashboard)
+    if (path.startsWith("/admin") || path.startsWith("/api/admin") || path.startsWith("/dashboard")) {
         const token = req.cookies.get("token")?.value;
 
         if (!token) {
@@ -24,15 +24,21 @@ export async function middleware(req) {
                 audience: "yourapp-users",
             });
 
-            if (payload.role !== "admin") {
+            // For admin routes, check if user has admin role
+            if ((path.startsWith("/admin") || path.startsWith("/api/admin")) && payload.role !== "admin") {
                 return NextResponse.rewrite(new URL("/404", req.url));
             }
 
-            // ✅ JWT valid & admin role
+            // For dashboard routes, check if user has either admin or guest role
+            if (path.startsWith("/dashboard") && !["admin", "guest"].includes(payload.role)) {
+                return NextResponse.rewrite(new URL("/404", req.url));
+            }
+
+            // ✅ JWT valid & appropriate role
             return NextResponse.next();
         } catch (err) {
             console.error("[SECURITY] Middleware JWT verification failed:", err.message);
-            return NextResponse.redirect(new URL("/signin", req.url));
+            return NextResponse.rewrite(new URL("/404", req.url));
         }
     }
 
@@ -41,5 +47,5 @@ export async function middleware(req) {
 }
 
 export const config = {
-    matcher: ["/admin/:path*", "/api/admin/:path*"],
+    matcher: ["/admin/:path*", "/api/admin/:path*", "/dashboard/:path*"],
 };

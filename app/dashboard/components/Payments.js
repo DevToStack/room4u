@@ -1,6 +1,6 @@
 // app/dashboard/components/Payments.js
 'use client';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
     faCreditCard,
@@ -22,7 +22,8 @@ import {
     faFingerprint,
     faBuilding,
     faEye,
-    faCircle
+    faCircle,
+    faRedo
 } from '@fortawesome/free-solid-svg-icons';
 import {
     faPaypal,
@@ -193,11 +194,52 @@ const safePaymentMethod = (method) => {
     return PAYMENT_METHODS[safeMethod] || safeToString(method, 'Unknown');
 };
 
-export default function Payments({ data }) {
+export default function Payments() {
     const [filter, setFilter] = useState('all');
+    const [paymentsData, setPaymentsData] = useState(DEFAULT_DATA);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [page, setPage] = useState(1);
+    const [limit] = useState(10); // You can make this configurable
+    const [receiptHTML, setReceiptHTML] = useState('');
+    const [showReceiptModal, setShowReceiptModal] = useState(false);
+    // Fetch payments data
+    const fetchPayments = useCallback(async (pageNum = page) => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await fetch(
+                `/api/dashboard/payments?page=${pageNum}&limit=${limit}`,
+                { cache: 'no-store' }
+            ).then(res => res.json());
+
+            if (response && typeof response === 'object') {
+                setPaymentsData(response);
+            } else {
+                throw new Error('Invalid response format');
+            }
+        } catch (err) {
+            console.error('Error fetching payments:', err);
+            setError('Failed to load payments. Please try again.');
+            setPaymentsData(DEFAULT_DATA);
+        } finally {
+            setLoading(false);
+        }
+    }, [page, limit]);
+
+    // Initial data fetch
+    useEffect(() => {
+        fetchPayments();
+    }, [fetchPayments]);
+
+    // Refetch function that can be called manually
+    const handleRefetch = useCallback(() => {
+        fetchPayments();
+    }, [fetchPayments]);
 
     // Safely process the data
-    const safeData = useMemo(() => getSafeData(data), [data]);
+    const safeData = useMemo(() => getSafeData(paymentsData), [paymentsData]);
 
     // Safe filter handler
     const handleFilterChange = useCallback((newFilter) => {
@@ -260,36 +302,23 @@ export default function Payments({ data }) {
         }
     }, [getPaymentProperty]);
 
+
     const handleReceiptAction = useCallback(async (bookingId, action) => {
         try {
             const url = `/api/receipt/${bookingId}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('Failed to fetch receipt');
 
-            if (action === 'view') {
-                // Open receipt in a new tab
-                const newWindow = window.open(url, '_blank');
-                if (!newWindow) alert('Please allow pop-ups for this site');
-            }
-            else if (action === 'download') {
-                // Open in new tab and trigger print for PDF download
-                const newWindow = window.open(url, '_blank');
-                if (!newWindow) {
-                    alert('Please allow pop-ups for this site');
-                    return;
-                }
-
-                // Wait a moment for content to load, then print
-                newWindow.onload = () => {
-                    newWindow.focus();
-                    newWindow.print();
-                };
-            }
+            const html = await res.text();
+            setReceiptHTML(html);
+            setShowReceiptModal(true);
         } catch (error) {
             console.error('Receipt error:', error);
             alert('Failed to generate receipt. Please try again.');
         }
     }, []);
-      
-      
+
+
     const handleRefundAction = useCallback((paymentId) => {
         try {
             const safePaymentId = safeToString(paymentId);
@@ -448,11 +477,59 @@ export default function Payments({ data }) {
         );
     }, [getPaymentProperty, getStatusColor, getSafePaymentId, handleReceiptAction]);
 
+    // Loading state
+    if (loading) {
+        return (
+            <div className="h-screen text-white p-6 flex items-center justify-center"
+                style={{ maxHeight: 'calc(100vh - 96px)' }}
+            >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            </div>
+        );
+    }
+
+    // Error state
+    if (error) {
+        return (
+            <div className="space-y-6">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                    <h1 className="text-2xl font-bold text-white mb-4 lg:mb-0">Payments</h1>
+                </div>
+                <Card className="p-12 text-center bg-gray-800 border border-gray-700 backdrop-blur-sm rounded-xl">
+                    <div className="max-w-md mx-auto">
+                        <div className="w-16 h-16 bg-red-900/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <FontAwesomeIcon
+                                icon={faTimesCircle}
+                                className="text-red-400 text-2xl"
+                            />
+                        </div>
+                        <h3 className="text-lg font-semibold text-white mb-2">Error Loading Payments</h3>
+                        <p className="text-gray-400 mb-4">{error}</p>
+                        <button
+                            onClick={handleRefetch}
+                            className="flex items-center justify-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25"
+                        >
+                            <FontAwesomeIcon icon={faRedo} className="text-sm" />
+                            Try Again
+                        </button>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <h1 className="text-2xl font-bold text-white mb-4 lg:mb-0">Payments</h1>
+                <button
+                    onClick={handleRefetch}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105"
+                >
+                    <FontAwesomeIcon icon={faRedo} className="text-sm" />
+                    Refresh
+                </button>
             </div>
 
             {/* Filter Pills */}
@@ -489,7 +566,37 @@ export default function Payments({ data }) {
             ) : (
                 // Usage in Payments Grid
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
-                        {filteredPayments.map((payment, index) => renderPaymentCard(payment, index)).filter(Boolean)}
+                    {filteredPayments.map((payment, index) => renderPaymentCard(payment, index)).filter(Boolean)}
+                </div>
+            )}
+            {showReceiptModal && (
+                <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+                    <div className="bg-white rounded-2xl shadow-lg w-[90vw] h-[90vh] overflow-hidden relative">
+                        <button
+                            className="absolute top-3 right-3 text-gray-500 hover:text-black text-lg"
+                            onClick={() => setShowReceiptModal(false)}
+                        >
+                            ✕
+                        </button>
+                        <button
+                            className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded"
+                            onClick={() => {
+                                const printWindow = window.open('', '_blank');
+                                printWindow.document.write(receiptHTML);
+                                printWindow.document.close();
+                                printWindow.print();
+                            }}
+                        >
+                            Print
+                        </button>
+
+                        {/* Render the HTML inside an iframe to preserve styles */}
+                        <iframe
+                            srcDoc={receiptHTML}
+                            className="w-full h-full rounded-b-2xl border-none"
+                            sandbox="allow-same-origin allow-scripts"
+                        />
+                    </div>
                 </div>
             )}
 

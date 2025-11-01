@@ -26,7 +26,7 @@ const BookingFilters = ({ filters, onFilterChange }) => {
     };
 
     return (
-        <div className="bg-neutral-800 p-6 rounded-xl shadow border border-neutral-800 mb-6">
+        <div className="bg-neutral-800 p-6 rounded-xl shadow border border-neutral-700 mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4 text-sm">
                 {/* Search */}
                 <div>

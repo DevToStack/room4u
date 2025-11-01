@@ -16,8 +16,12 @@ export default function Footer() {
                     {/* Company Info */}
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center mb-4">
-                            <FontAwesomeIcon icon={faBuilding} className="h-8 w-8 text-teal-400" />
-                            <span className="ml-2 text-xl font-bold">LuxStay</span>
+                            <div>
+                                <span className="flex justify-center items-center rounded-full bg-teal-400 h-10 w-10 font-bold text-neutral-900">
+                                    R4U
+                                </span>
+                            </div>
+                            <span className="ml-2 text-xl font-bold">Rooms4U</span>
                         </div>
                         <p className="text-gray-400 mb-4 max-w-md">
                             Your trusted platform for premium apartment bookings. Connecting guests with amazing hosts worldwide.
@@ -36,11 +40,19 @@ export default function Footer() {
                     {/* Quick Links */}
                     <div>
                         <h3 className="font-semibold mb-4 text-teal-400">Quick Links</h3>
-                        <ul className="space-y-2 text-gray-400">
-                            {['Home', '#apartments', '#how-it-works', '#admin'].map((link, i) => (
+                        <ul className="flex text-gray-400 flex-col space-y-2">
+                            {[
+                                { label: 'Home', href: '/' },
+                                { label: 'Apartments', href: '/apartments' },
+                                { label: 'How It Works', href: '#how-it-works' },
+                                { label: 'Why Rooms4U?', href: '#features' },
+                            ].map((item, i) => (
                                 <li key={i}>
-                                    <a href={link} className="hover:text-teal-400 transition">
-                                        {link === '#' ? 'Home' : link.replace('#', '').replace('-', ' ')}
+                                    <a
+                                        href={item.href}
+                                        className="hover:text-teal-400 transition"
+                                    >
+                                        {item.label}
                                     </a>
                                 </li>
                             ))}
@@ -50,18 +62,29 @@ export default function Footer() {
                     {/* Support */}
                     <div>
                         <h3 className="font-semibold mb-4 text-teal-400">Support</h3>
-                        <ul className="space-y-2 text-gray-400">
-                            {['Help Center', 'Contact Us', 'Privacy Policy', 'Terms of Service'].map((item, i) => (
+                        <ul className="flex text-gray-400 flex-col space-y-2">
+                            {[
+                                { label: 'Help Center', href: '/help' },
+                                { label: 'Contact Us', href: '/contact' },
+                                { label: 'Privacy Policy', href: '/privacy-policy' },
+                                { label: 'Terms of Service', href: '/terms-conditions' },
+                            ].map((item, i) => (
                                 <li key={i}>
-                                    <a href="#" className="hover:text-teal-400 transition">{item}</a>
+                                    <a
+                                        href={item.href}
+                                        className="hover:text-teal-400 transition"
+                                    >
+                                        {item.label}
+                                    </a>
                                 </li>
                             ))}
                         </ul>
+
                     </div>
                 </div>
 
                 <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-                    <p>&copy; 2024 LuxStay. All rights reserved.</p>
+                    <p>&copy; {new Date().getFullYear()} Rooms4U. All rights reserved.</p>
                 </div>
             </div>
         </footer>

@@ -82,9 +82,9 @@ export default function Hero() {
                                 className="relative z-10 w-3 h-3 sm:w-4 sm:h-4"
                                 fixedWidth
                             />
-                            <span className="relative z-10">Explore Properties</span>
+                            <a href='/apartments' className="relative z-10">Explore Apartments</a>
                         </button>
-                        <button className="group relative border border-gray-600 sm:border-2 hover:border-teal-400 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 lg:px-10 rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 backdrop-blur-sm text-sm sm:text-base">
+                        {/* <button className="group relative border border-gray-600 sm:border-2 hover:border-teal-400 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 lg:px-10 rounded-lg sm:rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 backdrop-blur-sm text-sm sm:text-base">
                             <div className="absolute inset-0 bg-teal-400/5 rounded-lg sm:rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                             <FontAwesomeIcon
                                 icon={faHeart}
@@ -92,7 +92,7 @@ export default function Hero() {
                                 fixedWidth
                             />
                             <span className="relative z-10">Save Favorites</span>
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 

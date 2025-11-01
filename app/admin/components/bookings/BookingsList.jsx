@@ -161,8 +161,12 @@ const BookingsList = ({
             <div className="bg-neutral-800 rounded-xl shadow-sm overflow-hidden border border-neutral-700">
                 {/* Scrollable Table */}
                 <div
-                    className="overflow-y-auto overflow-x-auto"
-                    style={{ maxHeight: "calc(100vh - 400px)", minHeight: "200px" }}
+                    style={{
+                        maxHeight: "calc(100vh - 400px)",
+                        minHeight: "400px",
+                        overflowY: "auto",
+                        overflowX: "auto"
+                      }}
                 >
                     <table className="w-full text-left border-collapse text-neutral-50 min-w-[1024px]">
                         <thead className="bg-neutral-700 sticky top-0 z-20 text-sm">

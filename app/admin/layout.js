@@ -91,7 +91,7 @@ export default function AdminLayout({ children }) {
             aria-label="Rooms4u sidebar"
         >
             {/* Sidebar Header */}
-            <div className="p-3 flex items-center justify-between">
+            <div className="p-3 flex border-b border-gray-700 items-center justify-between">
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => {
@@ -155,8 +155,8 @@ export default function AdminLayout({ children }) {
                         key={id}
                         onClick={() => router.push(path)}
                         className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-all duration-150 ${pathname === path
-                            ? 'bg-neutral-800 text-white shadow-sm'
-                            : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                            ? 'bg-neutral-700 text-white shadow-sm'
+                            : 'text-gray-300 hover:bg-neutral-800 hover:text-white'
                             } ${sidebarCollapsed ? 'justify-center' : ''}`}
                         title={sidebarCollapsed ? label : ''}
                     >

@@ -4,55 +4,64 @@ import pool from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 
-export async function GET(request) {
-    try {
-        const connection = await pool.getConnection();
+export async function GET() {
+  let connection;
 
-        const cookieStore = await cookies(); // ✅ await required in Next.js 13+
-        const sessionToken = cookieStore.get('token')?.value;
-        if (!sessionToken) {
-            return NextResponse.json(
-                { error: 'Authentication required', code: 'UNAUTHORIZED' },
-                { status: 401 }
-            );
-        }
+  try {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get('token')?.value;
 
-        const tokenResult = verifyToken(sessionToken);
-        if (!tokenResult.valid) {
-            return NextResponse.json(
-                { error: 'Invalid or expired session', code: 'UNAUTHORIZED' },
-                { status: 401 }
-            );
-        }
+    if (!sessionToken) {
+      console.log('No session token found in cookies.');
+      return NextResponse.json(
+        { error: 'Authentication required', code: 'UNAUTHORIZED' },
+        { status: 401 }
+      );
+    }
 
-        const userId = tokenResult.decoded.id;
+    const tokenResult = verifyToken(sessionToken);
+    if (!tokenResult.valid) {
+      return NextResponse.json(
+        { error: 'Invalid or expired session', code: 'UNAUTHORIZED' },
+        { status: 401 }
+      );
+    }
 
-        // Total bookings (last 30 days)
-        const [totalBookings] = await connection.execute(`
-      SELECT COUNT(*) as count 
-      FROM bookings 
-      WHERE user_id = ? 
+    const userId = tokenResult.decoded.id;
+    connection = await pool.getConnection();
+
+    // 🟦 Total bookings (last 30 days)
+    const [totalBookings] = await connection.execute(
+      `
+      SELECT COUNT(*) AS count
+      FROM bookings
+      WHERE user_id = ?
       AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-    `, [userId]);
+      `,
+      [userId]
+    );
 
-        // Total payments breakdown
-      const [paymentStats] = await connection.execute(`
-          SELECT 
-            SUM(CASE WHEN p.status = 'paid' THEN p.amount ELSE 0 END) AS paid,
-            SUM(CASE WHEN p.status = 'refunded' THEN p.amount ELSE 0 END) AS refunded
-          FROM payments p
-          JOIN bookings b ON p.booking_id = b.id
-          WHERE b.user_id = ?
-        `, [userId]);
-        
+    // 🟩 Total payments breakdown
+    const [paymentStats] = await connection.execute(
+      `
+      SELECT 
+        SUM(CASE WHEN p.status = 'paid' THEN p.amount ELSE 0 END) AS paid,
+        SUM(CASE WHEN p.status = 'refunded' THEN p.amount ELSE 0 END) AS refunded
+      FROM payments p
+      JOIN bookings b ON p.booking_id = b.id
+      WHERE b.user_id = ?
+      `,
+      [userId]
+    );
 
-        // Last booking
-        const [lastBooking] = await connection.execute(`
+    // 🟨 Last booking
+    const [lastBooking] = await connection.execute(
+      `
       SELECT 
         b.id,
-        a.title as apartment,
-        b.start_date as checkIn,
-        b.end_date as checkOut,
+        a.title AS apartment,
+        b.start_date AS checkIn,
+        b.end_date AS checkOut,
         b.status,
         b.guests,
         p.amount
@@ -62,15 +71,18 @@ export async function GET(request) {
       WHERE b.user_id = ?
       ORDER BY b.created_at DESC
       LIMIT 1
-    `, [userId]);
+      `,
+      [userId]
+    );
 
-        // Next booking
-        const [nextBooking] = await connection.execute(`
+    // 🟧 Next booking
+    const [nextBooking] = await connection.execute(
+      `
       SELECT 
         b.id,
-        a.title as apartment,
-        b.start_date as checkIn,
-        DATEDIFF(b.start_date, CURDATE()) as daysUntil
+        a.title AS apartment,
+        b.start_date AS checkIn,
+        DATEDIFF(b.start_date, CURDATE()) AS daysUntil
       FROM bookings b
       JOIN apartments a ON b.apartment_id = a.id
       WHERE b.user_id = ? 
@@ -78,46 +90,57 @@ export async function GET(request) {
       AND b.status IN ('confirmed', 'paid')
       ORDER BY b.start_date ASC
       LIMIT 1
-    `, [userId]);
+      `,
+      [userId]
+    );
 
-        // Upcoming check-ins (next 7 days)
-        const [upcomingCheckins] = await connection.execute(`
+    // 🟪 Upcoming check-ins (next 7 days)
+    const [upcomingCheckins] = await connection.execute(
+      `
       SELECT 
         b.id,
-        a.title as apartment,
-        u.name as guestName,
-        b.start_date as checkIn,
-        b.end_date as checkOut,
+        a.title AS apartment,
+        u.name AS guestName,
+        b.start_date AS checkIn,
+        b.end_date AS checkOut,
         b.nights,
         p.amount,
-        DATEDIFF(b.start_date, CURDATE()) <= 2 as dueSoon
+        DATEDIFF(b.start_date, CURDATE()) <= 2 AS dueSoon
       FROM bookings b
       JOIN apartments a ON b.apartment_id = a.id
       JOIN users u ON b.user_id = u.id
       LEFT JOIN payments p ON p.booking_id = b.id
-      WHERE b.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-      AND b.status IN ('confirmed', 'paid')
+      WHERE b.user_id = ?
+        AND b.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+        AND b.status IN ('confirmed', 'paid')
       ORDER BY b.start_date ASC
-    `);
+      `,
+      [userId]
+    );
 
-        connection.release();
+    connection.release();
 
-        const overviewData = {
-            totalBookings: totalBookings[0]?.count || 0,
-            totalPayments: paymentStats[0]?.paid || 0,
-            paidPayments: paymentStats[0]?.paid || 0,
-            refundedPayments: paymentStats[0]?.refunded || 0,
-            lastBooking: lastBooking[0] || null,
-            nextBooking: nextBooking[0] || { daysUntil: 0, apartment: 'No upcoming bookings' },
-            upcomingCheckins: upcomingCheckins || []
-        };
+    const overviewData = {
+      totalBookings: totalBookings[0]?.count || 0,
+      totalPayments: paymentStats[0]?.paid || 0,
+      paidPayments: paymentStats[0]?.paid || 0,
+      refundedPayments: paymentStats[0]?.refunded || 0,
+      lastBooking: lastBooking[0] || null,
+      nextBooking: nextBooking[0] || {
+        daysUntil: 0,
+        apartment: 'No upcoming bookings',
+      },
+      upcomingCheckins: upcomingCheckins || [],
+    };
 
-        return NextResponse.json(overviewData);
-    } catch (error) {
-        console.error('Error fetching overview data:', error);
-        return NextResponse.json(
-            { error: 'Failed to fetch overview data' },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json(overviewData);
+  } catch (error) {
+    console.error('Error fetching overview data:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch overview data' },
+      { status: 500 }
+    );
+  } finally {
+    if (connection) connection.release?.();
+  }
 }

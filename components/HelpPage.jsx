@@ -183,9 +183,9 @@ export default function HelpPage() {
     ]
 
 return (
-    <div className="min-h-screen bg-neutral-900 pt-20">
+    <div className="min-h-screen bg-neutral-900">
         {/* Header Section */}
-        <section className="relative bg-neutral-800 py-16">
+        <section className="relative bg-neutral-800 py-16 pt-20">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <div className="flex items-center justify-center gap-3 mb-4">
                     <FontAwesomeIcon icon={faQuestionCircle} className="text-teal-400 text-2xl" />
@@ -341,51 +341,6 @@ return (
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        {/* Additional Help Section */}
-        <section className="py-12 bg-neutral-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl font-bold text-white mb-4">Other Ways We Can Help</h2>
-                    <p className="text-gray-300 text-lg">Explore our additional resources</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="bg-neutral-700/30 rounded-2xl p-8 text-center border border-neutral-600 hover:border-teal-400/30 transition-all duration-200">
-                        <FontAwesomeIcon icon={faUser} className="text-teal-400 text-3xl mb-4" />
-                        <h3 className="text-white font-bold text-xl mb-3">Community Forum</h3>
-                        <p className="text-gray-300 mb-4">
-                            Connect with other travelers and hosts in our community
-                        </p>
-                        <button className="text-teal-400 font-medium hover:text-teal-300 transition-colors duration-200">
-                            Join Discussion →
-                        </button>
-                    </div>
-
-                    <div className="bg-neutral-700/30 rounded-2xl p-8 text-center border border-neutral-600 hover:border-teal-400/30 transition-all duration-200">
-                        <FontAwesomeIcon icon={faStar} className="text-teal-400 text-3xl mb-4" />
-                        <h3 className="text-white font-bold text-xl mb-3">Booking Guides</h3>
-                        <p className="text-gray-300 mb-4">
-                            Learn how to make the most of your LuxStay experience
-                        </p>
-                        <button className="text-teal-400 font-medium hover:text-teal-300 transition-colors duration-200">
-                            Read Guides →
-                        </button>
-                    </div>
-
-                    <div className="bg-neutral-700/30 rounded-2xl p-8 text-center border border-neutral-600 hover:border-teal-400/30 transition-all duration-200">
-                        <FontAwesomeIcon icon={faShield} className="text-teal-400 text-3xl mb-4" />
-                        <h3 className="text-white font-bold text-xl mb-3">Safety Center</h3>
-                        <p className="text-gray-300 mb-4">
-                            Learn about our safety measures and trust features
-                        </p>
-                        <button className="text-teal-400 font-medium hover:text-teal-300 transition-colors duration-200">
-                            Learn More →
-                        </button>
                     </div>
                 </div>
             </div>

@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faTrash, faEye } from '@fortawesome/free-solid-svg-icons';
 
-const ApartmentRow = ({ apartment, onEdit, onDelete, loadingAction, getImageUrl }) => {
+const ApartmentRow = ({ apartment, onEdit, onDelete, onViewDetails, loadingAction, getImageUrl }) => {
     const truncateText = (text, maxLength = 80) => {
         if (!text) return '';
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
@@ -12,11 +12,25 @@ const ApartmentRow = ({ apartment, onEdit, onDelete, loadingAction, getImageUrl 
             <td className="p-4">{apartment.id}</td>
             <td className="p-4">
                 <div className="flex items-center space-x-3">
-                    <img
-                        src={getImageUrl(apartment)}
-                        alt={apartment.title}
-                        className="w-12 h-12 rounded object-cover border border-neutral-700"
-                    />
+                    {getImageUrl(apartment) ? (
+                        <img
+                            src={getImageUrl(apartment)}
+                            alt={apartment.title}
+                            className="w-12 h-12 rounded-lg object-cover"
+                        />
+                    ) : (
+                            <div
+                                className="w-12 h-12 rounded-lg flex items-center justify-center font-semibold text-lg uppercase"
+                                style={{
+                                    backgroundColor: `hsl(${Math.floor(Math.random() * 360)}, 70%, 70%)`,
+                                    color: `hsl(${Math.floor(Math.random() * 360)}, 80%, 25%)`,
+                                }}
+                            >
+                                {apartment?.title?.slice(0, 1) || "NA"}
+                            </div>                    
+                        )}
+
+
                     <div className="min-w-0 flex-1">
                         <div className="font-medium truncate text-neutral-50">{apartment.title}</div>
                         <div className="text-sm text-neutral-400">
@@ -31,8 +45,8 @@ const ApartmentRow = ({ apartment, onEdit, onDelete, loadingAction, getImageUrl 
             <td className="p-4">
                 <span
                     className={`px-2 py-1 rounded text-xs ${apartment.available
-                            ? 'bg-neutral-700 text-green-400'
-                            : 'bg-neutral-700 text-red-400'
+                        ? 'bg-neutral-700 text-green-400'
+                        : 'bg-neutral-700 text-red-400'
                         }`}
                 >
                     {apartment.available ? 'Yes' : 'No'}
@@ -40,6 +54,18 @@ const ApartmentRow = ({ apartment, onEdit, onDelete, loadingAction, getImageUrl 
             </td>
             <td className="p-4">
                 <div className="flex space-x-2">
+                    {/* View Details Button */}
+                    <button
+                        onClick={() => onViewDetails(apartment)}
+                        disabled={loadingAction}
+                        className="bg-neutral-700 hover:bg-neutral-600 px-3 py-1 rounded text-sm flex items-center space-x-1 text-blue-400 disabled:opacity-50"
+                        title="View Details"
+                    >
+                        <FontAwesomeIcon icon={faEye} className="w-3 h-3" />
+                        <span>View</span>
+                    </button>
+
+                    {/* Edit Button */}
                     <button
                         onClick={() => onEdit(apartment)}
                         disabled={loadingAction}
@@ -48,6 +74,8 @@ const ApartmentRow = ({ apartment, onEdit, onDelete, loadingAction, getImageUrl 
                         <FontAwesomeIcon icon={faEdit} className="w-3 h-3" />
                         <span>Edit</span>
                     </button>
+
+                    {/* Delete Button */}
                     <button
                         onClick={() => onDelete(apartment)}
                         disabled={loadingAction}

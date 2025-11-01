@@ -1,10 +1,10 @@
+import Footer from '@/app/components/Footer'
 import Header from './Header'
-import Footer from './Footer'
 
 export default function PolicyLayout({ children, title, lastUpdated }) {
     return (
         <div className="min-h-screen flex flex-col bg-neutral-900">
-            <Header />
+            <Header navItems={['Home','Apartments','Help']}/>
             <main className="flex-grow bg-neutral-900 py-8 mt-10">
                 <div className="container mx-auto px-4 max-w-4xl">
                     <div className="bg-neutral-800 rounded-lg shadow-lg border border-neutral-700 p-8">

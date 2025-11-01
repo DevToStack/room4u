@@ -32,7 +32,9 @@ export default function OverviewPage() {
 
     if (!dashboardData) {
         return (
-            <div className="flex items-center justify-center h-64">
+            <div className="h-screen text-white p-6 flex items-center justify-center"
+                style={{ maxHeight: 'calc(100vh - 96px)' }}
+            >
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
         );

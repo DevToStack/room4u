@@ -1,13 +1,20 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faBars, faTimes, faBuilding, faStar, faCrown, faUser, faSignOutAlt, faTachometerAlt } from '@fortawesome/free-solid-svg-icons'
+import { faBars, faTimes, faUser, faSignOutAlt, faTachometerAlt } from '@fortawesome/free-solid-svg-icons'
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthModal from './AuthModal'
 
+// Cache for auth status to persist across component mounts
+let authCache = {
+    isLoggedIn: false,
+    lastChecked: 0,
+    cacheDuration: 5 * 60 * 1000, // 5 minutes cache
+}
+
 export default function Header({
-    navItems = ['Apartments', 'Features', 'Why Us', 'How It Works'],
+    navItems = ['Home', 'Apartments', 'About', 'Help'],
     authButtons = true,
     logo = { name: 'Rooms4U', showStar: true },
     transparentOnScroll = true,
@@ -17,13 +24,19 @@ export default function Header({
     const [isScrolled, setIsScrolled] = useState(false)
     const [authOpen, setAuthOpen] = useState(false);
     const [activeAuthTab, setActiveAuthTab] = useState('login');
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [userName, setUserName] = useState('');
+    const [isLoggedIn, setIsLoggedIn] = useState(authCache.isLoggedIn);
+    const [isLoading, setIsLoading] = useState(!authCache.isLoggedIn); // Only load if not cached
 
-    // Check authentication status on component mount
+    // Check authentication status on component mount - only if cache is stale
     useEffect(() => {
-        checkAuthStatus();
+        const shouldCheckAuth = Date.now() - authCache.lastChecked > authCache.cacheDuration;
+
+        if (shouldCheckAuth || !authCache.lastChecked) {
+            checkAuthStatus();
+        } else {
+            // Use cached value
+            setIsLoading(false);
+        }
     }, []);
 
     useEffect(() => {
@@ -36,13 +49,13 @@ export default function Header({
         return () => window.removeEventListener('scroll', handleScroll)
     }, [transparentOnScroll])
 
-    // Function to check if user is authenticated by calling your API
-    const checkAuthStatus = async () => {
+    // Memoized function to check authentication status
+    const checkAuthStatus = useCallback(async () => {
         try {
             setIsLoading(true);
             const response = await fetch('/api/auth/me', {
                 method: 'GET',
-                credentials: 'include', // Important for sending cookies
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -51,19 +64,29 @@ export default function Header({
             if (response.ok) {
                 const data = await response.json();
                 setIsLoggedIn(true);
-                setUserName(data.name || ''); // Store user name if needed
+                // Update cache
+                authCache = {
+                    ...authCache,
+                    isLoggedIn: true,
+                    lastChecked: Date.now()
+                };
             } else {
                 setIsLoggedIn(false);
-                setUserName('');
+                // Update cache
+                authCache = {
+                    ...authCache,
+                    isLoggedIn: false,
+                    lastChecked: Date.now()
+                };
             }
         } catch (error) {
             console.error('Error checking auth status:', error);
             setIsLoggedIn(false);
-            setUserName('');
+            // Don't update cache on error, keep old value
         } finally {
             setIsLoading(false);
         }
-    }
+    }, []);
 
     // Function to handle logout
     const handleLogout = async () => {
@@ -81,10 +104,14 @@ export default function Header({
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            // Clear client-side state regardless of API response
+            // Clear client-side state and cache
             setIsLoggedIn(false);
-            setUserName('');
             setIsMenuOpen(false);
+            authCache = {
+                ...authCache,
+                isLoggedIn: false,
+                lastChecked: Date.now()
+            };
 
             // Force a page reload to ensure clean state
             window.location.href = '/';
@@ -101,39 +128,27 @@ export default function Header({
         setAuthOpen(true);
     }
 
-    // Update auth state when modal closes (in case login was successful)
+    // Update auth state when modal closes
     const handleAuthModalClose = () => {
         setAuthOpen(false);
-        // Re-check auth status after a short delay to allow for login processing
+        // Only check auth if we suspect a change (user might have logged in)
+        // This prevents unnecessary checks when user just closes modal without action
         setTimeout(() => {
             checkAuthStatus();
         }, 500);
     }
 
-    // Skalito Loader Component
-    const SkalitoLoader = () => (
-        <div className="flex items-center justify-center space-x-1">
-            <div className="flex space-x-1">
-                {[...Array(3)].map((_, i) => (
-                    <motion.div
-                        key={i}
-                        className="w-2 h-2 bg-teal-400 rounded-full"
-                        animate={{
-                            scale: [1, 1.5, 1],
-                            opacity: [0.5, 1, 0.5],
-                        }}
-                        transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            delay: i * 0.2,
-                            ease: "easeInOut"
-                        }}
-                    />
-                ))}
-            </div>
-            <span className="text-gray-400 text-sm ml-2">Loading...</span>
-        </div>
-    );
+    // Function to handle successful authentication
+    const handleAuthSuccess = useCallback(() => {
+        // Update cache immediately on successful auth
+        authCache = {
+            ...authCache,
+            isLoggedIn: true,
+            lastChecked: Date.now()
+        };
+        setIsLoggedIn(true);
+        setAuthOpen(false);
+    }, []);
 
     // Show loading state briefly while checking auth
     if (isLoading) {
@@ -176,7 +191,7 @@ export default function Header({
                             {navItems.map((item, index) => (
                                 <motion.a
                                     key={item}
-                                    href={`#${item.toLowerCase().replace(' ', '-')}`}
+                                    href={item.toLowerCase() === 'home' ? '/' : `/${item.toLowerCase().replace(/\s+/g, '-')}`}
                                     initial={{ opacity: 0, y: -10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
@@ -187,6 +202,7 @@ export default function Header({
                                 </motion.a>
                             ))}
                         </div>
+
 
                         {/* Desktop Auth Buttons / Dashboard */}
                         {authButtons && (
@@ -267,7 +283,7 @@ export default function Header({
                                         {navItems.map((item, index) => (
                                             <motion.a
                                                 key={item}
-                                                href={`#${item.toLowerCase().replace(' ', '-')}`}
+                                                href={`/${item.toLowerCase().replace(' ', '-')}`}
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: index * 0.05 }}
@@ -278,14 +294,14 @@ export default function Header({
                                             </motion.a>
                                         ))}
                                         {authButtons && (
-                                            <div className="flex flex-col space-y-4 pt-6 border-t border-white/20">
+                                            <div className="flex gap-4 pt-6 border-t border-white/20">
                                                 {!isLoggedIn ? (
                                                     <>
                                                         <motion.button
                                                             initial={{ opacity: 0 }}
                                                             animate={{ opacity: 1 }}
                                                             transition={{ delay: 0.4 }}
-                                                            className="flex items-center space-x-3 text-white hover:text-teal-400 transition-colors duration-100 font-medium text-left py-2"
+                                                            className="flex w-full items-center justify-center space-x-3 bg-neutral-600 rounded-xl text-white hover:text-teal-400 transition-colors duration-100 font-medium text-left py-2"
                                                             onClick={() => {
                                                                 setIsMenuOpen(false);
                                                                 handleLoginClick();
@@ -299,7 +315,7 @@ export default function Header({
                                                             animate={{ opacity: 1 }}
                                                             transition={{ delay: 0.5 }}
                                                             whileHover={{ scale: 1.02 }}
-                                                            className="flex items-center space-x-3 bg-teal-400 text-neutral-900 font-semibold py-3 rounded-xl text-center justify-center"
+                                                            className="flex w-full items-center space-x-3 bg-teal-400 text-neutral-900 font-semibold py-3 rounded-xl text-center justify-center"
                                                             onClick={() => {
                                                                 setIsMenuOpen(false);
                                                                 handleRegisterClick();
@@ -353,7 +369,7 @@ export default function Header({
                 onClose={handleAuthModalClose}
                 activeTab={activeAuthTab}
                 onTabChange={setActiveAuthTab}
-                onAuthSuccess={checkAuthStatus} // Pass callback for successful auth
+                onAuthSuccess={handleAuthSuccess} // Use optimized callback
             />
         </>
     )

@@ -571,7 +571,7 @@ const ApartmentGallery = () => {
     }
 
     return (
-        <section className="min-h-screen bg-neutral-800">
+        <section className="min-h-screen bg-neutral-900">
             {/* Error Display */}
             {error && (
                 <div className="fixed top-4 right-4 z-50 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg">
@@ -589,7 +589,7 @@ const ApartmentGallery = () => {
             )}
 
             {/* Fixed Header - Enhanced Design */}
-            <div className="sticky top-0 z-40 bg-gradient-to-r from-neutral-900 to-neutral-800 border-b border-neutral-700 shadow-xl">
+            <div className="sticky top-0 z-40 bg-neutral-900 border-b border-neutral-700 shadow-xl">
                 <div className="max-w-7xl mx-auto p-4">
                     {/* Main Header Row */}
                     <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
@@ -615,7 +615,7 @@ const ApartmentGallery = () => {
                                     <option value="">Select Apartment...</option>
                                     {apartments.map(ap => (
                                         <option key={ap.id} value={ap.id}>
-                                            {ap.name || `Apartment ${ap.id}`}
+                                            {ap.title || `Apartment ${ap.id}`}
                                         </option>
                                     ))}
                                 </select>
@@ -761,7 +761,7 @@ const ApartmentGallery = () => {
 
             {/* Enhanced Stats Bar */}
             {images.length > 0 && (
-                <div className="bg-gradient-to-r from-neutral-800 to-neutral-700 border-b border-neutral-600 shadow-sm">
+                <div className="bg-neutral-900 border-b border-neutral-600 shadow-sm">
                     <div className="max-w-7xl mx-auto px-4 py-3">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             {/* Main Stats */}
@@ -770,18 +770,6 @@ const ApartmentGallery = () => {
                                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                     <span className="text-sm font-medium text-white">
                                         Total: <span className="text-blue-300">{stats.total}</span> images
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                                    <span className="text-sm font-medium text-white">
-                                        Primary: <span className="text-yellow-300">{stats.primary}</span>
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                    <span className="text-sm font-medium text-white">
-                                        Size: <span className="text-green-300">{(stats.totalSize / 1024 / 1024).toFixed(1)} MB</span>
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">

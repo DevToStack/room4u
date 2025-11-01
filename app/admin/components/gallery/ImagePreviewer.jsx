@@ -181,7 +181,7 @@ export default function ImagePreviewer({
                     <div className="flex gap-2">
                         <button
                             onClick={() => window.open(previewImage.image_url, "_blank")}
-                            className="px-3 py-2 bg-white bg-opacity-20 rounded hover:bg-opacity-30 flex items-center gap-2"
+                            className="px-3 py-2 bg-white text-neutral-900 bg-opacity-20 rounded hover:bg-opacity-30 flex items-center gap-2"
                         >
                             <FontAwesomeIcon icon={faExternalLinkAlt} />
                             Open Original

@@ -1,13 +1,32 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/mysql-wrapper';
 import { emailService } from '@/lib/emailService';
+import { verifyAdmin } from '@/lib/adminAuth';
+
+// ✅ Cookie parser
+function parseCookies(cookieHeader) {
+    if (!cookieHeader) return {};
+    return Object.fromEntries(
+        cookieHeader.split(';').map(c => {
+            const [k, v] = c.trim().split('=');
+            return [k, decodeURIComponent(v)];
+        })
+    );
+}
 
 export async function PUT(request, { params }) {
 
     try{
+        const cookieHeader = request.headers.get('cookie');
+        const cookies = parseCookies(cookieHeader);
+        const token = cookies.token;
+
+        const adminCheck = verifyAdmin(token);
+        if (adminCheck.error) {
+            return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+        }
         const { id } = params; // ✅ correct
         const { status, admin_notes } = await request.json();
-
         // Validate status
         const validStatuses = ['pending', 'confirmed', 'cancelled', 'expired', "paid"];
         if (!validStatuses.includes(status)) {

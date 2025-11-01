@@ -50,19 +50,19 @@ const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) =>
     return (
         <div className="bg-neutral-900 text-neutral-200 rounded-xl shadow-lg border border-neutral-800">
             {/* Header */}
-            <div className="px-6 py-4 border-b border-neutral-800 flex flex-col min-sm:flex-row items-center justify-between">
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={onBack}
-                        className="text-neutral-400 hover:text-white transition"
-                    >
-                        ← Back to List
-                    </button>
-                    <h2 className="text-xl font-semibold text-white">
-                        Booking #{booking.id}
-                    </h2>
-                </div>
+            <button
+                onClick={onBack}
+                className="text-neutral-200 hover:text-white transition rounded-lg p-2 bg-neutral-800 mt-1 ml-1"
+            >
+                Back to List
+            </button>
+            <div className="px-6 py-4 border-b border-neutral-800 flex flex-col min-sm:flex-row items-center justify-between space-y-4 min-sm:space-y-0">
+                
+                <h2 className="text-xl max-sm:text-sm sm:font-semibold text-white">
+                    Booking #{booking.id}
+                </h2>
                 <div className="flex space-x-2">
+                    
                     {booking.status === 'pending' && (
                         <button
                             onClick={() => openStatusModal('confirmed')}
