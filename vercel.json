@@ -1,7 +1,9 @@
 {
     "functions": {
         "app/api/**/route.js": {
-            "includeFiles": "node_modules/@sparticuz/chromium/**/*"
+            "memory": 1024,
+            "maxDuration": 30,
+            "includeFiles": "node_modules/@sparticuz/chromium/**"
         }
     }
 }
