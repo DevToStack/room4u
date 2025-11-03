@@ -1,10 +1,10 @@
-import PDFDocument from "@react-pdf/pdfkit";
 import connection from "@/lib/db";
 import { NextResponse } from "next/server";
 import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
-import getStream from "get-stream";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
+
 
 export const dynamic = "force-dynamic";
 
@@ -617,7 +617,7 @@ export async function GET(req, { params }) {
         
             <div class="footer">
               <div class="thank-you">
-                <i class="fas fa-heart"></i> Thank you for choosing StayEase Apartments! <i class="fas fa-heart"></i>
+                <i class="fas fa-heart"></i> Thank you for choosing Romms4U! <i class="fas fa-heart"></i>
               </div>
               <div><i class="fas fa-envelope"></i> Questions? Contact <b>support@stayease.com</b> or <i class="fas fa-phone"></i> call +91-XXXXX-XXXXX</div>
               <div style="margin-top: 1mm;">
@@ -630,10 +630,16 @@ export async function GET(req, { params }) {
     `;
     ``
         // Launch Puppeteer and generate PDF
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
+      const browser = await puppeteer.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath:
+          process.env.NODE_ENV === "development"
+            ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
+            : await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+        
         const page = await browser.newPage();
 
         await page.setContent(html, { waitUntil: "networkidle0" });
