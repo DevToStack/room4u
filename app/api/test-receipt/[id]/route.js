@@ -4,8 +4,7 @@ import { verifyToken } from "@/lib/jwt";
 import { cookies } from "next/headers";
 import puppeteer from "puppeteer-core";
 import chromium from "@sparticuz/chromium";
-
-
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req, { params }) {
