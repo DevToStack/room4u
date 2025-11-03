@@ -203,6 +203,11 @@ export default function Payments() {
     const [limit] = useState(10); // You can make this configurable
     const [receiptHTML, setReceiptHTML] = useState('');
     const [showReceiptModal, setShowReceiptModal] = useState(false);
+    const [receiptLoading, setReceiptLoading] = useState(false);
+    const [downloadLoading, setDownloadLoading] = useState(false);
+    const [currentAction, setCurrentAction] = useState(''); // 'view' or 'download'
+    const [currentPaymentId, setCurrentPaymentId] = useState('');
+
     // Fetch payments data
     const fetchPayments = useCallback(async (pageNum = page) => {
         try {
@@ -302,22 +307,62 @@ export default function Payments() {
         }
     }, [getPaymentProperty]);
 
-
-    const handleReceiptAction = useCallback(async (bookingId, action) => {
+    const handleReceiptAction = useCallback(async (paymentId, action) => {
         try {
-            const url = `/api/receipt/${bookingId}`;
+            setCurrentAction(action);
+            setCurrentPaymentId(paymentId);
+
+            if (action === 'view') {
+                setReceiptLoading(true);
+            } else if (action === 'download') {
+                setDownloadLoading(true);
+            }
+
+            const url = `/api/test-receipt/${paymentId}`;
             const res = await fetch(url);
+
             if (!res.ok) throw new Error('Failed to fetch receipt');
 
-            const html = await res.text();
-            setReceiptHTML(html);
-            setShowReceiptModal(true);
+            const pdfBlob = await res.blob();
+
+            if (action === 'view') {
+                // Create blob URL and set it in an iframe
+                const pdfUrl = URL.createObjectURL(pdfBlob);
+                setReceiptHTML(`
+                    <iframe 
+                        src="${pdfUrl}" 
+                        width="100%" 
+                        height="100%" 
+                        frameborder="0"
+                        style="border: none;"
+                    ></iframe>
+                `);
+                setShowReceiptModal(true);
+                setReceiptLoading(false);
+
+            } else if (action === 'download') {
+                // Download logic
+                const downloadUrl = URL.createObjectURL(pdfBlob);
+                const a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = `receipt-${paymentId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+                setDownloadLoading(false);
+            }
+
         } catch (error) {
             console.error('Receipt error:', error);
-            alert('Failed to generate receipt. Please try again.');
+            alert('Failed to process receipt. Please try again.');
+            setReceiptLoading(false);
+            setDownloadLoading(false);
+        } finally {
+            setCurrentAction('');
+            setCurrentPaymentId('');
         }
     }, []);
-
 
     const handleRefundAction = useCallback((paymentId) => {
         try {
@@ -371,6 +416,10 @@ export default function Payments() {
 
         const StatusIcon = statusIcons[status?.toLowerCase()] || faCircle;
         const MethodIcon = methodIcons[method?.toLowerCase()] || faCreditCard;
+
+        // Check if this payment is currently being processed
+        const isViewLoading = receiptLoading && currentPaymentId === paymentId && currentAction === 'view';
+        const isDownloadLoading = downloadLoading && currentPaymentId === paymentId && currentAction === 'download';
 
         return (
             <Card
@@ -452,30 +501,49 @@ export default function Payments() {
                 {/* Actions */}
                 <div className="flex flex-wrap gap-3">
                     <button
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105 group"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => handleReceiptAction(paymentId, 'view')}
+                        disabled={isViewLoading || isDownloadLoading}
                     >
-                        <FontAwesomeIcon
-                            icon={faEye}
-                            className="text-sm transition-transform duration-300 group-hover:scale-110"
-                        />
-                        Receipt
+                        {isViewLoading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Loading...
+                            </>
+                        ) : (
+                            <>
+                                <FontAwesomeIcon
+                                    icon={faEye}
+                                    className="text-sm transition-transform duration-300 group-hover:scale-110"
+                                />
+                                Receipt
+                            </>
+                        )}
                     </button>
                     <button
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-gray-500/10 hover:scale-105 group"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-gray-500/10 hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => handleReceiptAction(paymentId, 'download')}
+                        disabled={isViewLoading || isDownloadLoading}
                     >
-                        <FontAwesomeIcon
-                            icon={faDownload}
-                            className="text-sm transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
-                        />
-                        Download
+                        {isDownloadLoading ? (
+                            <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                Downloading...
+                            </>
+                        ) : (
+                            <>
+                                <FontAwesomeIcon
+                                    icon={faDownload}
+                                    className="text-sm transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-0.5"
+                                />
+                                Download
+                            </>
+                        )}
                     </button>
                 </div>
             </Card>
-
         );
-    }, [getPaymentProperty, getStatusColor, getSafePaymentId, handleReceiptAction]);
+    }, [getPaymentProperty, getStatusColor, getSafePaymentId, handleReceiptAction, receiptLoading, downloadLoading, currentPaymentId, currentAction]);
 
     // Loading state
     if (loading) {
@@ -569,37 +637,55 @@ export default function Payments() {
                     {filteredPayments.map((payment, index) => renderPaymentCard(payment, index)).filter(Boolean)}
                 </div>
             )}
+
+            {/* Receipt Modal */}
             {showReceiptModal && (
                 <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
-                    <div className="bg-white rounded-2xl shadow-lg w-[90vw] h-[90vh] overflow-hidden relative">
+                    <div className="bg-white rounded-2xl shadow-lg w-[50vw] max-sm:w-[300px] h-[90vh] overflow-hidden relative">
                         <button
-                            className="absolute top-3 right-3 text-gray-500 hover:text-black text-lg"
-                            onClick={() => setShowReceiptModal(false)}
+                            className="absolute top-3 right-3 z-10 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                            onClick={() => {
+                                setShowReceiptModal(false);
+                                // Clean up any blob URLs when closing
+                                if (receiptHTML.includes('blob:')) {
+                                    const blobUrl = receiptHTML.match(/src="([^"]*)"/)[1];
+                                    URL.revokeObjectURL(blobUrl);
+                                }
+                            }}
                         >
                             ✕
                         </button>
-                        <button
-                            className="absolute top-3 left-3 bg-blue-600 text-white px-3 py-1 rounded"
-                            onClick={() => {
-                                const printWindow = window.open('', '_blank');
-                                printWindow.document.write(receiptHTML);
-                                printWindow.document.close();
-                                printWindow.print();
-                            }}
-                        >
-                            Print
-                        </button>
 
-                        {/* Render the HTML inside an iframe to preserve styles */}
-                        <iframe
-                            srcDoc={receiptHTML}
-                            className="w-full h-full rounded-b-2xl border-none"
-                            sandbox="allow-same-origin allow-scripts"
+                        {/* PDF Display */}
+                        <div
+                            className="w-full h-full rounded-b-2xl"
+                            dangerouslySetInnerHTML={{ __html: receiptHTML }}
                         />
                     </div>
                 </div>
             )}
 
+            {/* Global Loading Modal for Receipt Actions */}
+            {(receiptLoading || downloadLoading) && (
+                <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center">
+                    <div className="bg-gray-800 rounded-2xl shadow-lg p-8 max-w-md mx-4">
+                        <div className="flex flex-col items-center justify-center gap-4">
+                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400"></div>
+                            <div className="text-center">
+                                <h3 className="text-lg font-semibold text-white mb-2">
+                                    {currentAction === 'view' ? 'Loading Receipt' : 'Downloading Receipt'}
+                                </h3>
+                                <p className="text-gray-400 text-sm">
+                                    {currentAction === 'view'
+                                        ? 'Please wait while we prepare your receipt...'
+                                        : 'Your download will start shortly...'
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

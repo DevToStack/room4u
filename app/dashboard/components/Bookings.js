@@ -12,7 +12,9 @@ import {
     faTrash,
     faCalendar,
     faRupeeSign,
-    faTimes
+    faTimes,
+    faCheck,
+    faExclamationTriangle
 } from '@fortawesome/free-solid-svg-icons';
 import FilterPills from './FilterPills';
 import Card from './Card';
@@ -42,6 +44,11 @@ export default function Bookings() {
     const [processingPayment, setProcessingPayment] = useState(null);
     const [paymentMessage, setPaymentMessage] = useState("");
 
+    // ✅ Payment verification modal state
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentStatus, setPaymentStatus] = useState('verifying'); // 'verifying', 'success', 'failed'
+    const [paymentDetails, setPaymentDetails] = useState(null);
+
     // ✅ For date range filter
     const [dateRange, setDateRange] = useState({
         startDate: '',
@@ -53,6 +60,13 @@ export default function Bookings() {
     useEffect(() => {
         loadRazorpay();
     }, []);
+
+    // ✅ Close payment modal
+    const closePaymentModal = () => {
+        setShowPaymentModal(false);
+        setPaymentStatus('verifying');
+        setPaymentDetails(null);
+    };
 
     // ✅ Cancel booking handler
     const handleCancelBooking = async (booking) => {
@@ -107,6 +121,15 @@ export default function Bookings() {
                 description: `Payment for Booking #${booking.id}`,
                 order_id: order.order_id,
                 handler: async function (response) {
+                    // Show verification modal
+                    setShowPaymentModal(true);
+                    setPaymentStatus('verifying');
+                    setPaymentDetails({
+                        bookingId: booking.id,
+                        orderId: response.razorpay_order_id,
+                        paymentId: response.razorpay_payment_id
+                    });
+
                     // Verify payment on server
                     const verifyResponse = await fetch('/api/payments/verify-payment', {
                         method: 'POST',
@@ -127,10 +150,12 @@ export default function Bookings() {
                     const result = await verifyResponse.json();
 
                     if (result.success) {
+                        setPaymentStatus('success');
                         setPaymentMessage(`✅ Payment successful! Payment ID: ${response.razorpay_payment_id}`);
                         // Refresh bookings to update status
                         await fetchBookings();
                     } else {
+                        setPaymentStatus('failed');
                         setPaymentMessage(`❌ Payment verification failed: ${result.error}`);
                     }
                 },
@@ -151,7 +176,17 @@ export default function Bookings() {
             const razorpayInstance = new window.Razorpay(options);
 
             razorpayInstance.on('payment.failed', function (response) {
+                setShowPaymentModal(true);
+                setPaymentStatus('failed');
                 setPaymentMessage(`❌ Payment failed: ${response.error.description}`);
+            });
+
+            razorpayInstance.on('close', function () {
+                // If modal is not already shown (payment wasn't completed), show verification modal
+                if (!showPaymentModal) {
+                    setShowPaymentModal(true);
+                    setPaymentStatus('verifying');
+                }
             });
 
             razorpayInstance.open();
@@ -159,10 +194,7 @@ export default function Bookings() {
         } catch (error) {
             console.error('Payment initiation error:', error);
             setPaymentMessage('❌ Failed to initiate payment. Please try again.');
-        } finally {
             setProcessingPayment(null);
-            // Auto-hide message after 5 seconds
-            setTimeout(() => setPaymentMessage(""), 5000);
         }
     };
 
@@ -639,16 +671,86 @@ export default function Bookings() {
                 </div>
             )}
 
-            {paymentMessage && (
-                <div className={`fixed bottom-4 right-4 text-center mt-4 p-3 bg-neutral-800 border rounded-xl text-sm font-medium shadow hover:scale-105 hover:shadow-lg transition-all duration-300 ${paymentMessage.includes('✅')
-                    ? 'border-green-700 text-green-300'
-                    : 'border-red-700 text-red-300'
-                    }`}>
-                    {paymentMessage}
+            {/* Payment Verification Modal */}
+            {showPaymentModal && (
+                <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-8 max-w-md w-full mx-auto shadow-2xl transform transition-all duration-500 ease-out animate-fade-in-scale">
+                        <div className="text-center">
+                            {/* Loading Spinner */}
+                            {paymentStatus === 'verifying' && (
+                                <>
+                                    <div className="w-20 h-20 mx-auto mb-6 relative">
+                                        <div className="absolute inset-0 border-4 border-teal-500/20 rounded-full"></div>
+                                        <div className="absolute inset-0 border-4 border-transparent rounded-full border-t-teal-500 animate-spin"></div>
+                                        <div className="absolute inset-2 border-4 border-teal-500/10 rounded-full"></div>
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-gray-100 mb-3">Verifying Payment</h3>
+                                    <p className="text-gray-400 mb-6">Please wait while we verify your payment...</p>
+                                    <div className="w-24 h-1 bg-neutral-700 rounded-full mx-auto overflow-hidden">
+                                        <div className="h-full bg-teal-500 rounded-full animate-pulse"></div>
+                                    </div>
+                                </>
+                            )}
+
+                            {/* Success State */}
+                            {paymentStatus === 'success' && (
+                                <>
+                                    <div className="w-20 h-20 mx-auto mb-6 bg-green-500/20 rounded-full flex items-center justify-center border-4 border-green-500/30">
+                                        <FontAwesomeIcon icon={faCheck} className="text-green-400 text-3xl" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-green-400 mb-3">Payment Successful!</h3>
+                                    <p className="text-gray-400 mb-2">Your payment has been verified successfully.</p>
+                                    {paymentDetails && (
+                                        <div className="text-sm text-gray-500 mb-6 space-y-1">
+                                            <p>Booking ID: #{paymentDetails.bookingId}</p>
+                                            <p>Payment ID: {paymentDetails.paymentId}</p>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={closePaymentModal}
+                                        className="w-full bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-500 transition-all duration-300 hover:scale-105 active:scale-95"
+                                    >
+                                        Continue
+                                    </button>
+                                </>
+                            )}
+
+                            {/* Failed State */}
+                            {paymentStatus === 'failed' && (
+                                <>
+                                    <div className="w-20 h-20 mx-auto mb-6 bg-red-500/20 rounded-full flex items-center justify-center border-4 border-red-500/30">
+                                        <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-400 text-3xl" />
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-red-400 mb-3">Payment Failed</h3>
+                                    <p className="text-gray-400 mb-6">We couldn't verify your payment. Please try again.</p>
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={closePaymentModal}
+                                            className="flex-1 bg-neutral-700 text-gray-300 py-3 rounded-xl font-semibold hover:bg-neutral-600 transition-all duration-300 hover:scale-105 active:scale-95"
+                                        >
+                                            Close
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                closePaymentModal();
+                                                if (paymentDetails) {
+                                                    const booking = bookingsData.bookings.find(b => b.id === paymentDetails.bookingId);
+                                                    if (booking) handlePayment(booking);
+                                                }
+                                            }}
+                                            className="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-500 transition-all duration-300 hover:scale-105 active:scale-95"
+                                        >
+                                            Try Again
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* Modal */}
+            {/* Booking Update Modal */}
             {selectedBooking && (
                 <BookingUpdateModal
                     isOpen={isModalOpen}

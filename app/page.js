@@ -17,7 +17,6 @@ export default function Home() {
       <FeaturedApartments />
       <Features />
       <HowItWorks />
-      <Stats />
       <Footer />
     </main>
   )
