@@ -627,15 +627,11 @@ export async function GET(req, { params }) {
         </body>
         </html>
     `;
-    ``
-        // Launch Puppeteer and generate PDF
+      // Launch Puppeteer and generate PDF
       const browser = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath:
-          process.env.NODE_ENV === "development"
-            ? "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
-            : await chromium.executablePath(),
+        executablePath: await chromium.executablePath(),
         headless: chromium.headless,
       });
         
