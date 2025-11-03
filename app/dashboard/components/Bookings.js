@@ -722,7 +722,7 @@ export default function Bookings() {
                                         <FontAwesomeIcon icon={faExclamationTriangle} className="text-red-400 text-3xl" />
                                     </div>
                                     <h3 className="text-2xl font-bold text-red-400 mb-3">Payment Failed</h3>
-                                    <p className="text-gray-400 mb-6">We couldn't verify your payment. Please try again.</p>
+                                    <p className="text-gray-400 mb-6">We couldn&apos;t verify your payment. Please try again.</p>
                                     <div className="flex gap-3">
                                         <button
                                             onClick={closePaymentModal}
