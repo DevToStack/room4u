@@ -84,7 +84,8 @@ export async function GET(req, { params }) {
 
     const executablePath = isLocal
       ? localChromePath
-      : await chromium.executablePath();
+      : await chromium.executablePath(path.join(process.cwd(), "public/chromium"));
+        
 
     // ⚙️ Puppeteer launch configuration
     const browser = await puppeteer.launch({
