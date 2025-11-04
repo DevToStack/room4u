@@ -11,7 +11,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "analyze": "next build --analyze"
+    "analyze": "next build --analyze",
+    "postinstall": "node -e \"require('fs').existsSync('./node_modules/@sparticuz/chromium/bin/chromium.br') || console.error('Chromium .br missing! Install failed.')\""
   },
   "dependencies": {
     "@fortawesome/free-brands-svg-icons": "^7.1.0",
