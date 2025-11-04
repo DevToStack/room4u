@@ -1,8 +1,8 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "functions": {
-        "app/api/test-receipt/[id]": {
-            "includeFiles": "node_modules/@sparticuz/chromium/bin/chromium.br"
+        "app/api/test-receipt/[id]/route.js": {
+            "includeFiles": "node_modules/@sparticuz/chromium/bin/**"
         }
     }
 }
