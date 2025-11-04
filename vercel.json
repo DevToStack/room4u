@@ -1,6 +1,6 @@
 {
     "functions": {
-        "api/**/*.js": {
+        "api/test-receipt/**/route.js": {
             "includeFiles": "node_modules/@sparticuz/chromium-min/bin/**"
         }
     }
