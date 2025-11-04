@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import { getReceiptTemplet } from "@/lib/receipt/templet";
+import path from "path";
 
 export const dynamic = "force-dynamic";
 
