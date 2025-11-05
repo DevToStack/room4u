@@ -15,7 +15,7 @@ async function ensureUploadDir() {
     try {
         await mkdir(UPLOAD_DIR, { recursive: true });
     } catch (error) {
-        console.error("Error creating upload directory:", error);
+        console.error("❌ Error creating upload directory:", error);
     }
 }
 
@@ -50,22 +50,23 @@ export async function GET(request) {
 
         return NextResponse.json({ images });
     } catch (error) {
-        console.error("Error fetching gallery:", error);
+        console.error("❌ Error fetching gallery:", error);
         return NextResponse.json({ error: "Failed to fetch gallery images" }, { status: 500 });
     }
 }
 
-// ─── Upload Gallery Images (Admin Only) ───────────────────────────
+// ─── Upload Gallery Images (Admin Only, Transaction Safe) ─────────
 export async function POST(request) {
+    let transactionStarted = false;
+
     try {
         await ensureUploadDir();
 
-        // 1️⃣ Extract token from cookies
+        // 1️⃣ Verify admin
         const cookieStore = await cookies();
         const token = cookieStore.get("token")?.value;
-
-        // 2️⃣ Verify admin authentication
         const { valid, decoded, error } = await verifyAdmin(token);
+
         if (!valid) {
             return NextResponse.json(
                 { error: `Unauthorized: ${error || "Invalid admin token"}` },
@@ -76,7 +77,7 @@ export async function POST(request) {
         const formData = await request.formData();
         const files = formData.getAll("files");
         const apartmentId = formData.get("apartmentId");
-        const uploadedBy = decoded.id; // ✅ from verified token
+        const uploadedBy = decoded?.id;
 
         if (!apartmentId || !files.length) {
             return NextResponse.json(
@@ -85,27 +86,29 @@ export async function POST(request) {
             );
         }
 
-        // 3️⃣ Ensure apartment exists
+        // 2️⃣ Ensure apartment exists
         const [apartment] = await query("SELECT id FROM apartments WHERE id = ?", [apartmentId]);
         if (!apartment) {
             return NextResponse.json({ error: "Apartment not found" }, { status: 404 });
         }
 
+        // 3️⃣ Begin transaction
+        await query("START TRANSACTION");
+        transactionStarted = true;
+
         const uploadedImages = [];
         const errors = [];
 
-        // 4️⃣ Process uploads (limit 10 at a time)
-        const uploadPromises = files.slice(0, 10).map(async (file) => {
+        // 4️⃣ Upload each file
+        for (const file of files.slice(0, 10)) {
             try {
                 validateFile(file);
 
-                const fileExtension = path.extname(file.name);
-                const uniqueFileName = `${uuidv4()}${fileExtension}`;
+                const ext = path.extname(file.name);
+                const uniqueFileName = `${uuidv4()}${ext}`;
                 const filePath = path.join(UPLOAD_DIR, uniqueFileName);
                 const publicUrl = `/uploads/gallery/${uniqueFileName}`;
-
-                const bytes = await file.arrayBuffer();
-                const buffer = Buffer.from(bytes);
+                const buffer = Buffer.from(await file.arrayBuffer());
 
                 await writeFile(filePath, buffer);
 
@@ -123,20 +126,41 @@ export async function POST(request) {
                     file_size: file.size,
                     mime_type: file.type,
                 });
-            } catch (error) {
-                errors.push({ fileName: file.name, error: error.message });
-            }
-        });
+            } catch (err) {
+                console.error("❌ File upload error:", err);
+                errors.push({ fileName: file.name, error: err.message });
 
-        await Promise.all(uploadPromises);
+                // Rollback immediately and stop further processing
+                await query("ROLLBACK");
+                transactionStarted = false;
+
+                return NextResponse.json(
+                    { error: `Upload failed for ${file.name}: ${err.message}` },
+                    { status: 500 }
+                );
+            }
+        }
+
+        // 5️⃣ Commit transaction if all succeeded
+        await query("COMMIT");
+        transactionStarted = false;
 
         return NextResponse.json({
             success: true,
             uploaded: uploadedImages,
-            errors: errors.length > 0 ? errors : undefined,
+            errors: errors.length ? errors : undefined,
         });
+
     } catch (error) {
-        console.error("❌ Error uploading files:", error);
-        return NextResponse.json({ error: "Failed to upload files" }, { status: 500 });
+        console.error("🔥 Server error during upload:", error);
+
+        if (transactionStarted) {
+            await query("ROLLBACK");
+        }
+
+        return NextResponse.json(
+            { error: "Internal Server Error. Upload rolled back." },
+            { status: 500 }
+        );
     }
 }

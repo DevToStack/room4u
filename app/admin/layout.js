@@ -77,7 +77,7 @@ export default function AdminLayout({ children }) {
         } catch (err) {
             console.error('Logout error:', err);
         } finally {
-            router.push('/signin');
+            router.push('/');
         }
     };
 
