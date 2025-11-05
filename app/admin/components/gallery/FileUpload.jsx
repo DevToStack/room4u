@@ -102,7 +102,6 @@ const FileUpload = ({ apartmentId, onUploadComplete, existingImages = [], maxFil
                     await new Promise((resolve, reject) => {
                         const formData = new FormData();
                         formData.append('apartmentId', apartmentId);
-                        formData.append('uploadedBy', '1'); // Ensure this is string if your API expects string
                         formData.append('files', fileObj.file);
 
                         const xhr = new XMLHttpRequest();

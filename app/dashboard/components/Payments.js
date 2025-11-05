@@ -501,7 +501,7 @@ export default function Payments() {
                 {/* Actions */}
                 <div className="flex flex-wrap gap-3">
                     <button
-                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex-1 max-sm:hidden flex items-center justify-center gap-2 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={() => handleReceiptAction(paymentId, 'view')}
                         disabled={isViewLoading || isDownloadLoading}
                     >
@@ -593,7 +593,7 @@ export default function Payments() {
                 <h1 className="text-2xl font-bold text-white mb-4 lg:mb-0">Payments</h1>
                 <button
                     onClick={handleRefetch}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105"
+                    className="flex max-w-[120px] items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-500 font-medium transition-all duration-300 hover:shadow-lg hover:shadow-teal-500/25 hover:scale-105"
                 >
                     <FontAwesomeIcon icon={faRedo} className="text-sm" />
                     Refresh
