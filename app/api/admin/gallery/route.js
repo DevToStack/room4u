@@ -1,25 +1,21 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
 import { v4 as uuidv4 } from "uuid";
 import { cookies } from "next/headers";
 import { verifyAdmin } from "@/lib/adminAuth";
+import { v2 as cloudinary } from "cloudinary";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public/uploads/gallery");
+// ─── Cloudinary Config ──────────────────────────────────────────────
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
-// ─── Ensure Upload Directory Exists ────────────────────────────────
-async function ensureUploadDir() {
-    try {
-        await mkdir(UPLOAD_DIR, { recursive: true });
-    } catch (error) {
-        console.error("❌ Error creating upload directory:", error);
-    }
-}
-
-// ─── Validate Uploaded File ───────────────────────────────────────
+// ─── Validate Uploaded File ─────────────────────────────────────────
 function validateFile(file) {
     if (!ALLOWED_MIME_TYPES.includes(file.type)) {
         throw new Error(`Invalid file type: ${file.type}`);
@@ -29,7 +25,7 @@ function validateFile(file) {
     }
 }
 
-// ─── Fetch Gallery Images ─────────────────────────────────────────
+// ─── Fetch Gallery Images ───────────────────────────────────────────
 export async function GET(request) {
     try {
         const { searchParams } = new URL(request.url);
@@ -55,13 +51,11 @@ export async function GET(request) {
     }
 }
 
-// ─── Upload Gallery Images (Transaction Safe + Uses Pool) ─────────
+// ─── Upload Gallery Images to Cloudinary ────────────────────────────
 export async function POST(request) {
     let conn;
 
     try {
-        await ensureUploadDir();
-
         // 1️⃣ Verify admin
         const cookieStore = await cookies();
         const token = cookieStore.get("token")?.value;
@@ -86,7 +80,7 @@ export async function POST(request) {
             );
         }
 
-        // 2️⃣ Get DB connection from pool
+        // 2️⃣ Get DB connection
         conn = await pool.getConnection();
 
         // 3️⃣ Ensure apartment exists
@@ -101,28 +95,40 @@ export async function POST(request) {
 
         const uploadedImages = [];
 
-        // 5️⃣ Upload each file
+        // 5️⃣ Upload each file to Cloudinary
         for (const file of files.slice(0, 10)) {
             validateFile(file);
 
-            const ext = path.extname(file.name);
-            const uniqueFileName = `${uuidv4()}${ext}`;
-            const filePath = path.join(UPLOAD_DIR, uniqueFileName);
-            const publicUrl = `/uploads/gallery/${uniqueFileName}`;
             const buffer = Buffer.from(await file.arrayBuffer());
+            const uniqueName = `${uuidv4()}_${file.name}`;
 
-            await writeFile(filePath, buffer);
+            const result = await new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: "apartment_gallery",
+                        public_id: uniqueName,
+                        resource_type: "image",
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                );
+                uploadStream.end(buffer);
+            });
 
-            const [result] = await conn.query(
+            const cloudUrl = result.secure_url;
+
+            const [dbResult] = await conn.query(
                 `INSERT INTO apartment_gallery 
                  (apartment_id, image_url, image_name, file_size, mime_type, uploaded_by) 
                  VALUES (?, ?, ?, ?, ?, ?)`,
-                [apartmentId, publicUrl, file.name, file.size, file.type, uploadedBy]
+                [apartmentId, cloudUrl, file.name, file.size, file.type, uploadedBy]
             );
 
             uploadedImages.push({
-                id: result.insertId,
-                image_url: publicUrl,
+                id: dbResult.insertId,
+                image_url: cloudUrl,
                 image_name: file.name,
                 file_size: file.size,
                 mime_type: file.type,
