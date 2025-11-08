@@ -11,8 +11,8 @@ export default function Footer() {
             <div className="absolute top-0 left-0 w-40 h-40 bg-teal-400/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
             <div className="absolute bottom-0 right-0 w-40 h-40 bg-teal-400/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-10">
                     {/* Company Info */}
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center mb-4">

@@ -8,6 +8,7 @@ import Stats from './components/Stats'
 import Footer from './components/Footer'
 import Header from '@/components/Header'
 import FeaturedApartments from './components/FeaturedApartments'
+import FeedbackForm from '@/components/FeedbackForm'
 
 export default function Home() {
   return (

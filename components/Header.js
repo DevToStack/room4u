@@ -150,13 +150,7 @@ export default function Header({
         setAuthOpen(false);
     }, []);
 
-    // Show loading state briefly while checking auth
-    if (isLoading) {
-        return (
-            <header className={`fixed top-0 w-screen z-50 bg-neutral-900 backdrop-blur-2xl border-b border-neutral-800 shadow-2xl ${className}`}>
-            </header>
-        );
-    }
+
 
     return (
         <>
@@ -326,13 +320,13 @@ export default function Header({
                                                         </motion.button>
                                                     </>
                                                 ) : (
-                                                    <div className='flex justify-between'>
+                                                    <>
                                                         <motion.a
                                                             initial={{ opacity: 0 }}
                                                             animate={{ opacity: 1 }}
                                                             transition={{ delay: 0.4 }}
                                                             href="/dashboard"
-                                                            className="flex px-4 items-center space-x-3 bg-teal-400 text-neutral-900 font-semibold py-3 rounded-xl text-center justify-center"
+                                                            className="flex w-full px-4 items-center space-x-3 bg-teal-400 text-neutral-900 font-semibold py-3 rounded-xl text-center justify-center"
                                                             onClick={() => setIsMenuOpen(false)}
                                                         >
                                                             <FontAwesomeIcon icon={faTachometerAlt} className="h-4 w-4" />
@@ -342,7 +336,7 @@ export default function Header({
                                                             initial={{ opacity: 0 }}
                                                             animate={{ opacity: 1 }}
                                                             transition={{ delay: 0.5 }}
-                                                            className="flex px-4 rounded-xl max-sm:bg-neutral-800 max-sm:text-red-400 items-center space-x-3 text-white hover:text-red-400 transition-colors duration-100 font-medium text-left py-2"
+                                                                className="flex w-full px-4 rounded-xl max-sm:bg-neutral-800 max-sm:text-red-400 justify-center items-center space-x-3 text-white hover:text-red-400 transition-colors duration-100 font-medium text-left py-2"
                                                             onClick={() => {
                                                                 setIsMenuOpen(false);
                                                                 handleLogout();
@@ -351,7 +345,7 @@ export default function Header({
                                                             <FontAwesomeIcon icon={faSignOutAlt} className="h-4 w-4" />
                                                             <span>Logout</span>
                                                         </motion.button>
-                                                    </div>
+                                                    </>
                                                 )}
                                             </div>
                                         )}
