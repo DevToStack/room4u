@@ -805,9 +805,9 @@ const ApartmentGallery = () => {
                 {/* Enhanced Mobile Upload Modal Header */}
                 {showMobileUpload && (
                     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-gradient-to-br from-neutral-800 to-neutral-900 rounded-2xl w-full max-w-4xl h-full max-h-[90vh] overflow-hidden border border-neutral-700 shadow-2xl">
+                        <div className="bg-neutral-900 rounded-2xl w-full max-w-4xl h-full max-h-[90vh] overflow-hidden border border-neutral-800 shadow-2xl">
                             {/* Enhanced Modal Header */}
-                            <div className="relative p-6 bg-gradient-to-r from-neutral-800 to-neutral-700 border-b border-neutral-600">
+                            <div className="relative p-6 bg-neutral-900 border-b border-neutral-800">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-blue-600 rounded-lg">

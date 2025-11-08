@@ -192,12 +192,12 @@ const FileUpload = ({ apartmentId, onUploadComplete, existingImages = [], maxFil
                 setSuccess(`Successfully uploaded ${successfulUploads.length} image(s)`);
             }
 
-            // Auto-close if all uploads are complete and we have the onClose prop
-            if (onClose && uploadingFiles.every(f => f.status !== 'uploading')) {
-                setTimeout(() => {
-                    onClose();
-                }, 2000);
-            }
+            // // Auto-close if all uploads are complete and we have the onClose prop
+            // if (onClose && uploadingFiles.every(f => f.status !== 'uploading')) {
+            //     setTimeout(() => {
+            //         onClose();
+            //     }, 2000);
+            // }
 
         } catch (batchError) {
             console.error('Batch upload error:', batchError);
@@ -265,7 +265,7 @@ const FileUpload = ({ apartmentId, onUploadComplete, existingImages = [], maxFil
     const totalCount = uploadingFiles.length;
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-4">
             {/* Header with progress and close button */}
             <div className="flex justify-between items-center">
                 <div>
@@ -356,10 +356,6 @@ const FileUpload = ({ apartmentId, onUploadComplete, existingImages = [], maxFil
                                                 fill
                                                 sizes="64px"
                                                 className="object-cover"
-                                                onLoad={() => {
-                                                    // Object URL is already created, no need to revoke here
-                                                    // It will be revoked when component unmounts or file is removed
-                                                }}
                                             />
 
                                             {/* Status Icon Overlay */}

@@ -13,7 +13,6 @@ export default function AuthModal({ isOpen, onClose, activeTab, onTabChange }) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-                    onClick={onClose}
                 >
                     <motion.div
                         initial={{ scale: 0.8, opacity: 0 }}
@@ -38,7 +37,7 @@ export default function AuthModal({ isOpen, onClose, activeTab, onTabChange }) {
                                         ? 'text-teal-400 border-b-2 border-teal-400'
                                         : 'text-gray-400 hover:text-gray-200'
                                     }`}
-                                onClick={() => onTabChange('login')}   // ✅ changed here
+                                onClick={() => onTabChange('login')}
                             >
                                 Login
                             </button>
@@ -47,7 +46,7 @@ export default function AuthModal({ isOpen, onClose, activeTab, onTabChange }) {
                                         ? 'text-teal-400 border-b-2 border-teal-400'
                                         : 'text-gray-400 hover:text-gray-200'
                                     }`}
-                                onClick={() => onTabChange('register')}  // ✅ changed here
+                                onClick={() => onTabChange('register')}
                             >
                                 Register
                             </button>
@@ -65,7 +64,7 @@ export default function AuthModal({ isOpen, onClose, activeTab, onTabChange }) {
                                 {activeTab === 'login' ? (
                                     <LoginForm isModal />
                                 ) : (
-                                    <RegisterForm isModal setTab={onTabChange}/>
+                                    <RegisterForm isModal setTab={onTabChange} />
                                 )}
                             </motion.div>
                         </AnimatePresence>

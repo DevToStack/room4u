@@ -148,7 +148,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
     };
 
     return (
-        <>
+        <section>
             <div className="sticky top-24 bg-neutral-900 rounded-xl p-4 sm:p-6 border border-white/10 shadow-lg space-y-6">
                 {/* Errors */}
                 {(formError || error) && (
@@ -300,15 +300,15 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                 onConfirm={handleConfirmBooking}
                 loading={loading}
             />
-            <FeedbackModal
+            {/* <FeedbackModal
                 isOpen={showFeedbackModal}
                 onClose={() => {
                     setShowFeedbackModal(false);
                     router.push(`/dashboard`);
                 }}
                 bookingId={id}
-            />
-        </>
+            /> */}
+        </section>
     );
 }
 

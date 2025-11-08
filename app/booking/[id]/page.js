@@ -148,7 +148,7 @@ export default async function BookingPage({ params }) {
         </section>
 
         {/* ✅ Features + Booking Form Section */}
-        <section className="w-full py-10 px-3 sm:px-6 lg:px-12 bg-neutral-900 contain-layout">
+        <section className="w-full py-10 px-3 sm:px-6 lg:px-12 bg-neutral-900">
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             <div className="lg:col-span-3 md:col-span-1 space-y-8">
               <FeaturesSection apartment={apartment} />
