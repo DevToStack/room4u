@@ -18,7 +18,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import FilterPills from './FilterPills';
 import Card from './Card';
-import BookingUpdateModal from './EditBooking';
 import { loadRazorpay, createRazorpayOrder } from '@/utils/razorpay' // Adjust path as needed
 import BookingInfoModal from './BookingInfoModal';
 
