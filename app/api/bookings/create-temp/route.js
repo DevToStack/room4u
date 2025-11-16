@@ -23,7 +23,7 @@ export async function POST(request) {
                 { status: 400 }
             );
         }
-
+        console.log(body);
         // === 2. AUTHENTICATION ===
         const cookieStore = await cookies(); // ✅ await required in Next.js 13+
         const sessionToken = cookieStore.get('token')?.value;

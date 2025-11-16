@@ -9,12 +9,13 @@ import {
     faTimes,
     faTrash,
     faExclamationTriangle,
-    faLock
+    faLock,
+    faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import Card from './Card';
 import UserActivity from './UserActivity';
 
-// Validation utilities
+/* Validation utilities */
 const validateEmail = (email) => {
     if (!email) return true;
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,8 +48,10 @@ export default function Settings() {
     const [validationErrors, setValidationErrors] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    // Fetch user data
+    /* Fetch user data */
     useEffect(() => {
         const fetchSettingsData = async () => {
             try {
@@ -104,7 +107,6 @@ export default function Settings() {
     };
 
     const handleEdit = (field) => {
-        // Only allow editing for editable fields
         const editableFields = ['name', 'altEmail', 'altPhone'];
         if (editableFields.includes(field)) {
             setEditingField(field);
@@ -139,7 +141,6 @@ export default function Settings() {
                 throw new Error(result.error || 'Failed to update profile');
             }
 
-            // Update original data and exit edit mode
             setOriginalData(prev => ({ ...prev, [field]: value }));
             setEditingField(null);
             setValidationErrors(prev => {
@@ -179,7 +180,6 @@ export default function Settings() {
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        // Clear field error when user starts typing
         if (validationErrors[field]) {
             setValidationErrors(prev => {
                 const newErrors = { ...prev };
@@ -189,6 +189,36 @@ export default function Settings() {
         }
     };
 
+    /* Performs account deletion */
+    const performAccountDeletion = async () => {
+        setIsDeleting(true);
+        try {
+            const response = await fetch('/api/dashboard/user/delete-account', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                },
+                credentials: 'include'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                router.push('/goodbye');
+            } else {
+                throw new Error(result.message || 'Failed to delete account');
+            }
+        } catch (error) {
+            console.error('Delete account error:', error);
+            alert(error.message || 'Failed to delete account.');
+        } finally {
+            setIsDeleting(false);
+            setIsDeleteModalOpen(false);
+        }
+    };
+
+    /* Fallback dangerous action (kept for other actions) */
     const handleDangerousAction = async (action, confirmationMessage) => {
         if (!window.confirm(confirmationMessage)) return;
 
@@ -222,109 +252,126 @@ export default function Settings() {
         }
     };
 
-    const ProfileField = ({ label, field, type = 'text', editable = true }) => (
-        <div className="flex flex-col items-center justify-left py-3 border-b border-gray-700 last:border-b-0">
+    /* Reusable profile field row */
+    const ProfileField = ({ label, field, type = 'text', editable = true }) => {
+        const isEditing = editingField === field && editable;
+        const value = formData[field];
 
-            <div className="flex justify-between items-center w-full">
-                <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
-                {editingField === field && editable ? (
-                    <div className="flex space-x-2">
-                        <button
-                            onClick={() => handleSave(field)}
-                            disabled={isSaving}
-                            className="px-3 py-2 text-green-400 bg-green-900/30 rounded-xl disabled:opacity-50 transition-colors duration-200 space-x-1"
-                        >
-                            <FontAwesomeIcon icon={faSave} />
-                            <span>Save</span>
-                        </button>
-                        <button
-                            onClick={() => handleCancel(field)}
-                            disabled={isSaving}
-                            className="px-3 py-2 text-red-400 bg-red-900/30 rounded-xl disabled:opacity-50 transition-colors duration-200 space-x-1"
-                        >
-                            <FontAwesomeIcon icon={faTimes} />
-                            <span>Cancel</span>
-                        </button>
-                    </div>
-                ) : (
-                    editable && (
-                        <button
-                            onClick={() => handleEdit(field)}
-                            disabled={isLoading || isSaving}
-                            className="px-3 py-2 text-neutral-200 bg-gray-700 rounded-xl disabled:opacity-50 transition-colors duration-200 space-x-1"
-                        >
-                            <FontAwesomeIcon icon={faEdit} />
-                            <span>Edit</span>
-                        </button>
-                    )
-                )}
-            </div>
-            <div className="w-full mt-1">
-                
-                {editingField === field && editable ? (
-                    <div>
-                        <input
-                            type={type}
-                            value={formData[field]}
-                            onChange={(e) => handleInputChange(field, e.target.value)}
-                            className={`w-full px-3 py-2 border rounded-2xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 bg-gray-700 text-white placeholder-gray-400 ${validationErrors[field] ? 'border-red-500' : 'border-gray-600'
-                                }`}
-                            disabled={isSaving}
-                            autoFocus
-                        />
-                        {validationErrors[field] && (
-                            <p className="text-red-400 text-xs mt-1 flex items-center">
-                                <FontAwesomeIcon icon={faExclamationTriangle} className="mr-1" />
-                                {validationErrors[field]}
-                            </p>
+        return (
+            <div className="flex flex-col w-full py-4 border-b border-neutral-700 last:border-b-0">
+                <div className="flex flex-col gap-2 w-full">
+                    <div className="flex justify-between flex items-center gap-2">
+                        <label className="block text-sm font-medium text-neutral-300 w-full">{label}</label>
+                        {isEditing ? (
+                            <>
+                                <button
+                                    onClick={() => handleSave(field)}
+                                    disabled={isSaving}
+                                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-neutral-800 border border-neutral-700 text-sm text-neutral-100 hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+                                    aria-label={`Save ${label}`}
+                                >
+                                    <FontAwesomeIcon icon={faSave} />
+                                    <span>Save</span>
+                                </button>
+
+                                <button
+                                    onClick={() => handleCancel(field)}
+                                    disabled={isSaving}
+                                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-transparent border border-neutral-700 text-sm text-neutral-300 hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+                                    aria-label={`Cancel editing ${label}`}
+                                >
+                                    <FontAwesomeIcon icon={faTimes} />
+                                    <span>Cancel</span>
+                                </button>
+                            </>
+                        ) : (
+                            editable ? (
+                                <button
+                                    onClick={() => handleEdit(field)}
+                                    disabled={isLoading || isSaving}
+                                    className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-transparent border border-neutral-700 text-sm text-neutral-200 hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+                                    aria-label={`Edit ${label}`}
+                                >
+                                    <FontAwesomeIcon icon={faEdit} />
+                                    <span>Edit</span>
+                                </button>
+                            ) : (
+                                <div className="text-neutral-400" title="Not editable">
+                                    <FontAwesomeIcon icon={faLock} />
+                                </div>
+                            )
                         )}
                     </div>
-                ) : (
-                    <div className="flex items-center">
-                        <p className="text-white break-words">{formData[field] || 'Not set'}</p>
-                        {!editable && (
-                            <FontAwesomeIcon
-                                icon={faLock}
-                                className="ml-2 text-gray-400 text-xs"
-                                title="This field cannot be edited"
-                            />
+                    <div className="flex-1 min-w-0">
+
+
+                        {isEditing ? (
+                            <div>
+                                <input
+                                    type={type}
+                                    value={value}
+                                    onChange={(e) => handleInputChange(field, e.target.value)}
+                                    className={`w-full px-3 py-2 border rounded-2xl bg-neutral-800 text-white placeholder-neutral-400 border-neutral-700 focus:outline-none focus:ring-2 focus:ring-neutral-600 focus:border-neutral-500`}
+                                    disabled={isSaving}
+                                    aria-invalid={!!validationErrors[field]}
+                                    aria-describedby={validationErrors[field] ? `${field}-error` : undefined}
+                                    autoFocus
+                                />
+                                {validationErrors[field] && (
+                                    <p id={`${field}-error`} className="text-xs mt-2 text-red-400 flex items-center gap-2">
+                                        <FontAwesomeIcon icon={faExclamationTriangle} />
+                                        <span>{validationErrors[field]}</span>
+                                    </p>
+                                )}
+                            </div>
+                        ) : (
+                            <p className="text-sm text-neutral-200 truncate">{value || 'Not set'}</p>
                         )}
                     </div>
-                )}
+                </div>
             </div>
+        );
+    };
 
-        </div>
-    );
-
+    /* Loading skeleton */
     if (isLoading && !formData.name) {
         return (
-            <div className="flex justify-center items-center min-h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-500"></div>
+            <div className="h-screen text-white p-6 flex items-center justify-center"
+                style={{ maxHeight: 'calc(100vh - 96px)' }}
+            >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
         );
     }
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-white">Settings</h1>
+            <div className="flex items-center justify-between gap-4 max-sm:hidden">
+                <h1 className="text-2xl font-semibold text-neutral-100">Settings</h1>
+            </div>
 
             {validationErrors.fetch && (
-                <div className="bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded-2xl">
+                <div className="rounded-2xl border border-red-800 bg-neutral-900/60 px-4 py-3 text-red-400">
                     {validationErrors.fetch}
                 </div>
             )}
 
             {validationErrors.submit && (
-                <div className="bg-red-900/20 border border-red-800 text-red-400 px-4 py-3 rounded-2xl">
+                <div className="rounded-2xl border border-red-800 bg-neutral-900/60 px-4 py-3 text-red-400">
                     {validationErrors.submit}
                 </div>
             )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main column */}
                 <div className="lg:col-span-2 space-y-6">
-                    <Card className="p-6 bg-gray-800 border-gray-700">
-                        <h2 className="text-xl font-semibold text-white mb-6">Profile Information</h2>
-                        <div className="space-y-1">
+                    <Card className="p-6 bg-neutral-800 border border-neutral-700 shadow-sm">
+                        <div className="flex flex-col">
+                            <h2 className="text-lg font-semibold text-neutral-100">Profile Information</h2>
+                            <p className="text-sm text-neutral-400">Manage your profile details</p>
+                        </div>
+
+                        <div className="mt-6">
                             <ProfileField label="Full Name" field="name" editable={true} />
                             <ProfileField label="Email" field="email" type="email" editable={false} />
                             <ProfileField label="Alternate Email" field="altEmail" type="email" editable={true} />
@@ -333,34 +380,101 @@ export default function Settings() {
                         </div>
                     </Card>
 
-                    <Card className="p-6 border-2 border-red-900/50 bg-red-900/10">
-                        <h2 className="text-xl font-semibold text-red-400 mb-4">Danger Zone</h2>
-                        <div className="space-y-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <div className="flex-1">
-                                    <h3 className="font-medium text-red-400">Delete Account</h3>
-                                    <p className="text-red-500 text-sm">Permanently delete your account and all data</p>
+                    {/* Additional card area (future) */}
+                    <Card className="p-6 bg-neutral-800 border border-neutral-700 shadow-sm">
+                        <h3 className="text-sm text-neutral-300 mb-2">Account Preferences</h3>
+                        <p className="text-sm text-neutral-400">Manage additional settings and preferences here.</p>
+                        {/* Placeholder area — keep lightweight */}
+                    </Card>
+                </div>
+
+                {/* Sidebar */}
+                <aside className="flex flex-col gap-6 lg:col-span-1">
+                    <UserActivity activities={activities} className="bg-neutral-800 border border-neutral-700" />
+
+                    <Card className="p-6 bg-neutral-900 border border-red-600/40">
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <h2 className="text-lg font-semibold text-red-400">Danger Zone</h2>
+                                    <p className="text-sm text-red-300">Permanently delete your account and all data</p>
                                 </div>
+                            </div>
+
+                            <div className="pt-2">
                                 <button
-                                    onClick={() => handleDangerousAction(
-                                        'delete-account',
-                                        'This will permanently delete your account and all data. This action cannot be undone. Are you sure?'
-                                    )}
+                                    onClick={() => setIsDeleteModalOpen(true)}
                                     disabled={isLoading || isSaving}
-                                    className="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-2xl hover:bg-red-500 disabled:opacity-50 transition-colors duration-200 w-full sm:w-auto"
+                                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-red-500 text-red-400 bg-transparent hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-red-500/30"
                                 >
-                                    <FontAwesomeIcon icon={faTrash} className="mr-2" />
-                                    Delete Account
+                                    <FontAwesomeIcon icon={faTrash} />
+                                    <span>Delete Account</span>
                                 </button>
                             </div>
                         </div>
                     </Card>
-                </div>
-
-                <div className="lg:col-span-1">
-                    <UserActivity activities={activities} />
-                </div>
+                </aside>
             </div>
+
+            {/* Delete Confirmation Modal */}
+            {isDeleteModalOpen && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-modal-title"
+                    className="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-6"
+                >
+                    {/* overlay */}
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
+                        aria-hidden="true"
+                    />
+
+                    <div className="relative w-full max-w-lg mx-auto">
+                        <div className="bg-neutral-800 border border-neutral-700 rounded-2xl p-6 shadow-2xl z-10">
+                            <div className="flex items-start gap-4">
+                                <div className="flex-shrink-0 text-red-400 mt-1">
+                                    <FontAwesomeIcon icon={faExclamationTriangle} size="lg" />
+                                </div>
+
+                                <div className="min-w-0">
+                                    <h3 id="delete-modal-title" className="text-lg font-semibold text-neutral-100">
+                                        Confirm Account Deletion
+                                    </h3>
+                                    <p className="text-sm text-neutral-300 mt-2">
+                                        This action is <span className="font-medium text-red-400">permanent</span> and cannot be undone.
+                                        Your profile, bookings and payments will be removed.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-6 flex items-center justify-end gap-3">
+                                <button
+                                    onClick={() => setIsDeleteModalOpen(false)}
+                                    disabled={isDeleting}
+                                    className="px-4 py-2 rounded-xl bg-transparent border border-neutral-700 text-neutral-200 hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-600"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    onClick={performAccountDeletion}
+                                    disabled={isDeleting}
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500 text-red-400 bg-transparent hover:bg-neutral-900 focus:outline-none focus:ring-2 focus:ring-red-500/30"
+                                >
+                                    {isDeleting ? (
+                                        <FontAwesomeIcon icon={faSpinner} spin />
+                                    ) : (
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    )}
+                                    <span>Delete Permanently</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

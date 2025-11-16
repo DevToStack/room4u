@@ -38,8 +38,10 @@ function VerificationModal({ isOpen, onClose, onConfirm, loading }) {
                         Confirm Your Booking
                     </h3>
                     <p className="text-gray-300 text-sm">
-                        Please verify your booking details before proceeding.
-                        You&apos;ll complete payment on the next page.
+                        We&apos;ll hold your spot for 30 minutes!
+                        After you confirm, the admin will review your booking.
+                        Payment unlocks only after approval.
+                        If the admin takes too long, the booking auto-expires and gets deleted.
                     </p>
                 </div>
 
@@ -63,10 +65,10 @@ function VerificationModal({ isOpen, onClose, onConfirm, loading }) {
                         {loading ? (
                             <>
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Confirming...
+                                Verifying...
                             </>
                         ) : (
-                            "Confirm Booking"
+                            "Continue"
                         )}
                     </button>
                 </div>

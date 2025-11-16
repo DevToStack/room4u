@@ -20,6 +20,7 @@ import FilterPills from './FilterPills';
 import Card from './Card';
 import BookingUpdateModal from './EditBooking';
 import { loadRazorpay, createRazorpayOrder } from '@/utils/razorpay' // Adjust path as needed
+import BookingInfoModal from './BookingInfoModal';
 
 const DEFAULT_DATA = { bookings: [] };
 
@@ -35,6 +36,7 @@ export default function Bookings() {
     const [isModalOpen, setModalOpen] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [showInfoModal, setShowInfoModal] = useState(false);
 
     // ✅ For resend button
     const [resendingId, setResendingId] = useState(null);
@@ -91,6 +93,7 @@ export default function Bookings() {
             if (res.ok && result.success) {
                 // Show success message
                 setPaymentMessage(`✅ Booking #${booking.id} cancelled successfully`);
+                setShowInfoModal(false);
                 // Refresh bookings to update status
                 await fetchBookings();
             } else {
@@ -250,6 +253,7 @@ export default function Bookings() {
             }
 
             const json = await res.json();
+            console.log(json)
             setBookingsData(getSafeData(json));
         } catch (err) {
             console.error('Error fetching bookings:', err);
@@ -298,6 +302,7 @@ export default function Bookings() {
         { id: 'pending', label: 'Pending' },
         { id: 'confirmed', label: 'Confirmed' },
         { id: 'cancelled', label: 'Cancelled' },
+        { id: 'ongoing', label: 'Ongoing' },
         { id: 'expired', label: 'Expired' },
     ];
 
@@ -324,39 +329,31 @@ export default function Bookings() {
 
     const getStatusColor = (status) => {
         const colors = {
-            pending: 'bg-yellow-100 text-yellow-800',
-            confirmed: 'bg-green-100 text-green-800',
-            cancelled: 'bg-red-100 text-red-800',
-            expired: 'bg-gray-100 text-gray-800',
+            pending: "bg-yellow-200 text-yellow-900 border border-yellow-300",
+            confirmed: "bg-green-200 text-green-900 border border-green-300",
+            cancelled: "bg-red-200 text-red-900 border border-red-300",
+            expired: "bg-gray-200 text-gray-900 border border-gray-300",
+            ongoing: "bg-blue-200 text-blue-900 border border-blue-300",
         };
-        return colors[status] || 'bg-gray-100 text-gray-800';
+
+        return colors[status] || "bg-gray-200 text-gray-900 border border-gray-300";
     };
+    
 
     // ✅ Helper function to determine which buttons to show based on booking status
     const getActionButtons = (booking) => {
         const { status, paymentStatus } = booking;
 
         const buttons = [
-            // Edit button - subtle blue accent
-            {
-                key: 'edit',
-                icon: faEdit,
-                label: 'Edit',
-                onClick: () => {
-                    setSelectedBooking(booking);
-                    setModalOpen(true);
-                },
-                className:
-                    "flex items-center gap-2 bg-neutral-800 border border-neutral-700 text-gray-300 hover:bg-blue-600/20 hover:border-blue-500 hover:text-blue-400 transition-all duration-300 px-4 py-2 rounded-lg shadow-sm hover:shadow-blue-500/10 active:scale-[0.97]",
-                show: status === 'pending',
-            },
-
             // Cancel button - amber warning tone
             {
                 key: 'cancel',
                 icon: faBan,
                 label: 'Cancel',
-                onClick: () => { handleCancelBooking(booking); },
+                onClick: (e) => { 
+                    e.stopPropagation();
+                    handleCancelBooking(booking); 
+                },
                 className:
                     "flex items-center gap-2 bg-neutral-800 border border-neutral-700 text-gray-300 hover:bg-rose-600/20 hover:border-rose-500 hover:text-rose-400 transition-all duration-300 px-4 py-2 rounded-lg shadow-sm hover:shadow-rose-500/10 active:scale-[0.97]",
                 show: status !== 'cancelled' && status !== 'expired',
@@ -367,7 +364,10 @@ export default function Bookings() {
                 key: 'resend',
                 icon: faEnvelope,
                 label: resendingId === booking.id ? 'Sending...' : 'Resend',
-                onClick: () => handleResendEmail(booking),
+                onClick: (e) => {
+                    e.stopPropagation();
+                    handleResendEmail(booking);
+                },
                 disabled: resendingId === booking.id,
                 className:
                     resendingId === booking.id
@@ -381,7 +381,10 @@ export default function Bookings() {
                 key: 'pay',
                 icon: faCreditCard,
                 label: processingPayment === booking.id ? 'Processing...' : 'Pay',
-                onClick: () => handlePayment(booking),
+                onClick: (e) => {
+                    e.stopPropagation(); 
+                    handlePayment(booking)
+                },
                 disabled: processingPayment === booking.id,
                 className:
                     processingPayment === booking.id
@@ -585,6 +588,11 @@ export default function Bookings() {
                                 key={booking.id}
                                 className="group bg-neutral-800/50 border border-neutral-700/50 rounded-xl p-6 hover:border-neutral-600/50 hover:bg-neutral-800/70 hover:shadow-xl hover:shadow-black/10 backdrop-blur-sm transition-all duration-500 ease-out animate-fade-in-slide-up"
                                 style={{ animationDelay: `${index * 0.1}s` }}
+                                onClick={() => {
+                                    setSelectedBooking(booking);
+                                    setShowInfoModal(true);
+                                }}
+                                
                             >
                                 {/* Header */}
                                 <div className="flex items-start justify-between mb-6">
@@ -646,7 +654,7 @@ export default function Bookings() {
                                     {actionButtons.map((button) => (
                                         <button
                                             key={button.key}
-                                            className={`flex items-center px-4 py-2.5 text-sm rounded-xl transition-all duration-300 font-medium backdrop-blur-sm ${button.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-neutral-700/50 active:bg-neutral-700/70 hover:scale-105'} ${button.className}`}
+                                            className={`flex items-center px-4 py-2.5 text-sm rounded-xl transition-all duration-300 font-medium backdrop-blur-sm z-50 ${button.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-neutral-700/50 active:bg-neutral-700/70 hover:scale-105'} ${button.className}`}
                                             onClick={button.onClick}
                                             disabled={button.disabled}
                                         >
@@ -749,19 +757,14 @@ export default function Bookings() {
                     </div>
                 </div>
             )}
+            <BookingInfoModal
+                booking={selectedBooking}
+                isOpen={showInfoModal}
+                onClose={() => setShowInfoModal(false)}
+                onCancel={handleCancelBooking}
+                onDelete={(b) => console.log("delete", b)}
+            />
 
-            {/* Booking Update Modal */}
-            {selectedBooking && (
-                <BookingUpdateModal
-                    isOpen={isModalOpen}
-                    onClose={() => {
-                        setModalOpen(false);
-                        setSelectedBooking(null);
-                    }}
-                    booking={selectedBooking}
-                    onUpdateSuccess={handleUpdateSuccess}
-                />
-            )}
         </div>
     );
 }

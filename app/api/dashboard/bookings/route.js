@@ -3,6 +3,23 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { updateBookingStatus } from '@/lib/updateBookingStatus';
+
+function safeGuestDetails(value) {
+    // If value is already an object or array → return as-is
+    if (typeof value === "object" && value !== null) return value;
+
+    // If value is null/empty → return empty array
+    if (!value) return [];
+
+    // If value is a string → try parsing
+    try {
+        return JSON.parse(value);
+    } catch (e) {
+        console.warn("⚠ Invalid guest_details JSON:", value);
+        return [];
+    }
+}
 
 export async function GET(request) {
     let connection;
@@ -14,19 +31,19 @@ export async function GET(request) {
         const limit = Number.parseInt(searchParams.get('limit') || '10', 10);
         const offset = (page - 1) * limit;
 
-        // ✅ Force numeric types (MySQL requires actual numbers for LIMIT/OFFSET)
         const safeLimit = Math.max(1, Number(limit) || 10);
         const safeOffset = Math.max(0, Number(offset) || 0);
 
-        const cookieStore = await cookies(); // ✅ await required in Next.js 13+
+        const cookieStore = await cookies();
         const sessionToken = cookieStore.get('token')?.value;
+
         if (!sessionToken) {
             return NextResponse.json(
                 { error: 'Authentication required', code: 'UNAUTHORIZED' },
                 { status: 401 }
             );
         }
-        
+
         const tokenResult = verifyToken(sessionToken);
         if (!tokenResult.valid) {
             return NextResponse.json(
@@ -34,12 +51,11 @@ export async function GET(request) {
                 { status: 401 }
             );
         }
-        
-        const userId = tokenResult.decoded.id;
 
+        const userId = tokenResult.decoded.id;
         connection = await pool.getConnection();
 
-        // ✅ Build WHERE clause dynamically
+        // Dynamic WHERE
         let whereClause = 'WHERE b.user_id = ?';
         const params = [userId];
 
@@ -53,10 +69,9 @@ export async function GET(request) {
             params.push(`%${search}%`, `%${search}%`);
         }
 
-        // ✅ Build final parameter array for SELECT query
         const finalParams = [...params, safeLimit, safeOffset];
 
-        // ✅ Main query
+        // === MAIN QUERY (WITH GUEST DETAILS) ===
         const [bookings] = await connection.query(
             `
             SELECT 
@@ -72,7 +87,8 @@ export async function GET(request) {
                 b.guests,
                 b.total_amount AS total,
                 p.status AS paymentStatus,
-                b.created_at
+                b.created_at,
+                b.guest_details  -- <-- ✅ return guest details JSON
             FROM bookings b
             JOIN apartments a ON b.apartment_id = a.id
             JOIN users u ON b.user_id = u.id
@@ -83,7 +99,14 @@ export async function GET(request) {
             `,
             finalParams
         );
-        // ✅ Count query (no limit/offset here)
+
+        // Convert guest_details from JSON string → JS object
+        const formattedBookings = bookings.map(b => ({
+            ...b,
+            guest_details: safeGuestDetails(b.guest_details)
+        }));
+        await updateBookingStatus()
+        // === COUNT QUERY ===
         const [totalCount] = await connection.query(
             `
             SELECT COUNT(*) as total
@@ -98,7 +121,7 @@ export async function GET(request) {
         connection.release();
 
         return NextResponse.json({
-            bookings,
+            bookings: formattedBookings,
             pagination: {
                 page,
                 limit: safeLimit,
@@ -113,13 +136,19 @@ export async function GET(request) {
     }
 }
 
+// ===============================================================
+// POST — NOW SUPPORTS GUEST DETAILS
+// ===============================================================
+
 export async function POST(request) {
     let connection;
     try {
         const body = await request.json();
-        const { apartment_id, start_date, end_date, guests, total_amount } = body;
-        const cookieStore = await cookies(); // ✅ await required in Next.js 13+
+        const { apartment_id, start_date, end_date, guests, total_amount, guest_details } = body;
+
+        const cookieStore = await cookies();
         const sessionToken = cookieStore.get('token')?.value;
+
         if (!sessionToken) {
             return NextResponse.json(
                 { error: 'Authentication required', code: 'UNAUTHORIZED' },
@@ -152,15 +181,26 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Invalid date range' }, { status: 400 });
         }
 
+        // === INSERT INCLUDING GUEST INFO ===
         const [result] = await connection.execute(
             `
             INSERT INTO bookings 
-                (user_id, apartment_id, start_date, end_date, guests, total_amount, nights, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
+                (user_id, apartment_id, start_date, end_date, guests, total_amount, nights, status, guest_details)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)
             `,
-            [userId, apartment_id, start_date, end_date, guests, total_amount, nights]
+            [
+                userId,
+                apartment_id,
+                start_date,
+                end_date,
+                guests,
+                total_amount,
+                nights,
+                JSON.stringify(guest_details || [])
+            ]
         );
 
+        // Log user activity
         await connection.execute(
             `INSERT INTO user_activity (user_id, message) VALUES (?, ?)`,
             [userId, `Created new booking #${result.insertId}`]

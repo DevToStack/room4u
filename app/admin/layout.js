@@ -6,7 +6,7 @@ import {
     faHome, faUsers, faCalendar, faCreditCard,
     faBars, faXmark, faRightFromBracket, faBuilding,
     faChevronDown, faChevronUp, faImages,
-    faEnvelope
+    faEnvelope,faMessage
 } from '@fortawesome/free-solid-svg-icons';
 
 const navItems = [
@@ -17,6 +17,7 @@ const navItems = [
     { id: 'payments', label: 'Payments', icon: faCreditCard, path: '/admin/payments' },
     { id: 'gallery', label: 'Gallery', icon: faImages, path: '/admin/gallery' },
     { id: 'inbox', label: 'Inbox', icon: faEnvelope, path: '/admin/inbox' },
+    { id: 'reviews', label: 'Reviews & Feedbacks', icon: faMessage, path: '/admin/feedback-reviews' },
 ];
 
 export default function AdminLayout({ children }) {

@@ -28,7 +28,7 @@ export async function PUT(request, { params }) {
         const { id } = params; // ✅ correct
         const { status, admin_notes } = await request.json();
         // Validate status
-        const validStatuses = ['pending', 'confirmed', 'cancelled', 'expired', "paid"];
+        const validStatuses = ['pending', 'confirmed', 'cancelled', 'expired', "ongoing"];
         if (!validStatuses.includes(status)) {
             return NextResponse.json({ success: false, message: 'Invalid status' }, { status: 400 });
         }

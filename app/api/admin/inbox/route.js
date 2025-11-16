@@ -1,6 +1,6 @@
 // /app/api/admin/inbox/route.js
 import { NextResponse } from 'next/server';
-import pool from '@/lib/db'; // your MySQL pool
+import pool from '@/lib/db';
 import { verifyAdmin } from '@/lib/adminAuth';
 import { parseCookies } from '@/lib/cookies';
 
@@ -12,30 +12,98 @@ export async function GET(req) {
         const cookies = parseCookies(req.headers.get("cookie"));
         const token = cookies.token;
 
-        // ✅ Use adminAuth helper
         const { valid, decoded, error } = await verifyAdmin(token);
         if (!valid) {
             return NextResponse.json({ error }, { status: 401 });
         }
 
-        const [rows] = await connection.query(
-`            SELECT id, senderName, subject, body, readed, createdAt
-            FROM messages
-            ORDER BY createdAt DESC
-            LIMIT 50;
-            `
-        );
+        // Get all messages with user info
+        const [rows] = await connection.query(`
+            SELECT
+                m.id,
+                m.senderName,
+                m.subject,
+                m.body,
+                m.readed,
+                m.createdAt,
+                m.user_id,
+                u.id as uid,
+                u.email AS senderEmail,
+                u.phone_number AS senderPhone
+            FROM messages AS m
+            LEFT JOIN users AS u ON u.id = m.user_id
+            ORDER BY m.createdAt DESC
+        `);
 
-        // Convert readed to read for frontend compatibility
         const messages = rows.map(msg => ({
             ...msg,
-            read: Boolean(msg.readed)
+            read: Boolean(msg.readed),
+            isAdmin: msg.direction === 'outgoing'
         }));
 
         return NextResponse.json({ messages });
     } catch (err) {
         console.error('Inbox API error:', err);
         return NextResponse.json({ error: 'Failed to fetch messages' }, { status: 500 });
+    } finally {
+        if (connection) connection.release();
+    }
+}
+
+export async function POST(req) {
+    let connection;
+
+    try {
+        connection = await pool.getConnection();
+        const cookies = parseCookies(req.headers.get("cookie"));
+        const token = cookies.token;
+
+        const { valid, decoded, error } = await verifyAdmin(token);
+        if (!valid) {
+            return NextResponse.json({ error }, { status: 401 });
+        }
+
+        const { userId, message, userEmail, userName } = await req.json();
+
+        if (!message || (!userId && !userEmail)) {
+            return NextResponse.json({ error: 'Message and user identifier are required' }, { status: 400 });
+        }
+
+        // Find or create user
+        let user_id = userId;
+        if (!user_id && userEmail) {
+            const [existingUser] = await connection.query(
+                'SELECT id FROM users WHERE email = ?',
+                [userEmail]
+            );
+
+            if (existingUser.length > 0) {
+                user_id = existingUser[0].id;
+            } else {
+                // Create new user entry
+                const [newUser] = await connection.query(
+                    'INSERT INTO users (email, name, phone_number) VALUES (?, ?, ?)',
+                    [userEmail, userName || 'Unknown User', '']
+                );
+                user_id = newUser.insertId;
+            }
+        }
+
+        // Insert admin message
+        const [result] = await connection.query(
+            `INSERT INTO messages (user_id, senderName, subject, body, direction, readed)
+             VALUES (?, ?, ?, ?, 'outgoing', TRUE)`,
+            [user_id, 'Admin', 'Admin Reply', message]
+        );
+
+        return NextResponse.json({
+            success: true,
+            message: 'Message sent successfully',
+            messageId: result.insertId
+        });
+    } catch (err) {
+        console.error('Send message API error:', err);
+        return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
     } finally {
         if (connection) connection.release();
     }
@@ -49,7 +117,6 @@ export async function PUT(req) {
         const cookies = parseCookies(req.headers.get("cookie"));
         const token = cookies.token;
 
-        // ✅ Use adminAuth helper
         const { valid, decoded, error } = await verifyAdmin(token);
         if (!valid) {
             return NextResponse.json({ error }, { status: 401 });
@@ -65,11 +132,9 @@ export async function PUT(req) {
         let params;
 
         if (markAs === 'unread') {
-            // Mark as unread
             query = `UPDATE messages SET readed = FALSE WHERE id = ?`;
             params = [messageId];
         } else {
-            // Mark as read (default behavior)
             query = `UPDATE messages SET readed = TRUE WHERE id = ?`;
             params = [messageId];
         }
@@ -101,13 +166,11 @@ export async function DELETE(req) {
         const cookies = parseCookies(req.headers.get("cookie"));
         const token = cookies.token;
 
-        // ✅ Use adminAuth helper
         const { valid, decoded, error } = await verifyAdmin(token);
         if (!valid) {
             return NextResponse.json({ error }, { status: 401 });
         }
 
-        // Get message ID from URL search params
         const url = new URL(req.url);
         const messageId = url.searchParams.get('id');
 
@@ -115,7 +178,6 @@ export async function DELETE(req) {
             return NextResponse.json({ error: 'Message ID is required' }, { status: 400 });
         }
 
-        // Delete the message
         const [result] = await connection.query(
             `DELETE FROM messages WHERE id = ?`,
             [messageId]
@@ -129,65 +191,6 @@ export async function DELETE(req) {
     } catch (err) {
         console.error('Delete message API error:', err);
         return NextResponse.json({ error: 'Failed to delete message' }, { status: 500 });
-    } finally {
-        if (connection) connection.release();
-    }
-}
-
-// New endpoint for individual message operations
-export async function PATCH(req) {
-    let connection;
-
-    try {
-        connection = await pool.getConnection();
-        const cookies = parseCookies(req.headers.get("cookie"));
-        const token = cookies.token;
-
-        // ✅ Use adminAuth helper
-        const { valid, decoded, error } = await verifyAdmin(token);
-        if (!valid) {
-            return NextResponse.json({ error }, { status: 401 });
-        }
-
-        const { messageId, action } = await req.json();
-
-        if (!messageId || !action) {
-            return NextResponse.json({ error: 'Message ID and action are required' }, { status: 400 });
-        }
-
-        let query;
-        let params;
-
-        switch (action) {
-            case 'mark-read':
-                query = `UPDATE messages SET readed = TRUE WHERE id = ?`;
-                params = [messageId];
-                break;
-            case 'mark-unread':
-                query = `UPDATE messages SET readed = FALSE WHERE id = ?`;
-                params = [messageId];
-                break;
-            case 'archive':
-                query = `UPDATE messages SET archived = TRUE WHERE id = ?`;
-                params = [messageId];
-                break;
-            default:
-                return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-        }
-
-        const [result] = await connection.query(query, params);
-
-        if (result.affectedRows === 0) {
-            return NextResponse.json({ error: 'Message not found' }, { status: 404 });
-        }
-
-        return NextResponse.json({
-            success: true,
-            message: `Message ${action.replace('-', ' ')} successfully`
-        });
-    } catch (err) {
-        console.error('Message action API error:', err);
-        return NextResponse.json({ error: 'Failed to perform action' }, { status: 500 });
     } finally {
         if (connection) connection.release();
     }

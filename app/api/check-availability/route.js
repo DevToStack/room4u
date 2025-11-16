@@ -33,7 +33,7 @@ export async function POST(req) {
         // Ensure check-in is in the future (or same day if allowed)
         if (checkinDate <= today) {
             return NextResponse.json(
-                { available: false, message: "The check-in date must be today or a future date." },
+                { available: false, message: "The check-in date must be a future date." },
                 { status: 400 }
             );
         }
@@ -49,13 +49,15 @@ export async function POST(req) {
         // Check overlapping bookings
         const results = await query(
             `
-            SELECT * FROM bookings
+            SELECT start_date, end_date
+            FROM bookings
             WHERE apartment_id = ?
-              AND (
-                (start_date <= ? AND end_date >= ?)
-                OR (start_date <= ? AND end_date >= ?)
-                OR (start_date >= ? AND end_date <= ?)
-              ) AND status='confirmed'
+            AND (
+                    status IN ('confirmed', 'pendig')
+                    OR (status = 'pending' AND expires_at > NOW())
+                )
+            ORDER BY start_date ASC
+
             `,
             [apartment_id, checkin, checkin, checkout, checkout, checkin, checkout]
         );

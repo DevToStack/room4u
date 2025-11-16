@@ -5,14 +5,9 @@ import Card from './Card';
 export default function UserActivity({ activities }) {
     return (
         <Card className="p-6 bg-gray-800 border-gray-700">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold text-white">Recent Activity</h2>
-                <button className="text-teal-400 hover:text-teal-300 font-medium transition-colors duration-200">
-                    See All Activity →
-                </button>
-            </div>
+            <h2 className="text-xl font-semibold text-white mb-6">Recent Activity</h2>
 
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[400px] overflow-y-auto">
                 {activities.map((activity, index) => (
                     <div
                         key={index}

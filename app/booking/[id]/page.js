@@ -101,11 +101,14 @@ async function getApartmentDetails(id) {
 // 🏡 Main Booking Page
 export default async function BookingPage({ params }) {
   const { id } = await params;
+  const numericId = Number(id);
+
+  if (isNaN(numericId)) return notFound();
 
   // ⚡ Fetch in parallel for faster SSR
   const [apartment, bookedData] = await Promise.all([
-    getApartmentDetails(id),
-    getBookedDates(id),
+    getApartmentDetails(numericId),
+    getBookedDates(numericId),
   ]);
 
   if (!apartment || !apartment.id) return notFound();

@@ -12,21 +12,28 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Card from "./Card";
 import { formatDate } from "@/lib/formateDate";
+import BookingInfoModal from "./BookingInfoModal";
 
 export default function Overview() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedBooking, setSelectedBooking] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     async function getOverviewData() {
         try {
             setLoading(true);
-            const [overviewRes, statsRes] = await Promise.all([
+            const [overviewRes, statsRes, upBookings] = await Promise.all([
                 fetch(`/api/dashboard/overview`, {
                     credentials: "include",
                     cache: "no-store",
                 }),
                 fetch(`/api/dashboard/stats`, {
+                    credentials: "include",
+                    cache: "no-store",
+                }),
+                fetch(`/api/dashboard/bookings`, {
                     credentials: "include",
                     cache: "no-store",
                 }),
@@ -38,8 +45,8 @@ export default function Overview() {
 
             const overview = await overviewRes.json();
             const stats = await statsRes.json();
-
-            setData({ ...overview, ...stats });
+            const bookings = await upBookings.json();
+            setData({ ...overview, ...stats, ...bookings });
         } catch (err) {
             console.error("Fetch error:", err);
             setError(err.message);
@@ -69,6 +76,15 @@ export default function Overview() {
             </div>
         );
     }
+    const openModal = (booking) => {
+        setSelectedBooking(booking);
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setSelectedBooking(null);
+        setIsModalOpen(false);
+    };
 
     const safeData = {
         totalBookings: data?.totalBookings || 0,
@@ -150,137 +166,198 @@ export default function Overview() {
     ];
 
     return (
-        <div className="space-y-6">
-            {/* Stats Section */}
+        <div className="space-y-10">
+
+            {/* 🌈 GEN-Z Stats Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {statsCards.map((card, index) => (
-                    <Card key={index} className="p-6 bg-gray-900 border-gray-800">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <p className="text-sm font-medium text-gray-400">{card.title}</p>
-                                <p className="text-2xl font-bold text-white mt-1">{card.value}</p>
-                                <p className="text-sm text-gray-500 mt-1">{card.subtext}</p>
-                            </div>
-                            <div
-                                className={`p-3 rounded-2xl ${card.color === "teal" ? "bg-teal-900/30" : "bg-gray-800"
-                                    }`}
-                            >
-                                <FontAwesomeIcon
-                                    icon={card.icon}
-                                    className={`${card.color === "teal"
-                                        ? "text-teal-400"
-                                        : "text-gray-400"
-                                        } text-lg`}
-                                />
-                            </div>
-                        </div>
-                    </Card>
-                ))}
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {quickActions.map((action, index) => (
                     <Card
                         key={index}
-                        className="p-6 cursor-pointer bg-gray-900 border-gray-800 hover:bg-gray-800 transition-all duration-200"
-                        onClick={action.action}
+                        className="p-6 bg-neutral-900 border border-neutral-700 rounded-3xl shadow-[0_0_20px_-5px_rgba(0,0,0,0.6)] hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.7)] transition-all duration-300"
                     >
-                        <div className="flex items-center">
-                            <div
-                                className={`p-3 rounded-2xl ${action.color === "teal" ? "bg-teal-900/30" : "bg-gray-800"
-                                    } mr-4`}
-                            >
-                                <FontAwesomeIcon
-                                    icon={action.icon}
-                                    className={`${action.color === "teal"
-                                        ? "text-teal-400"
-                                        : "text-gray-400"
-                                        } text-xl`}
-                                />
-                            </div>
+                        <div className="flex justify-between items-start">
                             <div>
-                                <h3 className="font-semibold text-white">{action.title}</h3>
-                                <p className="text-sm text-gray-400 mt-1">{action.description}</p>
+                                <p className="text-xs uppercase tracking-wider text-neutral-500">{card.title}</p>
+                                <p className="text-4xl font-extrabold text-white mt-3">{card.value}</p>
+                                <p className="text-xs text-neutral-500 mt-1">{card.subtext}</p>
+                            </div>
+
+                            <div className={`p-3 rounded-2xl bg-neutral-700/60 border border-neutral-600`}>
+                                <FontAwesomeIcon
+                                    icon={card.icon}
+                                    className={`text-xl text-teal-400`}
+                                />
                             </div>
                         </div>
                     </Card>
                 ))}
             </div>
 
-            {/* Upcoming Check-ins */}
-            <Card className="p-6 bg-gray-900 border-gray-800">
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-xl font-bold text-white">Upcoming Check-ins</h2>
-                    <button className="text-teal-400 hover:text-teal-300 font-medium transition-colors">
-                        See all →
-                    </button>
-                </div>
+            {/* 🏨 Last & Next Booking */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                {safeData.upcomingCheckins.length > 0 ? (
-                    <div className="flex flex-wrap gap-6 justify-start">
-                        {safeData.upcomingCheckins.map((booking, index) => (
-                            <div
-                                key={index}
-                                className="relative flex flex-col justify-between
-                                    p-4 bg-neutral-800 rounded-2xl border border-neutral-700
-                                    flex-grow flex-shrink min-w-[260px] max-w-[320px]
-                                    basis-[300px] transition-transform hover:-translate-y-1 hover:shadow-lg"
-                            >
-                                <div className="flex items-center space-x-4 mt-3">
-                                    <div>
-                                        <h4 className="font-semibold text-white">
-                                            {booking.apartment || "Unknown Apartment"}
-                                        </h4>
-                                        <p className="text-sm text-gray-400">
-                                            {booking.guestName || "Unknown Guest"}
-                                        </p>
-                                        <div className="flex items-center space-x-4 text-sm text-gray-500 mt-1">
-                                            <span>Check-in: {formatDate(booking.checkIn)}</span>
-                                            <span>•</span>
-                                            <span>{booking.nights || 0} nights</span>
+                {/* Last Booking */}
+                <Card className="p-6 bg-neutral-900 border border-neutral-700 rounded-3xl hover:border-neutral-600 transition-all">
+                    <h2 className="text-lg font-bold tracking-wide text-white mb-5">Last Booking</h2>
+
+                    <div className="bg-neutral-800/60 backdrop-blur-lg rounded-2xl p-5 border border-neutral-700">
+                        <p className="text-neutral-500 text-sm">Apartment</p>
+                        <p className="text-xl font-semibold text-white mt-1">{data.lastBooking.apartment}</p>
+
+                        <div className="mt-5 space-y-2 text-neutral-300 text-sm">
+                            <p><b>Status:</b> {data.lastBooking.status}</p>
+                            <p><b>Guests:</b> {data.lastBooking.guests}</p>
+                            <p><b>Check-in:</b> {data.lastBooking.checkIn}</p>
+                            <p><b>Check-out:</b> {data.lastBooking.checkOut}</p>
+                            <p><b>Total:</b> ₹{data.lastBooking.amount}</p>
+                        </div>
+                    </div>
+                </Card>
+
+                {/* Next Booking */}
+                <Card className="p-6 bg-neutral-900 border border-neutral-700 rounded-3xl hover:border-neutral-600 transition-all">
+                    <h2 className="text-lg font-bold tracking-wide text-white mb-5">Next Booking</h2>
+
+                    <div className="bg-neutral-800/60 backdrop-blur-lg rounded-2xl p-5 border border-neutral-700">
+                        <p className="text-neutral-500 text-sm">Apartment</p>
+                        <p className="text-xl font-semibold text-white mt-1">{data.nextBooking.apartment}</p>
+
+                        <div className="mt-5 space-y-2 text-neutral-300 text-sm">
+                            <p><b>Check-in:</b> {data.nextBooking.checkIn}</p>
+
+                            <p className="font-semibold text-teal-400 tracking-wide">
+                                {data.nextBooking.daysUntil > 1
+                                    ? `${data.nextBooking.daysUntil} days remaining`
+                                    : data.nextBooking.daysUntil === 1
+                                        ? "1 day remaining"
+                                        : "Today"}
+                            </p>
+                        </div>
+                    </div>
+                </Card>
+            </div>
+
+            {/* 📅 Upcoming Confirmed Check-ins */}
+            <Card className="p-6 bg-neutral-900 border border-neutral-700 rounded-3xl">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-xl font-bold text-white tracking-wide">Upcoming Check-ins</h2>
+                </div>
+                <div className="grid grid-cols-5 max-sm:grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    {data.bookings
+                        .filter((b) => b.status === "confirmed")
+                        .map((b) => {
+                            const today = new Date().setHours(0, 0, 0, 0);
+                            const checkInDate = new Date(b.checkIn).setHours(0, 0, 0, 0);
+                            const diffMs = checkInDate - today;
+
+                            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+
+                            let countdown;
+                            if (days > 1) countdown = `${days} days remaining`;
+                            else if (days === 1) countdown = "1 day remaining";
+                            else if (days === 0) countdown = "Today";
+                            else countdown = `${Math.abs(hours)} hours remaining`;
+
+                            return (
+                                <div
+                                    key={b.id}
+                                    className="
+                                    relative rounded-3xl
+                                    bg-neutral-900 border border-neutral-700
+                                    p-6 flex flex-col gap-4
+                                    shadow-[0_0_0_0_rgba(0,0,0,0.0)]
+                                    hover:shadow-[0_8px_25px_-5px_rgba(0,0,0,0.4)]
+                                    hover:-translate-y-1
+                                    transition-all duration-300
+    "
+                                >
+                                    {/* Floating circular icon */}
+                                    <div className="absolute -top-4 right-4 w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center border border-teal-500/30 backdrop-blur-sm">
+                                        <span className="text-teal-300 text-xs font-semibold">#{b.id}</span>
+                                    </div>
+
+                                    {/* Apartment + Status */}
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <p className="text-white font-bold text-lg">{b.apartment}</p>
+                                            <p className="text-neutral-500 text-xs mt-1">{b.guestName}</p>
                                         </div>
 
-                                        <div className="flex justify-between items-center space-x-4 w-full px-3 mt-2">
-                                            <div className="flex items-center space-x-2">
-                                                <FontAwesomeIcon
-                                                    icon={faIndianRupeeSign}
-                                                    className="text-teal-400"
-                                                />
-                                                <span className="font-semibold text-white">
-                                                    {(booking.amount || 0).toLocaleString()}
-                                                </span>
-                                            </div>
-                                            <button className="text-teal-400 hover:text-teal-300 text-sm font-medium transition-colors">
-                                                See details
-                                            </button>
+                                        <span
+                                            className="
+                                            px-3 py-1 text-xs rounded-full 
+                                            bg-neutral-800 border border-neutral-700 
+                                            text-teal-300 font-medium
+                                            shadow-[inset_0_0_8px_rgba(0,150,150,0.3)]
+            "
+                                        >
+                                            Confirmed
+                                        </span>
+                                    </div>
+
+                                    {/* Info blocks */}
+                                    <div className="grid grid-cols-2 gap-3 mt-2">
+                                        <div className="bg-neutral-800/50 p-3 rounded-xl border border-neutral-700 space-y-1">
+                                            <p className="text-neutral-500 text-xs">Check-in</p>
+                                            <p className="text-white font-semibold max-sm:text-xs">{b.checkIn}</p>
+                                        </div>
+
+                                        <div className="bg-neutral-800/50 p-3 rounded-xl border border-neutral-700 space-y-1">
+                                            <p className="text-neutral-500 text-xs">Nights</p>
+                                            <p className="text-white font-semibold max-sm:text-xs">{b.nights}</p>
+                                        </div>
+
+                                        <div className="bg-neutral-800/50 p-3 rounded-xl border border-neutral-700 space-y-1">
+                                            <p className="text-neutral-500 text-xs">Guests</p>
+                                            <p className="text-white font-semibold max-sm:text-xs ">{b.guests}</p>
+                                        </div>
+
+                                        <div className="bg-neutral-800/50 p-3 rounded-xl border border-neutral-700 space-y-1">
+                                            <p className="text-neutral-500 text-xs">Total</p>
+                                            <p className="text-white font-semibold max-sm:text-xs">₹{b.total}</p>
                                         </div>
                                     </div>
+
+                                    {/* Countdown */}
+                                    <p className="text-teal-400 text-sm font-semibold mt-2">
+                                        ⏳ {countdown}
+                                    </p>
+
+                                    {/* Button */}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();   // prevents card click issues
+                                            openModal(b);
+                                        }}
+                                        className="
+                                            mt-4 w-full py-2.5 
+                                            rounded-xl text-sm font-medium 
+                                            bg-neutral-800 hover:bg-neutral-700 
+                                            text-white transition
+                                        "
+                                    >
+                                        View Details
+                                    </button>
+
                                 </div>
 
-                                <span
-                                    className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-medium ${booking.paymentStatus === "paid"
-                                        ? "bg-orange-900/30 text-orange-300"
-                                        : "bg-teal-900/30 text-teal-300"
-                                        }`}
-                                >
-                                    {booking.paymentStatus === "paid" ? "Due Soon" : "Confirmed"}
-                                </span>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-8">
-                        <div className="w-16 h-16 bg-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <FontAwesomeIcon icon={faHome} className="text-gray-500 text-xl" />
-                        </div>
-                        <p className="text-gray-400 font-medium">No upcoming check-ins</p>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Check-ins for the next 7 days will appear here
-                        </p>
-                    </div>
-                )}
+                            );
+                        })}
+                </div>
+
+
             </Card>
+            <BookingInfoModal
+                booking={selectedBooking}
+                isOpen={isModalOpen}
+                onClose={closeModal}
+                onCancel={() => console.log("Cancel Booking")}
+                onDelete={() => console.log("Delete Booking")}
+            />
+
         </div>
     );
+    
+    
 }

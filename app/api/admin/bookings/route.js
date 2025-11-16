@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/mysql-wrapper';
+import { updateBookingStatus } from '@/lib/updateBookingStatus';
 
 export async function GET(request) {
     try {
@@ -76,7 +77,7 @@ export async function GET(request) {
             ORDER BY b.created_at DESC
             LIMIT ${limit} OFFSET ${offset}
         `;
-
+        await updateBookingStatus()
         // 👇 Pass ALL params: filters + pagination
         const bookings = await query(bookingsQuery, queryParams);
 

@@ -7,6 +7,7 @@ import Toast from "@/components/toast";
 import { Loader2, ShieldCheck } from "lucide-react";
 import VerificationModal from "./VerificationModal";
 import FeedbackModal from "./FeedbackModal";
+import GuestDetailsForm from "./GuestDetailsForm";
 
 function formatForMySQL(date) {
     const pad = (n) => n.toString().padStart(2, "0");
@@ -38,7 +39,10 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
     const [showVerificationModal, setShowVerificationModal] = useState(false);
     const [bookingSummary, setBookingSummary] = useState(null);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+    const [loadCallender,setLoadCallender] = useState(false);
     const [id, setId] = useState(null);
+    const [guestsInfo, setGuestsInfo] = useState([]);
+
 
     // Fixed check-in and check-out times
     const fixedCheckinTime = "15:00"; // 3:00 PM
@@ -126,6 +130,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                     guests: Number(formData.guests),
                     total_amount: Number(bookingSummary.total),
                     nights: Number(bookingSummary.nights),
+                    guest_details: guestsInfo,
                 }),
             });
 
@@ -138,6 +143,8 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
             setId(bookingData.id);
             setShowVerificationModal(false);
             setShowFeedbackModal(true);
+            setLoadCallender(true);
+            router.push('/dashboard')
         } catch (err) {
             console.error("Booking error:", err);
             setError("Something went wrong. Please try again.");
@@ -166,10 +173,11 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
 
                         {/* Calendar */}
                         <BookingCalendar
+                            loadCallender={loadCallender}
+                            setLoadCallender={setLoadCallender}
+                            apartmentId={Number(apartmentId)}
                             formData={formData}
                             setFormData={setFormData}
-                            disabledRanges={disabledRanges}
-                            lockedRanges={lockedRanges}
                             background="neutral-800"
                         />
 
@@ -192,7 +200,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                         </div>
 
                         {/* Guests */}
-                        <div className="flex justify-between text-sm">
+                        <div className="flex flex-col justify-between text-sm space-y-2">
                             <span className="text-gray-400">Guests</span>
                             <select
                                 value={formData.guests || 2}
@@ -201,6 +209,11 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                             >
                                 {[1, 2, 3, 4].map(n => <option key={n} value={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>)}
                             </select>
+                            <GuestDetailsForm
+                                guestCount={formData.guests}
+                                onChange={(data) => setGuestsInfo(data)}
+                            />
+
                         </div>
 
                         {/* Price Summary */}
@@ -266,11 +279,11 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                             />
                             <label htmlFor="terms" className="leading-snug">
                                 I agree to the{" "}
-                                <a href="/terms" className="text-teal-400 hover:underline">
+                                <a href="/terms-conditions" className="text-teal-400 hover:underline">
                                     Terms & Conditions
                                 </a>{" "}
                                 and{" "}
-                                <a href="/cancellation-policy" className="text-teal-400 hover:underline">
+                                <a href="/cancellation-refund" className="text-teal-400 hover:underline">
                                     Cancellation Policy
                                 </a>.
                             </label>
@@ -287,7 +300,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                                     <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Processing...
                                 </>
                             ) : (
-                                "Continue to Payment"
+                                "Request a Booking"
                             )}
                         </button>
                     </form>
@@ -295,6 +308,8 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
             </div>
 
             <VerificationModal
+                loadCallender={loadCallender}
+                setLoadCallender={setLoadCallender}
                 isOpen={showVerificationModal}
                 onClose={() => setShowVerificationModal(false)}
                 onConfirm={handleConfirmBooking}

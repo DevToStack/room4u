@@ -149,11 +149,11 @@ const ReviewSection = ({id}) => {
                                     className="bg-white/5 border border-white/10 rounded-2xl p-6 text-gray-100 transition-all hover:bg-white/15 hover:scale-105 duration-300"
                                 >
                                     <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                                        <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center text-white font-bold text-lg overflow-hidden">
                                             {review.name.charAt(0).toUpperCase() || "?"}
                                         </div>
                                         <div>
-                                            <h4 className="font-semibold text-lg truncate">{review.name}</h4>
+                                            <h4 className="font-semibold text-lg max-w-[170px] truncate">{review.name}</h4>
                                             <div className="flex">
                                                 {[...Array(5)].map((_, i) => (
                                                     <FontAwesomeIcon

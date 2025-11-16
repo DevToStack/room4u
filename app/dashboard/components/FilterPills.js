@@ -1,7 +1,7 @@
 // app/dashboard/components/FilterPills.js
 export default function FilterPills({ filters, activeFilter, onFilterChange }) {
     return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex gap-2 max-w-[100vw] overflow-x-auto">
             {filters.map((filter) => (
                 <button
                     key={filter.id}

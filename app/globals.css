@@ -75,3 +75,37 @@ body {
 .animate-soft-float {
   animation: soft-float 3s ease-in-out infinite;
 }
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s infinite linear;
+  background-size: 200% 100%;
+}
+
+@keyframes date-shimmer {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0.1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
+
+  100% {
+    transform: translateX(100%);
+    opacity: 0.1;
+  }
+}
+
+.animate-date-shimmer {
+  animation: date-shimmer 1.4s infinite;
+}

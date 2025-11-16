@@ -10,6 +10,23 @@ import {
     faSearch, faFilter, faTh, faThList, faExpand
 } from "@fortawesome/free-solid-svg-icons";
 
+// Utility function to format file size
+const formatFileSize = (bytes) => {
+    if (bytes === 0 || bytes === undefined || bytes === null) return '0 B';
+
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    // For bytes, show as is without decimals
+    if (i === 0) {
+        return `${bytes} ${sizes[i]}`;
+    }
+
+    // For KB and MB, show with 1 decimal place
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
 const ApartmentGallery = () => {
     const [apartments, setApartments] = useState([]);
     const [selectedApartmentId, setSelectedApartmentId] = useState('');
@@ -49,9 +66,19 @@ const ApartmentGallery = () => {
     const calculateStats = useCallback((imagesArray) => {
         const total = imagesArray.length;
         const primary = imagesArray.filter(img => img?.is_primary).length;
-        const totalSize = imagesArray.reduce((sum, img) => sum + (img?.file_size || 0), 0);
+
+        // First sum the raw bytes
+        const totalBytes = imagesArray.reduce(
+            (sum, img) => sum + (img?.file_size || 0),
+            0
+        );
+
+        // Then format once
+        const totalSize = formatFileSize(totalBytes);
+
         return { total, primary, totalSize };
     }, []);
+      
 
     // Load apartments
     useEffect(() => {
@@ -160,14 +187,14 @@ const ApartmentGallery = () => {
             );
         }
 
-        // Size filters
+        // Size filters - updated to use bytes directly
         if (selectedFilters.size !== 'all') {
             result = result.filter(img => {
-                const sizeMB = (img?.file_size || 0) / 1024 / 1024;
+                const sizeBytes = img?.file_size || 0;
                 switch (selectedFilters.size) {
-                    case 'small': return sizeMB < 1;
-                    case 'medium': return sizeMB >= 1 && sizeMB < 5;
-                    case 'large': return sizeMB >= 5;
+                    case 'small': return sizeBytes < 1024 * 1024; // < 1MB
+                    case 'medium': return sizeBytes >= 1024 * 1024 && sizeBytes < 5 * 1024 * 1024; // 1-5MB
+                    case 'large': return sizeBytes >= 5 * 1024 * 1024; // >= 5MB
                     default: return true;
                 }
             });
@@ -524,7 +551,7 @@ const ApartmentGallery = () => {
 
     const openEditModal = useCallback((img) => {
         if (!img?.id) return;
-
+        console.log(img)
         setSelectedImage(img);
         setEditModalOpen(true);
         setLoadingImage(true);
@@ -602,7 +629,7 @@ const ApartmentGallery = () => {
                                 <h1 className="text-xl font-bold text-white">Apartment Gallery</h1>
                             </div>
                         </div>
-                        
+
 
                         {/* Right Section - Actions */}
                         <div className="flex w-full flex-row max-sm:flex-col gap-3">
@@ -640,7 +667,7 @@ const ApartmentGallery = () => {
                                     <span>Filters</span>
                                 </button>
                             </div>
-                            
+
                         </div>
                     </div>
 
@@ -776,6 +803,12 @@ const ApartmentGallery = () => {
                                     <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                                     <span className="text-sm font-medium text-white">
                                         Showing: <span className="text-purple-300">{filteredImages.length}</span>
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                    <span className="text-sm font-medium text-white">
+                                        Total Size: <span className="text-green-300">{formatFileSize(stats.totalSize)}</span>
                                     </span>
                                 </div>
                             </div>
@@ -1000,7 +1033,7 @@ const ApartmentGallery = () => {
                                         <div className="flex justify-between items-center mt-2 text-xs text-neutral-400">
                                             <span className="flex items-center gap-1">
                                                 <FontAwesomeIcon icon={faWeightHanging} className="text-xs" />
-                                                <span>{((img?.file_size || 0) / 1024 / 1024).toFixed(1)} MB</span>
+                                                <span>{formatFileSize(img?.file_size)}</span>
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <FontAwesomeIcon icon={faCalendar} className="text-xs" />
@@ -1089,13 +1122,21 @@ const ApartmentGallery = () => {
                                                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
                                             </div>
                                         )}
-                                        <img
-                                            src={`${selectedImage.image_url}${selectedImage.image_url.includes('?') ? '&' : '?'}t=${new Date(selectedImage.updated_at || selectedImage.created_at).getTime()}`}
-                                            alt={selectedImage.image_name}
-                                            className={`w-full h-full object-cover transition-opacity duration-300 ${loadingImage ? 'opacity-0' : 'opacity-100'}`}
-                                            onLoad={() => setLoadingImage(false)}
-                                            onError={() => setLoadingImage(false)}
-                                        />
+                                        {selectedImage?.image_url ? (
+                                            <img
+                                                src={`${selectedImage.image_url}?t=${Date.now()}`}
+                                                alt={selectedImage.image_name || 'Selected image'}
+                                                className={`w-full h-full object-cover transition-opacity duration-300 ${loadingImage ? 'opacity-0' : 'opacity-100'
+                                                    }`}
+                                                onLoad={() => setLoadingImage(false)}
+                                                onError={() => setLoadingImage(false)}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400">
+                                                No image available
+                                            </div>
+                                        )}
+
                                     </div>
 
                                     {/* Image Actions */}
@@ -1153,7 +1194,7 @@ const ApartmentGallery = () => {
                                             <div>
                                                 <span className="text-neutral-400">File Size:</span>
                                                 <p className="text-white font-medium">
-                                                    {((selectedImage.file_size || 0) / 1024 / 1024).toFixed(1)} MB
+                                                    {formatFileSize(selectedImage.file_size)}
                                                 </p>
                                             </div>
                                             <div>

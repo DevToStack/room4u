@@ -27,7 +27,14 @@ export async function GET(request) {
 
         const userId = decoded.id; // JWT payload must contain user ID
         const connection = await pool.getConnection();
-
+        // === 0. CLEANUP EXPIRED TEMP BOOKINGS ===
+        await connection.query(`
+            UPDATE bookings
+            SET status = 'expired',
+                updated_at = NOW()
+            WHERE status = 'pending'
+            AND expires_at < NOW();
+        `);
         // ✅ Correct query according to schema (added guests)
         const [bookings] = await connection.query(
             `
