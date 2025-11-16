@@ -11,7 +11,6 @@ import {
     faPhone
 } from "@fortawesome/free-solid-svg-icons";
 import Card from "./Card";
-import { formatDate } from "@/lib/formateDate";
 import BookingInfoModal from "./BookingInfoModal";
 
 export default function Overview() {
@@ -192,7 +191,6 @@ export default function Overview() {
                     </Card>
                 ))}
             </div>
-
             {/* 🏨 Last & Next Booking */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 

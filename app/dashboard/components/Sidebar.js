@@ -11,7 +11,8 @@ import {
     faBars,
     faXmark,
     faBuilding,
-    faExclamationCircle
+    faExclamationCircle,
+    faStar
 } from '@fortawesome/free-solid-svg-icons';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -25,6 +26,7 @@ export default function Sidebar({ sidebarOpen, setSidebarOpen }) {
         { id: 'overview', label: 'Overview', icon: faChartSimple, href: '/dashboard' },
         { id: 'bookings', label: 'Bookings', icon: faCalendarCheck, href: '/dashboard/bookings' },
         { id: 'payments', label: 'Payments', icon: faCreditCard, href: '/dashboard/payments' },
+        { id: 'reviews', label: 'Reviews', icon: faStar, href: '/dashboard/reviews' },
         { id: 'settings', label: 'Settings', icon: faGear, href: '/dashboard/settings' },
     ];
 
