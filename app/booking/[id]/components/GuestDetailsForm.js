@@ -29,9 +29,30 @@ export default function GuestDetailsForm({
     // ---------------------------------------
     // INIT FORM DATA
     // ---------------------------------------
+    // In your useEffect that loads initialData
     useEffect(() => {
         if (initialData) {
-            setGuestInfo([initialData]);
+            // Extract country code from existing phone number
+            const processedData = { ...initialData };
+
+            if (processedData.phone) {
+                // Find if phone starts with any known country code
+                const matchedCode = countryCodes.find(country =>
+                    processedData.phone.startsWith(country.code)
+                );
+
+                if (matchedCode) {
+                    processedData.countryCode = matchedCode.code;
+                    processedData.phone = processedData.phone.replace(matchedCode.code, '');
+                } else {
+                    // Default to India if no match found
+                    processedData.countryCode = "+91";
+                }
+            } else {
+                processedData.countryCode = "+91";
+            }
+
+            setGuestInfo([processedData]);
             setActiveTab(0);
             return;
         }
@@ -49,7 +70,6 @@ export default function GuestDetailsForm({
         setGuestInfo(emptyGuests);
         setActiveTab(0);
     }, [guestCount, initialData]);
-
     // ---------------------------------------
     // UPDATE FIELD
     // ---------------------------------------
