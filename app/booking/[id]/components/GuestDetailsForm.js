@@ -12,10 +12,6 @@ export default function GuestDetailsForm({
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Upload states
-    const [uploading, setUploading] = useState(false);
-    const [progress, setProgress] = useState(0);
-
     // Country codes for phone
     const countryCodes = [
         { code: "+91", country: "India", flag: "IN" },
@@ -29,7 +25,6 @@ export default function GuestDetailsForm({
     // ---------------------------------------
     // INIT FORM DATA
     // ---------------------------------------
-    // In your useEffect that loads initialData
     useEffect(() => {
         if (initialData) {
             // Extract country code from existing phone number
@@ -63,13 +58,12 @@ export default function GuestDetailsForm({
             gender: "",
             phone: "",
             countryCode: "+91",
-            id_document_url: "",
-            id_document_public_id: "",
         }));
 
         setGuestInfo(emptyGuests);
         setActiveTab(0);
     }, [guestCount, initialData]);
+
     // ---------------------------------------
     // UPDATE FIELD
     // ---------------------------------------
@@ -116,10 +110,6 @@ export default function GuestDetailsForm({
             } else if (!/^\d{10}$/.test(guest.phone.replace(/\D/g, ''))) {
                 newErrors[`guest-${index}-phone`] = "Please enter a valid 10-digit phone number";
             }
-
-            if (!guest.id_document_url) {
-                newErrors[`guest-${index}-document`] = "ID proof is required";
-            }
         });
 
         setErrors(newErrors);
@@ -145,76 +135,6 @@ export default function GuestDetailsForm({
             return guestData;
         });
     };
-
-    // ---------------------------------------
-    // FILE UPLOAD HANDLER
-    // ---------------------------------------
-    async function handleFileUpload(file) {
-        setUploading(true);
-        setProgress(15);
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            // Fake smooth progress until 90%
-            let current = 15;
-            const interval = setInterval(() => {
-                current += 5;
-                setProgress(current);
-                if (current >= 90) clearInterval(interval);
-            }, 200); // update every 200ms
-
-            // Upload request
-            const res = await fetch("/api/upload", {
-                method: "POST",
-                body: formData,
-            });
-
-            const json = await res.json();
-            if (!json.success) throw new Error(json.error);
-
-            // Jump to 100%
-            setProgress(100);
-
-            // Stop smooth progress timer
-            clearInterval(interval);
-
-            // Update form
-            updateField(activeTab, "id_document_url", json.data.public_id);
-            updateField(activeTab, "id_document_public_id", json.data.public_id);
-
-            // Hide progress after a moment
-            setTimeout(() => {
-                setUploading(false);
-                setProgress(0);
-            }, 800);
-
-        } catch (err) {
-            console.error("Upload Error:", err.message);
-            setUploading(false);
-            setProgress(0);
-        }
-    }
-
-    // ---------------------------------------
-    // DELETE IMAGE
-    // ---------------------------------------
-    async function handleDeleteImage() {
-        const public_id = guestInfo[activeTab].id_document_public_id;
-        if (!public_id) return;
-
-        try {
-            await fetch(`/api/upload?public_id=${public_id}`, {
-                method: "DELETE",
-            });
-
-            updateField(activeTab, "id_document_url", "");
-            updateField(activeTab, "id_document_public_id", "");
-        } catch (err) {
-            console.error("Delete Error:", err.message);
-        }
-    }
 
     // ---------------------------------------
     // SUBMIT FORM
@@ -369,88 +289,6 @@ export default function GuestDetailsForm({
                     </div>
                     {errors[`guest-${activeTab}-phone`] && (
                         <p className="text-red-400 text-sm">{errors[`guest-${activeTab}-phone`]}</p>
-                    )}
-                </div>
-
-                {/* ---------------------------------------------------------------- */}
-                {/* UPLOAD ID SECTION */}
-                {/* ---------------------------------------------------------------- */}
-                <div
-                    className={`border rounded-xl p-5 transition-colors ${errors[`guest-${activeTab}-document`]
-                        ? "border-red-500/50 bg-red-500/5"
-                        : "border-neutral-700 bg-neutral-900/50"
-                        }`}
-                    data-field={`guest-${activeTab}-document`}
-                >
-                    <h3 className="text-lg font-semibold mb-4">Upload ID Proof *</h3>
-
-                    {!guest.id_document_url ? (
-                        <div className="space-y-4">
-                            <div className="relative border-2 border-dashed border-neutral-700 rounded-lg p-6 text-center transition-colors hover:border-blue-500/50">
-                                <div className="mb-3">
-                                    <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                                        <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                        </svg>
-                                    </div>
-                                </div>
-                                <p className="text-sm text-neutral-300 mb-2">Upload ID Proof</p>
-                                <p className="text-xs text-neutral-500">Supports JPG, PNG, PDF (Max 5MB)</p>
-
-                                <input
-                                    type="file"
-                                    accept="image/*,.pdf"
-                                    onChange={(e) => {
-                                        const file = e.target.files[0];
-                                        if (file) {
-                                            if (file.size > 5 * 1024 * 1024) {
-                                                alert("File size must be less than 5MB");
-                                                return;
-                                            }
-                                            handleFileUpload(file);
-                                        }
-                                    }}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                />
-                            </div>
-
-                            {/* Progress Bar */}
-                            {uploading && (
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-neutral-400">Uploading...</span>
-                                        <span className="text-blue-400">{progress}%</span>
-                                    </div>
-                                    <div className="w-full bg-neutral-800 rounded-full h-2 overflow-hidden">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-300 ease-out"
-                                            style={{ width: `${progress}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="border border-green-500/30 rounded-lg bg-green-500/5 p-4 flex items-center gap-4 max-sm:gap-2">
-                            <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                                <svg className="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-green-400 font-medium max-sm:text-[14px]">Upload Successful</p>
-                                <p className="text-green-400/70 text-sm max-sm:text-[8px]">ID proof has been uploaded</p>
-                            </div>
-                            <button
-                                onClick={handleDeleteImage}
-                                className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg text-sm font-medium transition-colors"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    )}
-                    {errors[`guest-${activeTab}-document`] && (
-                        <p className="text-red-400 text-sm mt-2">{errors[`guest-${activeTab}-document`]}</p>
                     )}
                 </div>
 
