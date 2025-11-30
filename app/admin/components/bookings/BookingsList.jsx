@@ -24,6 +24,7 @@ const BookingsList = ({
             confirmed: "bg-green-500/20 text-green-400",
             cancelled: "bg-red-500/20 text-red-400",
             expired: "bg-gray-500/20 text-gray-400",
+            ongoing: "bg-blue-500/20 text-blue-400",
         };
         return (
             <span

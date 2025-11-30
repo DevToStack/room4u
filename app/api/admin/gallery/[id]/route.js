@@ -1,6 +1,8 @@
 import pool from "@/lib/db";
 import { NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
+import { verifyAdmin } from "@/lib/adminAuth";
+import { parseCookies } from "@/lib/cookies"
 
 // ─── Cloudinary Config ───────────────────────────────────────────────
 cloudinary.config({
@@ -15,6 +17,20 @@ cloudinary.config({
 export async function DELETE(request, { params }) {
     try {
         const id = parseInt(params.id, 10);
+        const cookieHeader = req.headers.get('cookie');
+        const cookies = parseCookies(cookieHeader);
+        const token = cookies.token;
+
+        const adminCheck = verifyAdmin(token);
+        if (adminCheck.error)
+            return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+
+        const role = (await adminCheck).decoded.role;
+
+        if(role!=='admin')
+            return NextResponse.json({ error: "Access Denied" }, { status: 401 });
+
+
         if (isNaN(id)) {
             return NextResponse.json({ error: "Invalid image ID" }, { status: 400 });
         }

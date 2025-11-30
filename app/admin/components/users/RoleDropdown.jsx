@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUser, faUserShield, faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { faUser, faUserShield, faChevronDown,faUserTie } from '@fortawesome/free-solid-svg-icons';
 
 const roleOptions = [
     { label: "Guest", value: "guest", icon: faUser },
     { label: "Admin", value: "admin", icon: faUserShield },
+    { label: "Staff", value: "staff", icon: faUserTie },
 ];
 
 export default function RoleDropdown({ value, onChange }) {

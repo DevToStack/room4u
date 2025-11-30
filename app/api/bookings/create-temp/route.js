@@ -89,10 +89,7 @@ export async function POST(request) {
 
     } catch (error) {
         console.error({
-            context: 'create-temp booking API',
-            id: bookingResult?.bookingId,
-            message: error.message,
-            stack: error.stack
+            error
         });
 
         return NextResponse.json(

@@ -104,24 +104,7 @@ export async function POST(req) {
                  VALUES (?, ?, ?)`,
                 [paymentData.customer_name, "Payment Received", "A new payment has been made. For details, please check your admin dashboard."]
             );
-            // Send email to admin
-            await emailService.sendAdminPaymentEmail({
-                customerName: paymentData.customer_name,
-                customerEmail: paymentData.customer_email,
-                apartmentName: paymentData.apartment_name,
-                checkIn: formatDate(paymentData.check_in),
-                checkOut: formatDate(paymentData.check_out),
-                totalPrice: paymentData.total_price,
-                paymentId: paymentData.razorpay_payment_id,
-                paymentDate: new Date(paymentData.payment_date).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                }),
-                adminEmails,
-            });
+            
 
             return Response.json({
                 success: true,

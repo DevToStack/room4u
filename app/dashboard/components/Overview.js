@@ -274,6 +274,16 @@ export default function Overview() {
                                     <div className="absolute -top-4 right-4 w-10 h-10 rounded-full bg-teal-500/10 flex items-center justify-center border border-teal-500/30 backdrop-blur-sm">
                                         <span className="text-teal-300 text-xs font-semibold">#{b.id}</span>
                                     </div>
+                                    {b.paymentStatus === 'paid' && (
+                                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 h-10 rounded-full bg-teal-500/10 flex items-center justify-center border border-teal-500/30 backdrop-blur-sm">
+                                            <span className="text-teal-300 text-xs font-semibold">Completed</span>
+                                        </div>)
+                                    }
+                                    {b.paymentStatus !== 'paid' && (
+                                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-3 h-10 rounded-full bg-red-500/10 flex items-center justify-center border border-red-500/30 backdrop-blur-sm">
+                                            <span className="text-red-300 text-xs font-semibold">Incomplete</span>
+                                        </div>
+                                    )}
 
                                     {/* Apartment + Status */}
                                     <div className="flex justify-between items-center">

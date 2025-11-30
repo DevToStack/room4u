@@ -5,7 +5,7 @@ import ReviewSection from "@/components/Review";
 import Footer from "@/app/components/Footer";
 import Image from "next/image";
 import Script from "next/script";
-
+import Head from "next/head";
 // ⚡ Dynamic imports with proper fallbacks
 const GallerySection = dynamic(() => import("@/components/galery1"), {
   loading: () => (
@@ -65,23 +65,23 @@ function getLockedDates(bookings) {
   return locked;
 }
 
-// ✅ Fetch booked dates from backend
-async function getBookedDates(apartmentId) {
-  try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booked-dates`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ apartment_id: apartmentId }),
-      next: { revalidate: 60 },
-    });
+// // ✅ Fetch booked dates from backend
+// async function getBookedDates(apartmentId) {
+//   try {
+//     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/booked-dates`, {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({ apartment_id: apartmentId }),
+//       next: { revalidate: 60 },
+//     });
 
-    if (!res.ok) throw new Error("Failed to fetch booked dates");
-    return await res.json();
-  } catch (error) {
-    console.error("Error fetching booked dates:", error);
-    return { bookings: [] };
-  }
-}
+//     if (!res.ok) throw new Error("Failed to fetch booked dates");
+//     return await res.json();
+//   } catch (error) {
+//     console.error("Error fetching booked dates:", error);
+//     return { bookings: [] };
+//   }
+// }
 
 // ✅ Fetch apartment details from API
 async function getApartmentDetails(id) {
@@ -106,26 +106,16 @@ export default async function BookingPage({ params }) {
   if (isNaN(numericId)) return notFound();
 
   // ⚡ Fetch in parallel for faster SSR
-  const [apartment, bookedData] = await Promise.all([
+  const [apartment] = await Promise.all([
     getApartmentDetails(numericId),
-    getBookedDates(numericId),
   ]);
 
   if (!apartment || !apartment.id) return notFound();
-
-  const lockedDates = getLockedDates(bookedData.bookings || []);
 
   // Disable past dates
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const disabledRanges = [{ from: new Date("1970-01-01"), to: today }];
-
-  // Locked booked ranges
-  const lockedRanges = lockedDates.map((d) => {
-    const date = new Date(d);
-    date.setHours(0, 0, 0, 0);
-    return { from: date, to: date };
-  });
 
   const DAILY_RATE = apartment?.price;
   const cleaningFee = 500;
@@ -133,11 +123,17 @@ export default async function BookingPage({ params }) {
   return (
     <div className="min-h-screen min-w-screen text-white bg-neutral-950">
       {/* Preload largest image to improve LCP */}
-      {apartment.gallery?.[0] && (
-        <link rel="preload" as="image" href={apartment.gallery[0]} />
-      )}
+      <Head>
+        {apartment?.gallery?.[0] && (
+          <link
+            rel="preload"
+            as="image"
+            href={apartment.gallery[0]}
+          />
+        )}
+      </Head>
 
-      <Header navItems={["Overview", "Gallery", "Features"]} authButtons={true} />
+      <Header authButtons={true} />
 
       <main className="w-full min-w-screen mx-auto">
         <HeaderSection plan={apartment} />
@@ -166,7 +162,6 @@ export default async function BookingPage({ params }) {
               <BookingForm
                 apartmentId={id}
                 disabledRanges={disabledRanges}
-                lockedRanges={lockedRanges}
                 dailyRate={DAILY_RATE}
                 cleaningFee={cleaningFee}
               />
@@ -181,9 +176,7 @@ export default async function BookingPage({ params }) {
 
         <Footer />
       </main>
-
-      {/* Lazy-load any non-critical scripts */}
-      <Script src="/analytics.js" strategy="lazyOnload" />
+      
     </div>
   );
 }

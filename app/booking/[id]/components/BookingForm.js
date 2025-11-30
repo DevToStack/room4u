@@ -8,6 +8,9 @@ import { Loader2, ShieldCheck } from "lucide-react";
 import VerificationModal from "./VerificationModal";
 import FeedbackModal from "./FeedbackModal";
 import GuestDetailsForm from "./GuestDetailsForm";
+import GuestDetailsModal from "./GuestDetailsModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 
 function formatForMySQL(date) {
     const pad = (n) => n.toString().padStart(2, "0");
@@ -31,7 +34,7 @@ function calculateNights(checkin, checkout) {
 
 function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 200, cleaningFee = 500 }) {
     const router = useRouter();
-    const [formData, setFormData] = useState({ checkin: "", checkout: "", guests: 2 });
+    const [formData, setFormData] = useState({ checkin: "", checkout: "", guests: 1 });
     const [formError, setFormError] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
@@ -42,6 +45,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
     const [loadCallender,setLoadCallender] = useState(false);
     const [id, setId] = useState(null);
     const [guestsInfo, setGuestsInfo] = useState([]);
+    const [showGuestModal, setShowGuestModal] = useState(false);
 
 
     // Fixed check-in and check-out times
@@ -140,6 +144,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                 setFormError(bookingData.error || "Apartment not available.");
                 return;
             }
+
             setId(bookingData.id);
             setShowVerificationModal(false);
             setShowFeedbackModal(true);
@@ -201,18 +206,30 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
 
                         {/* Guests */}
                         <div className="flex flex-col justify-between text-sm space-y-2">
-                            <span className="text-gray-400">Guests</span>
-                            <select
-                                value={formData.guests || 2}
-                                onChange={(e) => setFormData({ ...formData, guests: parseInt(e.target.value) })}
-                                className="bg-neutral-800 text-white p-1 rounded border border-white/10"
-                            >
-                                {[1, 2, 3, 4].map(n => <option key={n} value={n}>{n} {n === 1 ? 'Guest' : 'Guests'}</option>)}
-                            </select>
-                            <GuestDetailsForm
-                                guestCount={formData.guests}
-                                onChange={(data) => setGuestsInfo(data)}
+                            <GuestList
+                                guests={guestsInfo}
+                                onEdit={(index) => {
+                                    setFormData({ ...formData, editIndex: index });
+                                    setShowGuestModal(true);
+                                }}                                
+                                onDelete={(index) => {
+                                    const updated = [...guestsInfo];
+                                    updated.splice(index, 1);
+                                    setGuestsInfo(updated);
+
+                                    // Update guest count
+                                    setFormData({ ...formData, guests: updated.length });
+                                }}
+                                
                             />
+
+                            <button
+                                type="button"
+                                onClick={() => setShowGuestModal(true)}
+                                className="mt-3 w-full bg-neutral-800 border border-white/10 p-3 rounded-lg text-gray-300 hover:bg-neutral-700 transition"
+                            >
+                                + Add Guest
+                            </button>
 
                         </div>
 
@@ -304,6 +321,36 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                             )}
                         </button>
                     </form>
+
+                    <GuestDetailsModal
+                        isOpen={showGuestModal}
+                        guestCount={formData.guests}
+                        initialData={
+                            formData.editIndex !== undefined
+                                ? guestsInfo[formData.editIndex]
+                                : null
+                        }
+                        onClose={() => {
+                            setShowGuestModal(false);
+                            setFormData({ ...formData, editIndex: undefined });
+                        }}
+                        onSave={(data) => {
+                            if (formData.editIndex !== undefined) {
+                                const updated = [...guestsInfo];
+                                updated[formData.editIndex] = data;
+                                setGuestsInfo(updated);
+                                setFormData({ ...formData, guests: updated.length, editIndex: undefined });
+                            } else {
+                                const updated = [...guestsInfo, data];
+                                setGuestsInfo(updated);
+                                setFormData({ ...formData, guests: updated.length });
+                            }
+                            setShowGuestModal(false);
+                        }}
+                        
+                    />
+
+
                 </div>
             </div>
 
@@ -324,6 +371,51 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                 bookingId={id}
             /> */}
         </section>
+    );
+}
+
+function GuestList({ guests, onEdit, onDelete }) {
+    return (
+        <div className="space-y-3">
+            <span className="text-gray-400 text-sm mb-2">Guests</span>
+
+            {guests.length === 0 && (
+                <div className="text-gray-500 text-sm">No guest details added.</div>
+            )}
+
+            <div className="space-y-2">
+                {guests.map((guest, index) => (
+                    <div
+                        key={index}
+                        className="flex items-center justify-between bg-neutral-800 border border-white/10 rounded-lg p-3"
+                    >
+                        <div className="text-white">
+                            {guest.name || `Guest ${index + 1}`}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            {/* Edit */}
+                            <button
+                            type="button"
+                                onClick={() => onEdit(index)}
+                                className="text-teal-400 hover:text-teal-300"
+                            >
+                                <FontAwesomeIcon icon={faPen} className="w-4 h-4" />
+                            </button>
+
+                            {/* Delete */}
+                            <button
+                            type="button"
+                                onClick={() => onDelete(index)}
+                                className="text-red-400 hover:text-red-300"
+                            >
+                                <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
 

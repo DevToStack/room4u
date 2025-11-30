@@ -25,7 +25,7 @@ export async function PUT(request, { params }) {
         if (adminCheck.error) {
             return NextResponse.json({ error: adminCheck.error }, { status: 401 });
         }
-        const { id } = params; // ✅ correct
+        const { id } = await params; // ✅ correct
         const { status, admin_notes } = await request.json();
         // Validate status
         const validStatuses = ['pending', 'confirmed', 'cancelled', 'expired', "ongoing"];

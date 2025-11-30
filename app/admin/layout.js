@@ -6,7 +6,8 @@ import {
     faHome, faUsers, faCalendar, faCreditCard,
     faBars, faXmark, faRightFromBracket, faBuilding,
     faChevronDown, faChevronUp, faImages,
-    faEnvelope,faMessage
+    faEnvelope,faMessage,
+    faBell
 } from '@fortawesome/free-solid-svg-icons';
 
 const navItems = [
@@ -16,7 +17,7 @@ const navItems = [
     { id: 'bookings', label: 'Bookings', icon: faCalendar, path: '/admin/bookings' },
     { id: 'payments', label: 'Payments', icon: faCreditCard, path: '/admin/payments' },
     { id: 'gallery', label: 'Gallery', icon: faImages, path: '/admin/gallery' },
-    { id: 'inbox', label: 'Inbox', icon: faEnvelope, path: '/admin/inbox' },
+    { id: 'notifications', label: 'Notificatins', icon: faBell, path: '/admin/notifications' },
     { id: 'reviews', label: 'Reviews & Feedbacks', icon: faMessage, path: '/admin/feedback-reviews' },
 ];
 

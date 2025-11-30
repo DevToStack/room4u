@@ -64,7 +64,6 @@ export async function GET(req) {
         if (adminCheck.error) {
             return NextResponse.json({ error: adminCheck.error }, { status: 401 });
         }
-
         const url = new URL(req.url);
         const id = url.searchParams.get("id");
 
@@ -157,6 +156,11 @@ export async function POST(req) {
         const adminCheck = verifyAdmin(token);
         if (adminCheck.error)
             return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+
+        const role = (await adminCheck).decoded.role;
+
+        if(role!=='admin')
+            return NextResponse.json({ error: "Unauthorized user" }, { status: 401 });
 
         const body = await req.json();
         const {
@@ -261,6 +265,11 @@ export async function PUT(req) {
         const adminCheck = verifyAdmin(token);
         if (adminCheck.error)
             return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+
+        const role = (await adminCheck).decoded.role;
+
+        if (role !== 'admin')
+            return NextResponse.json({ error: "Unauthorized user" }, { status: 401 });
 
         const body = await req.json();
         const {
@@ -376,6 +385,11 @@ export async function DELETE(req) {
         const adminCheck = verifyAdmin(token);
         if (adminCheck.error)
             return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+
+        const role = (await adminCheck).decoded.role;
+
+        if (role !== 'admin')
+            return NextResponse.json({ error: "Unauthorized user" }, { status: 401 });
 
         const url = new URL(req.url);
         const id = url.searchParams.get('id');

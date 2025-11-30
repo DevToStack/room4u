@@ -164,7 +164,8 @@ export default function AdminDashboardStats() {
         pending: "#fbbf24",
         confirmed: "#4ade80",
         cancelled: "#f87171",
-        ongoing:"#04f0ff"
+        ongoing:"#04f0ff",
+        expired: "#4a4d4aff"
     };
 
     // Prepare data for pie chart
@@ -195,11 +196,19 @@ export default function AdminDashboardStats() {
         },
         {
             name: "Ongoing Bookings",
-            value: dashboardData.totals.cancelledBookings,
+            value: dashboardData.totals.ongoingBookings,
             percentage: dashboardData.totals.totalBookings > 0
-                ? Math.round((dashboardData.totals.cancelledBookings / dashboardData.totals.totalBookings) * 100)
+                ? Math.round((dashboardData.totals.ongoingBookings / dashboardData.totals.totalBookings) * 100)
                 : 0,
             color: PIE_CHART_COLORS.ongoing
+        },
+        {
+            name: "Expired Bookings",
+            value: dashboardData.totals.expiredBookings,
+            percentage: dashboardData.totals.totalBookings > 0
+                ? Math.round((dashboardData.totals.expiredBookings / dashboardData.totals.totalBookings) * 100)
+                : 0,
+            color: PIE_CHART_COLORS.expired
         }
     ];
     const formatNumber = (num) =>
@@ -296,31 +305,6 @@ export default function AdminDashboardStats() {
         { key: "bookings", label: "Bookings", color: "#60a5fa" },
         { key: "payments", label: "Payments", color: "#fbbf24" },
         { key: "revenue", label: "Revenue (₹)", color: "#f87171" },
-    ];
-
-    // Booking status cards data
-    const bookingStats = [
-        {
-            key: "pending",
-            label: "Pending Bookings",
-            value: dashboardData.totals.pendingBookings,
-            color: "#fbbf24",
-            icon: faClock
-        },
-        {
-            key: "confirmed",
-            label: "Confirmed Bookings",
-            value: dashboardData.totals.confirmedBookings,
-            color: "#4ade80",
-            icon: faUserCheck
-        },
-        {
-            key: "cancelled",
-            label: "Cancelled Bookings",
-            value: dashboardData.totals.cancelledBookings,
-            color: "#f87171",
-            icon: faCalendarCheck
-        }
     ];
 
     // Render different chart types based on configuration
@@ -487,9 +471,11 @@ export default function AdminDashboardStats() {
 
     if (loading) {
         return (
-            <section className="h-screen flex items-center justify-center bg-neutral-900">
-                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-neutral-400"></div>
-            </section>
+            <div className="h-screen text-white p-6 flex items-center justify-center"
+                style={{ maxHeight: 'calc(100vh - 96px)' }}
+            >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            </div>
         );
     }
 
@@ -524,7 +510,7 @@ export default function AdminDashboardStats() {
                     transition: all 0.3s ease;
                 }
                 .summary-card:hover {
-                    background: rgb(51 51 51);
+                    background: rgb(41 41 41);
                     border-color: rgb(82 82 82);
                     transform: translateY(-1px);
                 }
@@ -560,9 +546,9 @@ export default function AdminDashboardStats() {
             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
                 {/* Pie Chart Card with Half-Circle Design */}
                 <div className="chart-card flex flex-col p-6 rounded-xl shadow-lg xl:col-span-1 lg:col-span-1">
-                    <h2 className="text-xl font-bold text-white mb-6">Booking Status Distribution</h2>
+                    <h2 className="text-xl font-bold text-white mb-2">Booking Status Distribution</h2>
                     <div className="flex flex-col items-center">
-                        <div className="w-full h-48 mb-6 relative">
+                        <div className="w-full h-48 mb-2 relative">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -607,7 +593,7 @@ export default function AdminDashboardStats() {
                                 <div
                                     key={index}
                                     className={`flex items-center justify-between p-3 rounded-lg bg-neutral-800/50 border border-neutral-700 
-                ${index <= 1 ? "max-sm:col-span-1 col-span-2" : "col-span-1"}
+                ${index >= 2 && index <= 3 ? "col-span-1 " : "max-sm:col-span-1 col-span-2"}
             `}
                                 >
                                     <div className="flex items-center gap-3">
@@ -654,6 +640,15 @@ export default function AdminDashboardStats() {
                                     }`}
                             >
                                 Upcoming Check-ins
+                            </button>
+                            <button
+                                onClick={() => setActiveBookingTab('ongoing')}
+                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeBookingTab === 'ongoing'
+                                    ? 'bg-neutral-700 text-white shadow'
+                                    : 'text-neutral-400 hover:text-white'
+                                    }`}
+                            >
+                                Ongoing
                             </button>
                         </div>
                     </div>
@@ -779,6 +774,63 @@ export default function AdminDashboardStats() {
                                 <div className="col-span-2 flex flex-col items-center justify-center py-8 text-neutral-500">
                                     <FontAwesomeIcon icon={faCalendarCheck} className="text-4xl mb-2 opacity-50" />
                                     <p>No upcoming check-ins found</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                    {/* Upcoming Check-ins Tab */}
+                    {activeBookingTab === 'ongoing' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {dashboardData.bookings.ongoing?.slice(0, 4).map((booking) => (
+                                <div key={booking.id} className="summary-card p-4 rounded-lg border border-neutral-700 hover:border-neutral-100 transition-colors">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <div>
+                                            <p className="font-medium text-white text-sm">
+                                                {booking.bookingReference || `#${booking.id}`}
+                                            </p>
+                                            <p className="text-xs text-neutral-400">
+                                                {booking.customer?.name || 'N/A'}
+                                            </p>
+                                        </div>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className={`px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400`}>
+                                                {booking.status}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-neutral-400">Check-in</span>
+                                            <span className="text-sm text-white font-medium">
+                                                {new Date(booking.checkInDate).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-neutral-400">Check-out</span>
+                                            <span className="text-sm text-white">
+                                                {new Date(booking.checkOutDate).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-neutral-400">Nights</span>
+                                            <span className="text-sm text-white">
+                                                {Math.ceil((new Date(booking.checkOutDate) - new Date(booking.checkInDate)) / (1000 * 60 * 60 * 24))} nights
+                                            </span>
+                                        </div>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-xs text-neutral-400">Amount</span>
+                                            <span className="text-sm font-medium text-white">
+                                                ₹{booking.totalAmount?.toLocaleString() || '0'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                            {(!dashboardData.bookings.ongoing || dashboardData.bookings.ongoing.length === 0) && (
+                                <div className="col-span-2 flex flex-col items-center justify-center py-8 text-neutral-500">
+                                    <FontAwesomeIcon icon={faCalendarCheck} className="text-4xl mb-2 opacity-50" />
+                                    <p>No Ongoing bookings found</p>
                                 </div>
                             )}
                         </div>

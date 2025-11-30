@@ -114,7 +114,9 @@ export async function GET(req) {
             revenueRow,
             pendingRow,
             confirmedRow,
-            cancelledRow
+            cancelledRow,
+            ongoingRow,
+            expiredRow,
         ] = await Promise.all([
             query("SELECT COUNT(*) AS totalUsers FROM users"),
             query("SELECT COUNT(*) AS totalBookings FROM bookings"),
@@ -122,7 +124,9 @@ export async function GET(req) {
             query("SELECT IFNULL(SUM(amount),0) AS totalRevenue FROM payments WHERE status IN ('paid')"),
             query("SELECT COUNT(*) AS pendingBookings FROM bookings WHERE status = 'pending'"),
             query("SELECT COUNT(*) AS confirmedBookings FROM bookings WHERE status = 'confirmed'"),
-            query("SELECT COUNT(*) AS cancelledBookings FROM bookings WHERE status = 'cancelled'")
+            query("SELECT COUNT(*) AS cancelledBookings FROM bookings WHERE status = 'cancelled'"),
+            query("SELECT COUNT(*) AS ongoingBookings FROM bookings WHERE status = 'ongoing'"),
+            query("SELECT COUNT(*) AS expiredBookings FROM bookings WHERE status = 'expired'")
         ]);
 
         // ---- Totals Object ----
@@ -134,6 +138,8 @@ export async function GET(req) {
             pendingBookings: Number(pendingRow[0].pendingBookings),
             confirmedBookings: Number(confirmedRow[0].confirmedBookings),
             cancelledBookings: Number(cancelledRow[0].cancelledBookings),
+            ongoingBookings: Number(ongoingRow[0].ongoingBookings),
+            expiredBookings: Number(expiredRow[0].expiredBookings),
         };
 
         // ---- Upcoming Bookings (7 days) ----
@@ -150,7 +156,7 @@ export async function GET(req) {
             FROM bookings b
             LEFT JOIN users u ON b.user_id = u.id
             WHERE b.start_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-            AND b.status IN ('pending','confirmed')
+            AND b.status = 'confirmed'
             ORDER BY b.start_date ASC
             LIMIT 20
         `);
@@ -167,7 +173,37 @@ export async function GET(req) {
                 email: b.customer_email
             }
         }));
+        // ---- Ongoing Bookings (latest 10) ----
+        const ongoing = await query(`
+            SELECT 
+                b.id,
+                b.start_date,
+                b.end_date,
+                b.total_amount,
+                b.status,
+                b.created_at,
+                u.name AS customer_name,
+                u.email AS customer_email
+            FROM bookings b
+            LEFT JOIN users u ON b.user_id = u.id
+            WHERE b.status = 'ongoing'
+            ORDER BY b.start_date ASC
+            LIMIT 20
+        `);
 
+        const ongoingBookings = ongoing.map(b => ({
+            id: b.id,
+            checkInDate: b.start_date,
+            checkOutDate: b.end_date,
+            totalAmount: Number(b.total_amount),
+            status: b.status,
+            createdAt: b.created_at,
+            customer: {
+                name: b.customer_name,
+                email: b.customer_email
+            }
+        }));
+        
         // ---- Recent Bookings (latest 10) ----
         const recent = await query(`
             SELECT 
@@ -252,10 +288,12 @@ export async function GET(req) {
                     pending: totals.pendingBookings,
                     confirmed: totals.confirmedBookings,
                     cancelled: totals.cancelledBookings,
+                    expired: totals.expiredBookings,
                     total: totals.totalBookings,
                 },
                 upcoming: upcomingBookings,
                 recent: recentBookings,
+                ongoing:ongoingBookings,
                 statusDistribution
             }
         });

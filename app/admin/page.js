@@ -16,14 +16,14 @@ export default function OverviewPage() {
                 });
 
                 if (!res.ok) {
-                    router.push('/signin');
+                    router.push('/');
                     return;
                 }
                 const data = await res.json();
                 setDashboardData(data);
             } catch (err) {
                 console.error('Admin dashboard fetch error:', err);
-                router.push('/signin');
+                router.push('/');
             }
         };
 

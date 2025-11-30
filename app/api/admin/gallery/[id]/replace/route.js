@@ -1,10 +1,25 @@
 import { NextResponse } from 'next/server';
 import { query } from '@/lib/mysql-wrapper';
 import cloudinary from '@/lib/cloudinary';
+import { parseCookies } from '@/lib/cookies';
 
 export async function POST(request, { params }) {
     try {
         const { id } = params;
+
+        const cookieHeader = req.headers.get('cookie');
+        const cookies = parseCookies(cookieHeader);
+        const token = cookies.token;
+        
+        const adminCheck = verifyAdmin(token);
+        if (adminCheck.error)
+            return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+        
+        const role = (await adminCheck).decoded.role;
+        
+        if(role!=='admin')
+            return NextResponse.json({ error: "Unauthorized user" }, { status: 401 });
+        
         const [existingImage] = await query(
             'SELECT * FROM apartment_gallery WHERE id = ?',
             [id]

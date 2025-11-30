@@ -25,12 +25,12 @@ export async function middleware(req) {
             });
 
             // For admin routes, check if user has admin role
-            if ((path.startsWith("/admin") || path.startsWith("/api/admin")) && payload.role !== "admin") {
+            if ((path.startsWith("/admin") || path.startsWith("/api/admin")) && payload.role === "guest") {
                 return NextResponse.rewrite(new URL("/404", req.url));
             }
 
             // For dashboard routes, check if user has either admin or guest role
-            if (path.startsWith("/dashboard") && !["admin", "guest"].includes(payload.role)) {
+            if (path.startsWith("/dashboard") && !["admin", "guest","staff"].includes(payload.role)) {
                 return NextResponse.rewrite(new URL("/404", req.url));
             }
 

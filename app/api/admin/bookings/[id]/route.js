@@ -87,6 +87,8 @@ export async function DELETE(request, { params }) {
         if (adminCheck.error) {
             return NextResponse.json({ error: adminCheck.error }, { status: 401 });
         }
+        if((await adminCheck).decoded.role != "admin")
+            return NextResponse.json({ error: "Access Denied" }, { status: 401 });
         // Check if booking exists
         const bookings = await query('SELECT * FROM bookings WHERE id = ?', [id]);
 

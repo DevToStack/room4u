@@ -27,7 +27,10 @@ export default function UserReviews() {
     useEffect(() => {
         const fetchUserReviews = async () => {
             try {
-                const res = await fetch("/api/reviews");
+                const res = await fetch("/api/reviews", {
+                    method: "GET",
+                    credentials: "include",  // VERY IMPORTANT so cookies (token) go with request
+                });
                 const data = await res.json();
                 if (data.reviews) {
                     setReviews(data.reviews);
@@ -135,8 +138,10 @@ export default function UserReviews() {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <div className="h-screen text-white p-6 flex items-center justify-center"
+                style={{ maxHeight: 'calc(100vh - 96px)' }}
+            >
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
             </div>
         );
     }
@@ -153,6 +158,7 @@ export default function UserReviews() {
 
     return (
         <div className="space-y-6">
+            <h1 className="text-2xl font-bold text-white mb-4">Reviews</h1>
             {/* Search and Filter Bar */}
             <div className="bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm">
                 <div className="flex flex-col lg:flex-row gap-4">

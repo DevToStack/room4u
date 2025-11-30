@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSyncAlt, faFilter, faSearch, faTimes, faChevronDown, faChevronUp, faShieldAlt, faCalendar, faSort, faUsers, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faSyncAlt, faFilter,faUserTie, faSearch, faTimes, faChevronDown, faChevronUp, faShieldAlt, faCalendar, faSort, faUsers, faTrash } from '@fortawesome/free-solid-svg-icons';
 import CompactStatCard from './CompactStatCard';
 import UserDetailsModal from './UserDetailsModal';
 import EditUserModal from './EditUserModal';
@@ -407,6 +407,7 @@ export default function UsersTable() {
                                     <option value="all">All Roles</option>
                                     <option value="guest">Guest</option>
                                     <option value="admin">Admin</option>
+                                    <option value="staff">Staff</option>
                                 </select>
                             </div>
 
@@ -627,17 +628,27 @@ function UserTableRow({ user, isSelected, onSelect, onViewDetails, onEdit, onDel
             </td>
             <td className="px-4 py-3">
                 <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${user.role === "admin"
-                        ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
-                        : "bg-gray-500/20 text-gray-400 border border-gray-500/30"
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+    ${user.role === "admin"
+                            ? "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                            : user.role === "staff"
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                : "bg-gray-500/20 text-gray-400 border border-gray-500/30"
                         }`}
                 >
                     <FontAwesomeIcon
-                        icon={user.role === "admin" ? faUserShield : faUser}
+                        icon={
+                            user.role === "admin"
+                                ? faUserShield
+                                : user.role === "staff"
+                                    ? faUserTie        // Best icon for staff
+                                    : faUser
+                        }
                         className="w-3 h-3 mr-1"
                     />
                     {user.role}
                 </span>
+
             </td>
             <td className="px-4 py-3 text-gray-300">
                 <div className="flex items-center gap-1">

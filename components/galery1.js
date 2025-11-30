@@ -102,7 +102,7 @@ const GallerySection = ({ images = [], initialIndex = 0, groupSize = 4 }) => {
                                     height={MAIN_H}
                                     className="object-cover w-full h-full cursor-zoom-in"
                                     priority={currentIndex === 0}
-                                    onLoadingComplete={() => setMainImageLoaded(true)}
+                                    onLoad={() => setMainImageLoaded(true)}
                                     quality={75}
                                 />
                             </div>
