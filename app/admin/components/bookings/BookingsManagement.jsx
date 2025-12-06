@@ -6,7 +6,6 @@ import BookingDetails from './BookingDetails';
 import BookingsStats from './BookingsStats';
 import BookingFilters from './BookingFilters';
 import Toast from '@/components/toast';
-import { set } from 'zod';
 
 const BookingsManagement = () => {
     const [bookings, setBookings] = useState([]);
@@ -15,6 +14,7 @@ const BookingsManagement = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [openFilters, setFiltersOpen] = useState(false);
+
     const [filters, setFilters] = useState({
         page: 1,
         limit: 10,
@@ -23,20 +23,23 @@ const BookingsManagement = () => {
         start_date: '',
         end_date: '',
     });
+
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 10,
         total: 0,
         pages: 0,
     });
+
     const [view, setView] = useState('list'); // 'list', 'details', 'stats'
-    const handleOpenFilters = () => {
-        setFiltersOpen(!openFilters);
-    }
-    // Fetch bookings
+
+    const handleOpenFilters = () => setFiltersOpen(!openFilters);
+
+    // 🔵 Fetch bookings normally only on filter / page change
     const fetchBookings = async () => {
         try {
             setLoading(true);
+
             const queryParams = new URLSearchParams();
             Object.entries(filters).forEach(([key, value]) => {
                 if (value) queryParams.append(key, value);
@@ -53,7 +56,6 @@ const BookingsManagement = () => {
             }
         } catch (err) {
             setError('Error fetching bookings');
-            console.error('Error:', err);
         } finally {
             setLoading(false);
         }
@@ -79,9 +81,10 @@ const BookingsManagement = () => {
     const handleBackToList = () => {
         setView('list');
         setSelectedBooking(null);
-        fetchBookings();
+        fetchBookings(); // only when returning from details
     };
 
+    // 🔥 FIXED: Update without full reload
     const handleStatusUpdate = async (bookingId, newStatus, adminNotes = '') => {
         try {
             const response = await fetch(`/api/admin/bookings/${bookingId}/status`, {
@@ -89,38 +92,57 @@ const BookingsManagement = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: newStatus, admin_notes: adminNotes }),
             });
+
             const result = await response.json();
 
-            if (result.success) {
-                setSuccess(`Booking ${newStatus} successfully!`);
-                if (view === 'details' && selectedBooking?.id === bookingId) {
-                    setSelectedBooking(result.data);
-                }
-                fetchBookings();
-            } else {
-                setError(result.message || 'Failed to update booking status');
+            if (!result.success) {
+                return setError(result.message || 'Failed to update booking status');
             }
+
+            const updated = result.data;
+
+            setSuccess(`Booking ${newStatus} successfully!`);
+
+            // 🔵 Update only the modified booking in the list
+            setBookings(prev =>
+                prev.map(b => (b.id === bookingId ? { ...b, ...updated } : b))
+            );
+
+            // 🔵 If in details view, update selectedBooking too
+            if (view === 'details' && selectedBooking?.id === bookingId) {
+                setSelectedBooking(updated);
+            }
+
         } catch (err) {
             setError('Error updating booking status');
-            console.error('Error:', err);
         }
     };
 
+    // 🔥 FIXED: Delete without full reload
     const handleDeleteBooking = async (bookingId) => {
         try {
-            const response = await fetch(`/api/admin/bookings/${bookingId}`, { method: 'DELETE' });
+            const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+                method: 'DELETE'
+            });
+
             const result = await response.json();
 
-            if (result.success) {
-                setSuccess('Booking deleted successfully!');
-                fetchBookings();
-                if (view === 'details' && selectedBooking?.id === bookingId) handleBackToList();
-            } else {
-                setError(result.message || 'Failed to delete booking');
+            if (!result.success) {
+                return setError(result.message || 'Failed to delete booking');
             }
+
+            setSuccess('Booking deleted successfully!');
+
+            // 🔵 Remove only the deleted booking
+            setBookings(prev => prev.filter(b => b.id !== bookingId));
+
+            // If deleted from details view → go back
+            if (view === 'details' && selectedBooking?.id === bookingId) {
+                handleBackToList();
+            }
+
         } catch (err) {
             setError('Error deleting booking');
-            console.error('Error:', err);
         }
     };
 
@@ -137,25 +159,28 @@ const BookingsManagement = () => {
     return (
         <div className="h-full p-4 sm:p-6 max-sm:pb-16 bg-neutral-900 text-neutral-200">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+
                 <div className="flex space-x-2">
                     <button
                         onClick={() => setView('list')}
                         className={`px-4 py-2 rounded-lg transition ${view === 'list'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
                             }`}
                     >
                         All Bookings
                     </button>
+
                     <button
                         onClick={() => setView('stats')}
                         className={`px-4 py-2 rounded-lg transition ${view === 'stats'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
                             }`}
                     >
                         Statistics
                     </button>
+
                     {view === 'list' && (
                         <button
                             onClick={() => handleOpenFilters()}
@@ -167,20 +192,23 @@ const BookingsManagement = () => {
                             Filters
                         </button>
                     )}
-                    
                 </div>
             </div>
 
             {error && <Toast message={error} onClose={() => setError('')} />}
-            {success && <Toast message={success} type='success' onClose={() => setSuccess('')} />}
+            {success && <Toast message={success} type="success" onClose={() => setSuccess('')} />}
+
             {view === 'stats' && <BookingsStats onBack={() => setView('list')} />}
 
             {view === 'list' && (
                 <>
-                    {
-                        openFilters && (<BookingFilters filters={filters} onFilterChange={handleFilterChange} />
+                    {openFilters && (
+                        <BookingFilters
+                            filters={filters}
+                            onFilterChange={handleFilterChange}
+                        />
                     )}
-                    
+
                     <BookingsList
                         bookings={bookings}
                         loading={loading}

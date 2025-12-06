@@ -11,8 +11,8 @@ export default function Footer() {
             <div className="absolute top-0 left-0 w-40 h-40 bg-teal-400/10 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2"></div>
             <div className="absolute bottom-0 right-0 w-40 h-40 bg-teal-400/10 rounded-full blur-3xl translate-x-1/2 translate-y-1/2"></div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 relative z-10">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-10">
+            <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 py-2 relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-6 gap-8 mt-10">
                     {/* Company Info */}
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center mb-4">
@@ -81,8 +81,12 @@ export default function Footer() {
                         </ul>
 
                     </div>
+                    <div className='w-full h-full flex flex-col col-span-2 justify-left gap-3'>
+                        <p>Feedback</p>
+                        <textarea className='bg-white h-[100px]'></textarea>
+                        <button className='bg-green-400 rounded-md p-3 w-[100px]'>Submit</button>
+                    </div>
                 </div>
-
                 <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
                     <p>&copy; {new Date().getFullYear()} Rooms4U. All rights reserved.</p>
                 </div>

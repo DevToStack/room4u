@@ -186,7 +186,7 @@ return (
     <div className="min-h-screen bg-neutral-900">
         {/* Header Section */}
         <section className="relative bg-neutral-800 py-16 pt-20">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div className="w-full mx-auto px-4 sm:px-6 lg:px-8 text-center">
                 <div className="flex items-center justify-center gap-3 mb-4">
                     <FontAwesomeIcon icon={faQuestionCircle} className="text-teal-400 text-2xl" />
                     <h1 className="text-4xl font-bold text-white">How can we help you?</h1>
@@ -216,7 +216,7 @@ return (
 
         {/* Main Content */}
         <section className="py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="w-full mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* Categories Sidebar */}
                     <div className="lg:col-span-1">
