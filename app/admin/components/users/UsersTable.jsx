@@ -41,12 +41,22 @@ export default function UsersTable() {
     const [successMessage, setSuccessMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [isUnauthorized, setIsUnauthorized] = useState(false);
 
     // Fetch users
     const fetchUsers = async () => {
         try {
             setLoading(true);
+            setError('');
+            setIsUnauthorized(false);
+
             const response = await fetch('/api/admin/users');
+
+            if (response.status === 401) {
+                // User is unauthorized
+                setIsUnauthorized(true);
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error('Failed to fetch users');
@@ -279,6 +289,28 @@ export default function UsersTable() {
 
     const { totalUsers, filteredCount, selectedCount } = getFilterStats();
 
+    if (isUnauthorized) {
+        return (
+            <div className="h-screen text-white p-6 flex flex-col items-center justify-center"
+                style={{ maxHeight: 'calc(100vh - 96px)' }}
+            >
+                <div className="text-center">
+                    <div className="text-9xl font-bold text-gray-700 mb-4">404</div>
+                    <h1 className="text-2xl font-bold mb-2">Unauthorized Access</h1>
+                    <p className="text-gray-400 mb-6">
+                        You don't have permission to access this page.
+                    </p>
+                    <button
+                        onClick={() => window.location.href = '/login'}
+                        className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    >
+                        Go to Login
+                    </button>
+                </div>
+            </div>
+        );
+    }
+    
     if (loading) {
         return (
             <div className="h-screen text-white p-6 flex items-center justify-center"
