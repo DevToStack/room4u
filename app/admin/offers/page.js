@@ -548,7 +548,7 @@ export default function OffersPage() {
                                             <div>
                                                 <h4 className="font-medium text-blue-800 dark:text-blue-300">Email Notification</h4>
                                                 <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                                                    After creating this offer, you'll be prompted to send email notifications to all registered users.
+                                                    After creating this offer, you&apos;ll be prompted to send email notifications to all registered users.
                                                 </p>
                                             </div>
                                         </div>
