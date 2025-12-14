@@ -36,7 +36,6 @@ export default function NotificationFilters({ filters, setFilters }) {
                 <option value="feedback">Feedback</option>
                 <option value="message">Message</option>
                 <option value="review">Review</option>
-                <option value="system">System</option>
             </select>
 
             <label className="flex items-center gap-2 text-white mt-2">
