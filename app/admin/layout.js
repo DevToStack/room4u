@@ -7,7 +7,8 @@ import {
     faBars, faXmark, faRightFromBracket, faBuilding,
     faChevronDown, faChevronUp, faImages,
     faEnvelope,faMessage,
-    faBell
+    faBell,
+    faTags
 } from '@fortawesome/free-solid-svg-icons';
 
 const navItems = [
@@ -19,6 +20,7 @@ const navItems = [
     { id: 'gallery', label: 'Gallery', icon: faImages, path: '/admin/gallery' },
     { id: 'notifications', label: 'Notificatins', icon: faBell, path: '/admin/notifications' },
     { id: 'reviews', label: 'Reviews & Feedbacks', icon: faMessage, path: '/admin/feedback-reviews' },
+    { id: 'offers', label: 'Offers', icon: faTags, path: '/admin/offers' },
 ];
 
 export default function AdminLayout({ children }) {

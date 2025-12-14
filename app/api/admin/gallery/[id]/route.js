@@ -17,7 +17,7 @@ cloudinary.config({
 export async function DELETE(request, { params }) {
     try {
         const id = parseInt(params.id, 10);
-        const cookieHeader = req.headers.get('cookie');
+        const cookieHeader = request.headers.get('cookie');
         const cookies = parseCookies(cookieHeader);
         const token = cookies.token;
 

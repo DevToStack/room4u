@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faBars, faTimes, faUser, faSignOutAlt, faTachometerAlt } from '@fortawesome/free-solid-svg-icons'
 import { motion, AnimatePresence } from 'framer-motion';
 import AuthModal from './AuthModal'
+import { getUser } from '@/lib/get-user';
 
 // Cache for auth status to persist across component mounts
 let authCache = {
@@ -112,9 +113,7 @@ export default function Header({
                 isLoggedIn: false,
                 lastChecked: Date.now()
             };
-
-            // Force a page reload to ensure clean state
-            window.location.href = '/';
+            await getUser(); // Refresh user data in UI
         }
     }
 

@@ -172,25 +172,25 @@ export default function Overview() {
                 {statsCards.map((card, index) => (
                     <Card
                         key={index}
-                        className="p-6 bg-neutral-900 border border-neutral-700 rounded-3xl shadow-[0_0_20px_-5px_rgba(0,0,0,0.6)] hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.7)] transition-all duration-300"
+                        className="p-4 bg-neutral-900 border border-neutral-700 rounded-3xl shadow-[0_0_20px_-5px_rgba(0,0,0,0.6)] hover:shadow-[0_0_30px_-5px_rgba(0,0,0,0.7)] transition-all duration-300"
                     >
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-xs uppercase tracking-wider text-neutral-500">{card.title}</p>
-                                <p className="text-4xl font-extrabold text-white mt-3">{card.value}</p>
-                                <p className="text-xs text-neutral-500 mt-1">{card.subtext}</p>
-                            </div>
-
+                        <div className="flex items-center gap-3">
                             <div className={`p-3 rounded-2xl bg-neutral-700/60 border border-neutral-600`}>
                                 <FontAwesomeIcon
                                     icon={card.icon}
                                     className={`text-xl text-teal-400`}
                                 />
                             </div>
+                            <div>
+                                <p className="text-xs uppercase text-neutral-500">{card.title}</p>
+                                <p className="text-2xl font-extrabold text-white mt-1">{card.value}</p>
+                                <p className="text-xs text-neutral-500 mt-1">{card.subtext}</p>
+                            </div>
                         </div>
                     </Card>
                 ))}
             </div>
+
             {/* 🏨 Last & Next Booking */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
@@ -234,6 +234,7 @@ export default function Overview() {
                     </div>
                 </Card>
             </div>
+            
 
             {/* 📅 Upcoming Confirmed Check-ins */}
             <Card className="p-6 bg-neutral-900 border border-neutral-700 rounded-3xl">

@@ -471,11 +471,12 @@ const ApartmentGallery = () => {
             const updated = await res.json();
             const updatedImage = updated.image || updated;
 
-            // Better cache busting logic
-            const separator = updatedImage.image_url.includes('?') ? '&' : '?';
+            // FIX: Add null/undefined check before calling .includes()
+            const imageUrl = updatedImage.image_url || '';
+            const separator = imageUrl.includes('?') ? '&' : '?';
             const updatedImageWithCacheBust = {
                 ...updatedImage,
-                image_url: `${updatedImage.image_url}${separator}t=${new Date().getTime()}`
+                image_url: imageUrl ? `${imageUrl}${separator}t=${new Date().getTime()}` : imageUrl
             };
 
             setImages(prev => prev.map(img =>

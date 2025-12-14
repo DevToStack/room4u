@@ -1,6 +1,10 @@
 import crypto from "crypto";
 import pool from "@/lib/db";
 import { emailService } from "@/services/email/Service";
+import { createNotification } from "@/lib/notification-service";
+import { verifyToken } from "@/lib/jwt";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
 
 export async function POST(req) {
     const {
@@ -9,6 +13,30 @@ export async function POST(req) {
         razorpay_payment_id,
         razorpay_signature,
     } = await req.json();
+    
+    // Extract token from cookies
+    const cookieStore = await cookies();
+    const token = cookieStore.get('token')?.value;
+
+    if (!token) {
+        return NextResponse.json(
+            { success: false, message: 'Not authenticated' },
+            { status: 401 }
+        );
+    }
+
+    // ✅ Verify JWT
+    const { valid, decoded, error } = verifyToken(token);
+    if (!valid) {
+        return NextResponse.json(
+            { success: false, message: 'Invalid token: ' + error },
+            { status: 401 }
+        );
+    }
+
+    const userId = decoded.id;
+
+    // ✅ Verify signature
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
@@ -67,6 +95,7 @@ export async function POST(req) {
             SELECT 
                 u.name AS customer_name,
                 u.email AS customer_email,
+                a.id AS apartment_id,
                 a.title AS apartment_name,
                 b.start_date AS check_in,
                 b.end_date AS check_out,
@@ -105,6 +134,20 @@ export async function POST(req) {
                 [paymentData.customer_name, "Payment Received", "A new payment has been made. For details, please check your admin dashboard."]
             );
             
+            await createNotification({
+                type: 'payment',
+                title: 'Payment Received',
+                content: 'User payment has been received and booking completed.',
+                userId,
+                bookingId: bookingId,
+                meta: {
+                    status: 'pending',
+                    apartment_id: paymentData.apartment_id,
+                    check_in: paymentData.check_in,
+                    check_out: paymentData.check_out
+                },
+                level: 'info'
+            });
 
             return Response.json({
                 success: true,

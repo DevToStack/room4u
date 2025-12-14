@@ -5,6 +5,7 @@ import { rateLimit } from '@/lib/rate-limit';
 import { validateBookingData } from '@/lib/booking-validation';
 import { createTempBooking } from '@/lib/booking-service';
 import { verifyToken } from '@/lib/jwt'; // sync
+import { createNotification } from '@/lib/notification-service';
 
 // === RATE LIMITER ===
 const limiter = rateLimit({
@@ -23,7 +24,6 @@ export async function POST(request) {
                 { status: 400 }
             );
         }
-        console.log(body);
         // === 2. AUTHENTICATION ===
         const cookieStore = await cookies(); // ✅ await required in Next.js 13+
         const sessionToken = cookieStore.get('token')?.value;
@@ -80,7 +80,23 @@ export async function POST(request) {
                 { status: bookingResult.statusCode || 400 }
             );
         }
-
+        if (bookingResult.success) {
+            await createNotification({
+                type: 'booking',
+                title: 'Booking Request',
+                content: 'User booking request has been submitted and is awaiting admin verification.',
+                userId,
+                bookingId: bookingResult.bookingId,
+                meta: {
+                    status: 'pending',
+                    apartment_id: validation.data.apartment_id,
+                    check_in: validation.data.check_in,
+                    check_out: validation.data.check_out
+                },
+                level: 'info'
+            });
+        }
+        
         // === 6. SUCCESS RESPONSE ===
         return NextResponse.json({
             success: true,

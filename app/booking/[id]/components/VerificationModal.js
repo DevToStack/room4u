@@ -2,13 +2,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Loader2, ShieldCheck, Upload, X, FileText, Image, ChevronDown } from "lucide-react";
 
-/**
- * VerificationModal (Optimized)
- * - Separate uploading/progress state per side (front/back)
- * - Cleaner upload logic with interval cleanup
- * - Same UX & API usage as your original component
- */
-
 export default function VerificationModal({ isOpen, onClose, onConfirm, loading }) {
     const DOCUMENTS = {
         "Aadhaar Card": { front: true, back: true },
@@ -18,84 +11,23 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
         "Voter ID": { front: true, back: true },
     };
 
-    // selected doc
+    // States
     const [selectedDoc, setSelectedDoc] = useState(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-
-    // uploaded files
     const [frontFile, setFrontFile] = useState(null);
     const [backFile, setBackFile] = useState(null);
-
-    // per-side uploading + progress
-    const [frontUploading, setFrontUploading] = useState(false);
-    const [frontProgress, setFrontProgress] = useState(0);
-
-    const [backUploading, setBackUploading] = useState(false);
-    const [backProgress, setBackProgress] = useState(0);
-
+    const [frontPreview, setFrontPreview] = useState(null);
+    const [backPreview, setBackPreview] = useState(null);
+    const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState("");
-    const [tempUploads, setTempUploads] = useState([]); // server-side temporary public_ids
 
-    // refs to hold intervals so we can clear them reliably
-    const progressIntervalRef = useRef({ front: null, back: null });
-
-    // disable page scroll while modal open
-    useEffect(() => {
-        document.body.style.overflow = isOpen ? "hidden" : "";
-        return () => (document.body.style.overflow = "");
-    }, [isOpen]);
-
-    // reset when modal closes
-    useEffect(() => {
-        if (!isOpen) resetModal();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen]);
-
-    function resetModal() {
-        // clear any running intervals
-        clearInterval(progressIntervalRef.current.front);
-        clearInterval(progressIntervalRef.current.back);
-        progressIntervalRef.current.front = null;
-        progressIntervalRef.current.back = null;
-
-        setSelectedDoc(null);
-        setDropdownOpen(false);
-        setFrontFile(null);
-        setBackFile(null);
+    // ------------------------------
+    // FILE SELECTION
+    // ------------------------------
+    function handleFileSelect(file, side) {
         setUploadError("");
-        setFrontProgress(0);
-        setBackProgress(0);
-        setFrontUploading(false);
-        setBackUploading(false);
-        setTempUploads([]);
-    }
 
-    // Helper to choose state setters by side
-    function settersFor(side) {
-        if (side === "front") {
-            return {
-                setUploading: setFrontUploading,
-                setProgress: setFrontProgress,
-                setFile: setFrontFile,
-                clearIntervalRefKey: "front",
-            };
-        }
-        return {
-            setUploading: setBackUploading,
-            setProgress: setBackProgress,
-            setFile: setBackFile,
-            clearIntervalRefKey: "back",
-        };
-    }
-
-    // ------------------------------
-    // FILE UPLOAD
-    // ------------------------------
-    async function handleFileUpload(file, side) {
-        setUploadError(""); // clear previous errors
-        const { setUploading, setProgress, setFile, clearIntervalRefKey } = settersFor(side);
-
-        // validation
+        // Validation
         if (!file) return;
         if (file.size > 5 * 1024 * 1024) {
             setUploadError("File size must be less than 5MB");
@@ -107,140 +39,165 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
             return;
         }
 
+        // Store file and create preview
+        if (side === "front") {
+            setFrontFile(file);
+            if (file.type.startsWith('image/')) {
+                const previewUrl = URL.createObjectURL(file);
+                setFrontPreview(previewUrl);
+            }
+        } else {
+            setBackFile(file);
+            if (file.type.startsWith('image/')) {
+                const previewUrl = URL.createObjectURL(file);
+                setBackPreview(previewUrl);
+            }
+        }
+    }
+
+    // ------------------------------
+    // DELETE FILE HANDLER
+    // ------------------------------
+    function handleDelete(side) {
+        if (side === "front") {
+            if (frontPreview) URL.revokeObjectURL(frontPreview);
+            setFrontFile(null);
+            setFrontPreview(null);
+        } else {
+            if (backPreview) URL.revokeObjectURL(backPreview);
+            setBackFile(null);
+            setBackPreview(null);
+        }
+        setUploadError("");
+    }
+
+    // ------------------------------
+    // UPLOAD ALL FILES VIA API (BATCH UPLOAD)
+    // ------------------------------
+    async function uploadAllFiles() {
+        if (!selectedDoc || !frontFile) return;
+
         setUploading(true);
-        setProgress(10);
-
-        // start a smooth fake progress (cleared when actual upload finishes)
-        let current = 10;
-        if (progressIntervalRef.current[clearIntervalRefKey]) {
-            clearInterval(progressIntervalRef.current[clearIntervalRefKey]);
-        }
-        progressIntervalRef.current[clearIntervalRefKey] = setInterval(() => {
-            current += 4 + Math.floor(Math.random() * 3); // slight randomness
-            if (current >= 90) {
-                current = 90;
-                clearInterval(progressIntervalRef.current[clearIntervalRefKey]);
-                progressIntervalRef.current[clearIntervalRefKey] = null;
-            }
-            setProgress(Math.min(current, 90));
-        }, 180);
-
-        const formData = new FormData();
-        formData.append("file", file);
+        setUploadError("");
 
         try {
-            const res = await fetch("/api/upload", { method: "POST", body: formData });
-            const json = await res.json();
+            // Prepare FormData
+            const formData = new FormData();
 
-            if (!json.success) throw new Error(json.error || "Upload failed");
+            // Add files and their sides
+            const files = [];
+            const sides = [];
 
-            // add to tempUploads for cleanup later
-            setTempUploads(prev => [...prev, json.data.public_id]);
-
-            const uploadedFile = {
-                name: file.name,
-                type: file.type,
-                size: file.size,
-                url: json.data.public_id,
-                public_id: json.data.public_id,
-            };
-
-            // set the uploaded file into correct side
-            setFile(uploadedFile);
-
-            // finalize progress
-            setProgress(100);
-
-            // clear interval if still present
-            if (progressIntervalRef.current[clearIntervalRefKey]) {
-                clearInterval(progressIntervalRef.current[clearIntervalRefKey]);
-                progressIntervalRef.current[clearIntervalRefKey] = null;
+            if (frontFile) {
+                formData.append("files[]", frontFile);
+                formData.append("sides[]", "front");
+                files.push(frontFile);
+                sides.push("front");
             }
 
-            // small delay to let user see 100%
-            setTimeout(() => {
-                setUploading(false);
-                setProgress(0);
-            }, 600);
-        } catch (err) {
-            console.error("Upload error:", err);
-            setUploadError("Upload failed, try again.");
-
-            // cleanup interval and state
-            if (progressIntervalRef.current[clearIntervalRefKey]) {
-                clearInterval(progressIntervalRef.current[clearIntervalRefKey]);
-                progressIntervalRef.current[clearIntervalRefKey] = null;
+            if (DOCUMENTS[selectedDoc].back && backFile) {
+                formData.append("files[]", backFile);
+                formData.append("sides[]", "back");
+                files.push(backFile);
+                sides.push("back");
             }
+
+            // Add document type
+            formData.append("document_type", selectedDoc);
+
+            // Get token
+            const token = localStorage.getItem('token') || getCookie('token');
+
+            // Upload all files at once
+            const response = await fetch("/api/upload", {
+                method: "POST",
+                body: formData,
+                credentials:"include",
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Upload failed: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (!result.success) {
+                throw new Error(result.error || "Upload failed");
+            }
+
+            // Call parent callback with results
+            onConfirm({
+                documentType: selectedDoc,
+                front: result.data.front,
+                back: result.data.back
+            });
+
+            // Reset state
+            resetState();
+
+        } catch (error) {
+            console.error("Upload process failed:", error);
+            setUploadError(error.message || "Upload failed. Please try again.");
             setUploading(false);
-            setProgress(0);
         }
     }
 
     // ------------------------------
-    // DELETE SINGLE FILE
+    // CANCEL HANDLER
     // ------------------------------
-    async function handleDelete(side) {
-        const file = side === "front" ? frontFile : backFile;
-        const { setFile } = settersFor(side);
-
-        if (!file) return;
-
-        try {
-            if (file?.public_id) {
-                await fetch(`/api/upload?public_id=${encodeURIComponent(file.public_id)}`, { method: "DELETE" });
-                setTempUploads(prev => prev.filter(id => id !== file.public_id));
-            }
-        } catch (err) {
-            console.warn("Error deleting file on server:", err);
-        }
-
-        setFile(null);
-    }
-
-    // ------------------------------
-    // CANCEL → DELETE ALL FILES
-    // ------------------------------
-    async function handleCancel() {
-        // prevent cancel while an upload is active
-        if (frontUploading || backUploading) {
-            setUploadError("Please wait for uploads to finish or cancel each upload first.");
-            return;
-        }
-
-        // delete all temporary images on server
-        for (let id of tempUploads) {
-            try {
-                await fetch(`/api/upload?public_id=${encodeURIComponent(id)}`, { method: "DELETE" });
-            } catch (err) {
-                console.warn("Failed to delete temp upload:", id, err);
-            }
-        }
-
-        resetModal();
+    function handleCancel() {
+        resetState();
         onClose();
     }
 
     // ------------------------------
-    // CONFIRM
+    // RESET STATE
     // ------------------------------
-    async function handleConfirm() {
-        // basic guard (should be disabled already by button)
-        if (!selectedDoc) return;
+    function resetState() {
+        if (frontPreview) URL.revokeObjectURL(frontPreview);
+        if (backPreview) URL.revokeObjectURL(backPreview);
 
-        onConfirm({
-            documentType: selectedDoc,
-            front: frontFile,
-            back: backFile
-        });
-
-        // Clear temp list (files are now "official" on server)
-        setTempUploads([]);
+        setSelectedDoc(null);
+        setDropdownOpen(false);
+        setFrontFile(null);
+        setBackFile(null);
+        setFrontPreview(null);
+        setBackPreview(null);
+        setUploadError("");
+        setUploading(false);
     }
 
+    // ------------------------------
+    // CONTINUE BUTTON
+    // ------------------------------
+    async function handleConfirm() {
+        if (!selectedDoc || !frontFile) return;
+        await uploadAllFiles();
+    }
+
+    // Helper function to get cookies
+    function getCookie(name) {
+        if (typeof document === 'undefined') return null;
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return null;
+    }
+
+    // Clean up on unmount
+    useEffect(() => {
+        return () => {
+            if (frontPreview) URL.revokeObjectURL(frontPreview);
+            if (backPreview) URL.revokeObjectURL(backPreview);
+        };
+    }, [frontPreview, backPreview]);
+
     // UI helpers
-    function getFileIcon(type) {
-        if (!type) return <FileText className="w-5 h-5" />;
-        if (type.startsWith("image/")) return <Image className="w-5 h-5" />;
+    function getFileIcon(file) {
+        if (!file) return <FileText className="w-5 h-5" />;
+        if (file.type.startsWith("image/")) return <Image className="w-5 h-5" />;
+        if (file.type === "application/pdf") return <FileText className="w-5 h-5" />;
         return <FileText className="w-5 h-5" />;
     }
 
@@ -253,27 +210,29 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
 
     if (!isOpen) return null;
 
+    const canContinue = selectedDoc && frontFile && (!DOCUMENTS[selectedDoc].back || backFile);
+
     return (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
             <div className="bg-neutral-900 rounded-2xl p-6 max-w-md w-full border border-white/10 max-h-[90vh] overflow-y-auto">
 
+                {/* Header */}
                 <div className="text-center mb-6">
                     <div className="w-16 h-16 bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                         <ShieldCheck className="w-8 h-8 text-teal-400" />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Confirm Your Booking</h3>
+                    <h3 className="text-xl font-bold text-white mb-2">Upload ID Documents</h3>
                     <p className="text-gray-300 text-sm">
-                        Upload required ID documents for verification.
+                        {uploading ? "Uploading all files..." : "Files will be uploaded when you click Continue"}
                     </p>
                 </div>
 
-                {/* Document Dropdown */}
+                {/* Document Selection */}
                 <div className="mb-5">
                     <p className="text-white mb-2 text-sm font-medium">Select Document Type</p>
-
                     <div
                         className="relative bg-neutral-800 border border-neutral-700 p-3 rounded-lg cursor-pointer flex justify-between items-center"
-                        onClick={() => setDropdownOpen(v => !v)}
+                        onClick={() => !uploading && setDropdownOpen(v => !v)}
                     >
                         <span className="text-white">
                             {selectedDoc || "Choose Document"}
@@ -290,9 +249,10 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
                                     onClick={() => {
                                         setSelectedDoc(doc);
                                         setDropdownOpen(false);
-                                        // reset existing files when switching doc type
                                         setFrontFile(null);
                                         setBackFile(null);
+                                        setFrontPreview(null);
+                                        setBackPreview(null);
                                         setUploadError("");
                                     }}
                                 >
@@ -303,65 +263,93 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
                     )}
                 </div>
 
-                {/* FRONT UPLOAD */}
+                {/* Front Side Upload */}
                 {selectedDoc && DOCUMENTS[selectedDoc].front && (
                     <div className="mb-4">
                         <p className="text-white mb-2 text-sm font-medium">Upload Front Side</p>
-
                         {!frontFile ? (
                             <UploadBox
-                                onSelect={(file) => handleFileUpload(file, "front")}
-                                uploading={frontUploading}
-                                progress={frontProgress}
+                                onSelect={(file) => handleFileSelect(file, "front")}
+                                disabled={uploading}
                             />
                         ) : (
-                            <UploadedFileCard file={frontFile} onDelete={() => handleDelete("front")} getFileIcon={getFileIcon} formatSize={formatSize} />
+                            <UploadedFileCard
+                                file={frontFile}
+                                preview={frontPreview}
+                                onDelete={() => !uploading && handleDelete("front")}
+                                getFileIcon={getFileIcon}
+                                formatSize={formatSize}
+                                uploading={uploading}
+                            />
                         )}
                     </div>
                 )}
 
-                {/* BACK UPLOAD */}
+                {/* Back Side Upload */}
                 {selectedDoc && DOCUMENTS[selectedDoc].back && (
                     <div className="mb-4">
                         <p className="text-white mb-2 text-sm font-medium">Upload Back Side</p>
-
                         {!backFile ? (
                             <UploadBox
-                                onSelect={(file) => handleFileUpload(file, "back")}
-                                uploading={backUploading}
-                                progress={backProgress}
+                                onSelect={(file) => handleFileSelect(file, "back")}
+                                disabled={uploading}
                             />
                         ) : (
-                            <UploadedFileCard file={backFile} onDelete={() => handleDelete("back")} getFileIcon={getFileIcon} formatSize={formatSize} />
+                            <UploadedFileCard
+                                file={backFile}
+                                preview={backPreview}
+                                onDelete={() => !uploading && handleDelete("back")}
+                                getFileIcon={getFileIcon}
+                                formatSize={formatSize}
+                                uploading={uploading}
+                            />
                         )}
                     </div>
                 )}
 
-                {uploadError && <p className="text-red-400 text-sm">{uploadError}</p>}
+                {/* Upload Status */}
+                {uploading && (
+                    <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <div className="flex items-center gap-2">
+                            <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
+                            <p className="text-blue-400 text-sm">Uploading all files to Cloudinary...</p>
+                        </div>
+                        <p className="text-blue-400/70 text-xs mt-1">
+                            Please wait while we upload your documents
+                        </p>
+                    </div>
+                )}
 
-                {/* BUTTONS */}
+                {/* Error Message */}
+                {uploadError && (
+                    <div className="mb-4 p-3 bg-red-900/20 border border-red-700/50 rounded-lg">
+                        <p className="text-red-400 text-sm">{uploadError}</p>
+                    </div>
+                )}
+
+                {/* Buttons */}
                 <div className="flex gap-3 mt-6">
                     <button
                         onClick={handleCancel}
-                        disabled={frontUploading || backUploading || loading}
-                        className="flex-1 py-3 bg-neutral-700 text-white rounded-lg disabled:opacity-50"
+                        disabled={uploading}
+                        className="flex-1 py-3 bg-neutral-700 hover:bg-neutral-600 text-white rounded-lg disabled:opacity-50 transition-colors"
                     >
                         Cancel
                     </button>
 
                     <button
                         onClick={handleConfirm}
-                        disabled={
-                            frontUploading ||
-                            backUploading ||
-                            loading ||
-                            !selectedDoc ||
-                            !frontFile ||
-                            (DOCUMENTS[selectedDoc].back && !backFile)
-                        }
-                        className="flex-1 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg disabled:opacity-50 flex justify-center items-center"
+                        disabled={!canContinue || uploading}
+                        className="flex-1 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg disabled:opacity-50 flex justify-center items-center transition-colors"
                     >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Continue"}
+                        {uploading ? (
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Uploading...</span>
+                            </div>
+                        ) : (
+                            "Continue"
+                        )}
                     </button>
                 </div>
             </div>
@@ -369,14 +357,10 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
     );
 }
 
-/* -------------------------
-   SMALL SUB-COMPONENTS
-   (kept inside file for simplicity)
--------------------------- */
-
-function UploadBox({ onSelect, uploading, progress }) {
+// Sub-components
+function UploadBox({ onSelect, disabled }) {
     return (
-        <div className="relative border-2 border-dashed border-neutral-700 rounded-lg p-6 text-center cursor-pointer hover:border-teal-500/50">
+        <div className="relative border-2 border-dashed border-neutral-700 rounded-lg p-6 text-center hover:border-teal-500/50 transition-colors">
             <input
                 type="file"
                 accept="image/*,.pdf"
@@ -385,44 +369,61 @@ function UploadBox({ onSelect, uploading, progress }) {
                     e.target.value = "";
                 }}
                 className="absolute inset-0 opacity-0 cursor-pointer"
+                disabled={disabled}
             />
             <div className="w-12 h-12 bg-teal-500/20 rounded-full mx-auto mb-3 flex items-center justify-center">
                 <Upload className="w-6 h-6 text-teal-400" />
             </div>
-            <p className="text-neutral-300 text-sm">Click to Upload</p>
+            <p className="text-neutral-300 text-sm">Click to select file</p>
             <p className="text-neutral-500 text-xs">JPG, PNG, PDF — Max 5MB</p>
-
-            {uploading && (
-                <div className="mt-3">
-                    <div className="flex justify-between text-sm text-neutral-400">
-                        <span>Uploading…</span>
-                        <span className="text-teal-400">{progress}%</span>
-                    </div>
-                    <div className="w-full h-2 bg-neutral-800 rounded-full mt-1 overflow-hidden">
-                        <div
-                            className="h-full bg-teal-600 transition-all"
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
-                </div>
+            {disabled && (
+                <p className="text-amber-400 text-xs mt-2">Upload in progress...</p>
             )}
         </div>
     );
 }
 
-function UploadedFileCard({ file, onDelete, getFileIcon, formatSize }) {
+function UploadedFileCard({ file, preview, onDelete, getFileIcon, formatSize, uploading }) {
     return (
-        <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
-            <div className="w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                {getFileIcon(file.type)}
+        <div className={`flex items-center gap-3 p-3 border rounded-lg ${uploading
+            ? 'bg-blue-500/10 border-blue-500/30'
+            : 'bg-green-500/10 border-green-500/30'
+            }`}>
+            {preview ? (
+                <div className="w-10 h-10 rounded overflow-hidden flex-shrink-0">
+                    <img
+                        src={preview}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+            ) : (
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${uploading ? 'bg-blue-500/20' : 'bg-green-500/20'
+                    }`}>
+                    {getFileIcon(file)}
+                </div>
+            )}
+            <div className="flex-1 min-w-0">
+                <p className={`font-medium text-sm truncate ${uploading ? 'text-blue-400' : 'text-green-400'
+                    }`}>
+                    {file.name}
+                </p>
+                <div className="flex items-center justify-between">
+                    <p className={`text-xs ${uploading ? 'text-blue-400/70' : 'text-green-400/70'
+                        }`}>
+                        {formatSize(file.size)}
+                        {uploading ? ' • Uploading...' : ' • Ready to upload'}
+                    </p>
+                </div>
             </div>
-            <div className="flex-1">
-                <p className="text-green-400 font-medium text-sm truncate">{file.name}</p>
-                <p className="text-green-400/70 text-xs">{formatSize(file.size)}</p>
-            </div>
-            <button onClick={onDelete} className="p-2 bg-red-600 hover:bg-red-700 rounded-lg">
-                <X className="w-4 h-4" />
-            </button>
+            {!uploading && (
+                <button
+                    onClick={onDelete}
+                    className="p-2 bg-red-600 hover:bg-red-700 rounded-lg flex-shrink-0 transition-colors"
+                >
+                    <X className="w-4 h-4" />
+                </button>
+            )}
         </div>
     );
 }

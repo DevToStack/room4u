@@ -184,7 +184,7 @@ const GallerySection = ({ images = [], initialIndex = 0, groupSize = 4 }) => {
             {isFullscreen && (
                 <div className="fixed inset-0 bg-black z-50 flex items-center justify-center" onClick={closeFullscreen}>
                     <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={closeFullscreen} className="absolute top-4 right-4 text-white p-2 hover:bg-white/20 rounded-full">
+                        <button onClick={closeFullscreen} className="absolute top-4 bg-black/40 right-4 text-white p-2 hover:bg-black rounded-full">
                             <FontAwesomeIcon icon={faTimes} />
                         </button>
                         <div className="flex items-center justify-center">
@@ -201,13 +201,13 @@ const GallerySection = ({ images = [], initialIndex = 0, groupSize = 4 }) => {
 
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/20 text-white p-4 rounded-full"
+                            className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-4 rounded-full"
                         >
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/20 text-white p-4 rounded-full"
+                            className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/50 text-white p-4 rounded-full"
                         >
                             <FontAwesomeIcon icon={faChevronRight} />
                         </button>

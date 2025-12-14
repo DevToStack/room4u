@@ -6,9 +6,10 @@ import LoginForm from './Login';
 
 export default function AuthModal({ isOpen, onClose, activeTab, onTabChange }) {
     return (
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
             {isOpen && (
                 <motion.div
+                    key="modal"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -62,7 +63,7 @@ export default function AuthModal({ isOpen, onClose, activeTab, onTabChange }) {
                                 transition={{ duration: 0.2 }}
                             >
                                 {activeTab === 'login' ? (
-                                    <LoginForm isModal />
+                                    <LoginForm isModal onSuccess={onClose} />
                                 ) : (
                                     <RegisterForm isModal setTab={onTabChange} />
                                 )}

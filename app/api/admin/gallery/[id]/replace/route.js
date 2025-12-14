@@ -2,73 +2,88 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/mysql-wrapper';
 import cloudinary from '@/lib/cloudinary';
 import { parseCookies } from '@/lib/cookies';
+import { verifyAdmin } from '@/lib/adminAuth';
 
 export async function POST(request, { params }) {
     try {
         const { id } = params;
 
-        const cookieHeader = req.headers.get('cookie');
+        // ===== AUTH =====
+        const cookieHeader = request.headers.get('cookie');
         const cookies = parseCookies(cookieHeader);
-        const token = cookies.token;
-        
-        const adminCheck = verifyAdmin(token);
-        if (adminCheck.error)
-            return NextResponse.json({ error: adminCheck.error }, { status: 401 });
-        
-        const role = (await adminCheck).decoded.role;
-        
-        if(role!=='admin')
-            return NextResponse.json({ error: "Unauthorized user" }, { status: 401 });
-        
+        const token = cookies?.token;
+
+        const adminCheck = await verifyAdmin(token);
+        if (adminCheck?.error || adminCheck.decoded?.role !== 'admin') {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        // ===== CHECK IMAGE =====
         const [existingImage] = await query(
             'SELECT * FROM apartment_gallery WHERE id = ?',
             [id]
         );
 
         if (!existingImage) {
-            return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+            return NextResponse.json({ message: 'Image not found' }, { status: 404 });
         }
 
+        // ===== FORM DATA =====
         const formData = await request.formData();
         const file = formData.get('file');
         const apartmentId = formData.get('apartmentId');
 
-        if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
-        if (!file.type.startsWith('image/'))
-            return NextResponse.json({ error: 'File must be an image' }, { status: 400 });
+        if (!file) {
+            return NextResponse.json({ message: 'No file provided' }, { status: 400 });
+        }
 
-        const bytes = await file.arrayBuffer();
-        const buffer = Buffer.from(bytes);
+        if (!file.type.startsWith('image/')) {
+            return NextResponse.json({ message: 'Invalid file type' }, { status: 400 });
+        }
 
-        // Upload to Cloudinary
-        const result = await cloudinary.uploader.upload_stream(
-            {
-                folder: `apartments/${apartmentId}`,
-                public_id: `${id}-${Date.now()}`,
-                overwrite: true,
-            },
-            async (error, uploaded) => {
-                if (error) throw error;
+        const buffer = Buffer.from(await file.arrayBuffer());
 
-                await query(
-                    `UPDATE apartment_gallery 
-                     SET image_url = ?, file_size = ?, mime_type = ? 
-                     WHERE id = ?`,
-                    [uploaded.secure_url, uploaded.bytes, uploaded.format, id]
-                );
-            }
+        // ===== CLOUDINARY UPLOAD (PROMISE-WRAPPED) =====
+        const uploaded = await new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+                {
+                    folder: `apartments/${apartmentId}`,
+                    public_id: `gallery_${id}`,
+                    overwrite: true,
+                },
+                (error, result) => {
+                    if (error) return reject(error);
+                    resolve(result);
+                }
+            );
+
+            stream.end(buffer);
+        });
+
+        // ===== DB UPDATE =====
+        await query(
+            `UPDATE apartment_gallery
+             SET image_url = ?, file_size = ?, mime_type = ?
+             WHERE id = ?`,
+            [uploaded.secure_url, uploaded.bytes, uploaded.format, id]
         );
 
-        return new Promise((resolve, reject) => {
-            const stream = result;
-            stream.end(buffer);
-            stream.on('finish', () => {
-                resolve(NextResponse.json({ success: true }));
-            });
-            stream.on('error', reject);
+        // ===== RETURN UPDATED IMAGE =====
+        const [updatedImage] = await query(
+            'SELECT * FROM apartment_gallery WHERE id = ?',
+            [id]
+        );
+
+        return NextResponse.json({
+            success: true,
+            image: updatedImage
         });
+
     } catch (error) {
         console.error('Error replacing image:', error);
-        return NextResponse.json({ error: 'Failed to replace image' }, { status: 500 });
+        return NextResponse.json(
+            { message: 'Failed to replace image' },
+            { status: 500 }
+        );
     }
 }

@@ -34,6 +34,7 @@ export async function GET() {
                 COALESCE(r.rating, 0) AS rating,
                 COALESCE(r.totalReviews, 0) AS totalReviews,
                 GROUP_CONCAT(af.icon) AS features,
+                GROUP_CONCAT(af.text) AS feature_texts,
                 ag.image_url AS primary_image
             FROM apartments a
             LEFT JOIN (
@@ -83,6 +84,7 @@ export async function GET() {
                     totalReviews: Number(apartment.totalReviews)
                 },
                 features: apartment.features ? apartment.features.split(',') : [],
+                feature_texts: apartment.feature_texts ? apartment.feature_texts.split(',') : [],
                 image: apartment.primary_image || null
             };
         });

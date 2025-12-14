@@ -35,6 +35,7 @@ export default function NotificationFilters({ filters, setFilters }) {
                 <option value="payment">Payment</option>
                 <option value="feedback">Feedback</option>
                 <option value="message">Message</option>
+                <option value="review">Review</option>
                 <option value="system">System</option>
             </select>
 

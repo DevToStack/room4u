@@ -9,78 +9,140 @@ import Link from 'next/link';
 // Updated Skeleton with new design
 const ApartmentCardSkeleton = () => {
     return (
-        <div className="bg-neutral-800/30 backdrop-blur-lg border border-gray-700/50 rounded-xl sm:rounded-2xl overflow-hidden shadow-lg animate-pulse group">
-            <div className="h-56 bg-neutral-700/50 relative overflow-hidden">
-                <div className="absolute top-3 right-3 bg-neutral-600 px-3 py-1 rounded-full text-sm font-semibold shadow w-20 h-6"></div>
+        <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-2xl overflow-hidden shadow-2xl animate-pulse border border-neutral-700/50">
+            <div className="h-64 bg-neutral-800 relative overflow-hidden">
+                <div className="absolute top-4 right-4 bg-neutral-700 w-20 h-7 rounded-full"></div>
             </div>
-            <div className="p-4 sm:p-6">
-                <div className="h-6 bg-neutral-700/50 rounded mb-3 w-3/4"></div>
-                <div className="flex items-center mb-3">
-                    <div className="h-4 w-4 bg-neutral-700/50 rounded mr-2"></div>
-                    <div className="h-4 bg-neutral-700/50 rounded w-1/2"></div>
+            <div className="p-6">
+                <div className="h-7 bg-neutral-700 rounded-lg mb-4 w-3/4"></div>
+                <div className="flex items-center mb-4">
+                    <div className="h-4 w-4 bg-neutral-700 rounded-full mr-2"></div>
+                    <div className="h-4 bg-neutral-700 rounded w-1/2"></div>
                 </div>
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-5">
                     <div className="flex items-center">
-                        <div className="h-4 w-4 bg-neutral-700/50 rounded mr-1"></div>
-                        <div className="h-4 bg-neutral-700/50 rounded w-8 ml-1"></div>
-                        <div className="h-4 bg-neutral-700/50 rounded w-12 ml-1"></div>
+                        <div className="h-5 w-5 bg-neutral-700 rounded-full mr-1"></div>
+                        <div className="h-4 bg-neutral-700 rounded w-8 ml-1"></div>
+                        <div className="h-4 bg-neutral-700 rounded w-12 ml-1"></div>
                     </div>
                 </div>
-                <div className="flex items-center gap-3 pt-3 border-t border-gray-700/50 flex-wrap">
-                    {[...Array(4)].map((_, idx) => (
-                        <div key={idx} className="flex items-center gap-1">
-                            <div className="h-4 w-4 bg-neutral-700/50 rounded"></div>
-                        </div>
+                <div className="flex flex-wrap gap-3 mb-6">
+                    {[...Array(3)].map((_, idx) => (
+                        <div key={idx} className="h-6 bg-neutral-700 rounded-full w-16"></div>
                     ))}
                 </div>
-                <div className="w-full mt-6 bg-neutral-700/50 h-12 rounded-xl"></div>
+                <div className="w-full bg-gradient-to-r from-neutral-700 to-neutral-800 h-12 rounded-xl"></div>
             </div>
         </div>
     );
 };
 
-// Updated ApartmentImage with new design
-const ApartmentImage = ({ apartment, index }) => {
+// Offer Tag Component
+const OfferTag = ({ offer }) => {
+    return (
+        <div className="absolute top-4 left-4 z-20">
+            <div className="relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-yellow-400 via-orange-400 to-pink-400 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+                <div className="relative px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full shadow-lg">
+                    <div className="flex items-center gap-2">
+                        <FontAwesomeIcon icon={solidIcons.faTag} className="h-3 w-3 text-white" />
+                        <span className="text-xs font-bold text-white whitespace-nowrap">
+                            {offer.discount_percentage}% OFF
+                        </span>
+                    </div>
+                </div>
+                {/* Tooltip on hover */}
+                <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block">
+                    <div className="bg-neutral-900/95 backdrop-blur-sm text-white text-xs rounded-lg p-3 w-48 shadow-xl border border-neutral-700">
+                        <div className="font-bold text-yellow-400 mb-1">{offer.title}</div>
+                        <p className="text-gray-300 mb-2">{offer.description}</p>
+                        <div className="text-xs text-gray-400">
+                            Valid until: {new Date(offer.valid_until).toLocaleDateString()}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Updated ApartmentImage with original + discounted price display
+const ApartmentImage = ({ apartment, index, offer }) => {
     const [imageError, setImageError] = useState(false);
 
+    // Calculate discounted price
+    const finalPrice = offer
+        ? (apartment.price - (apartment.price * Number(offer.discount_percentage) / 100)).toFixed(2)
+        : apartment.price;
+
+    const hasDiscount = offer !== null;
+
+    // PRICE UI BLOCK (used in both image cases)
+    const PriceTag = () => (
+        <div className="absolute bottom-4 right-4 z-20 flex items-end">
+            {hasDiscount ? (
+                <span className="bg-gradient-to-r from-teal-500 to-emerald-500 px-3 py-1 rounded-full text-sm font-bold text-black shadow-md">
+                    <span className="text-sm line-through font-medium mr-3">
+                        ${apartment.price}
+                    </span>
+
+                    ${finalPrice}/night
+                </span>
+            ) : (
+                <div className="bg-gradient-to-r from-teal-500 to-emerald-500 px-4 py-2 rounded-full text-sm font-bold text-black shadow-lg">
+                    ${apartment.price}/night
+                </div>
+            )}
+        </div>
+    );
+
+    // ========= NO IMAGE CASE ==========
     if (!apartment?.image || imageError) {
         return (
-            <div className="h-56 bg-neutral-700/50 relative flex items-center justify-center group-hover:bg-neutral-600/50 transition-colors duration-300">
-                <div className="text-gray-400 text-center">
-                    <FontAwesomeIcon icon={solidIcons.faImage} className="h-12 w-12 mb-2" />
-                    <p className="text-sm">Image not available</p>
+            <div className="h-64 relative flex items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-700 group-hover:from-neutral-700 group-hover:to-neutral-600 transition-all duration-300">
+
+                <div className="text-center p-6">
+                    <div className="w-16 h-16 bg-neutral-700/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <FontAwesomeIcon icon={solidIcons.faHome} className="h-8 w-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-400 text-sm">Image not available</p>
                 </div>
-                <div className="absolute top-3 right-3 bg-teal-400/90 px-3 py-1 rounded-full text-sm font-semibold shadow text-neutral-900">
-                    ${apartment?.price || 0}/night
-                </div>
+
+                {offer && <OfferTag offer={offer} />}
+
+                <PriceTag />
             </div>
         );
     }
 
+    // ========= NORMAL IMAGE CASE ==========
     return (
-        <div className="h-56 bg-neutral-700/50 relative overflow-hidden">
+        <div className="h-64 relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-t from-neutral-900/60 via-neutral-900/20 to-transparent z-10"></div>
+
             <NextImage
                 src={apartment.image}
                 alt={apartment.title || 'Apartment'}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover group-hover:scale-110 transition-transform duration-500"
+                className="object-cover transform group-hover:scale-110 transition-transform duration-700 ease-out"
                 onError={() => setImageError(true)}
                 priority={index <= 2}
             />
-            <div className="absolute top-3 right-3 bg-teal-400/90 px-3 py-1 rounded-full text-sm font-semibold shadow text-neutral-900">
-                ${apartment.price}/night
-            </div>
-            <button className="absolute top-3 left-3 w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
-                <FontAwesomeIcon icon={solidIcons.faHeart} className="text-white text-sm" />
-            </button>
+
+            {offer && <OfferTag offer={offer} />}
+
+            <PriceTag />
         </div>
     );
 };
 
+
+
 export default function FeaturedApartments() {
     const router = useRouter();
     const [apartments, setApartments] = useState([]);
+    const [offers, setOffers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
 
@@ -89,23 +151,69 @@ export default function FeaturedApartments() {
         setIsClient(true);
     }, []);
 
-    // Fetch apartments
+    // Fetch apartments and offers
     useEffect(() => {
-        async function fetchApartments() {
+        async function fetchData() {
             try {
                 setLoading(true);
-                const res = await fetch('/api/apartment');
-                if (!res.ok) throw new Error('Failed to fetch apartments');
-                const data = await res.json();
-                setApartments(Array.isArray(data) ? data.slice(0, 3) : []);
+
+                // Fetch apartments
+                const aptRes = await fetch('/api/apartment');
+                if (!aptRes.ok) throw new Error('Failed to fetch apartments');
+                const aptData = await aptRes.json();
+                setApartments(Array.isArray(aptData) ? aptData : []);
+
+                // Fetch offers
+                const offersRes = await fetch('/api/offers');
+                if (offersRes.ok) {
+                    const offersData = await offersRes.json();
+                    console.log(offersData.offers)
+                    setOffers(offersData.offers || []);
+                }
             } catch (err) {
+                console.error('Error fetching data:', err);
                 setApartments([]);
+                setOffers([]);
             } finally {
                 setLoading(false);
             }
         }
-        fetchApartments();
+        fetchData();
     }, []);
+
+    const getApartmentOffer = (apartmentId) => {
+        if (!offers.length) return null;
+
+        const now = new Date();
+
+        return offers.find(offer => {
+            const validFrom = new Date(offer.valid_from);
+            const validUntil = new Date(offer.valid_until);
+
+            // Offer must be within valid date range
+            if (now < validFrom || now > validUntil) return false;
+
+            // If null -> offer applies to ALL apartments
+            if (offer.apartment_ids === null) {
+                return true;
+            }
+
+            let apartmentIds = offer.apartment_ids;
+
+            // If value is a string, parse it
+            if (typeof apartmentIds === "string") {
+                try {
+                    apartmentIds = JSON.parse(apartmentIds);
+                } catch {
+                    return false;
+                }
+            }
+
+            // Must be an array & include the apartmentId
+            return Array.isArray(apartmentIds) && apartmentIds.includes(apartmentId);
+        });
+    };
+    
 
     // Featured apartments (first 3)
     const featuredApartments = useMemo(() => {
@@ -114,116 +222,147 @@ export default function FeaturedApartments() {
     }, [apartments]);
 
     return (
-        <section className="relative w-full bg-neutral-900 py-16 sm:py-20 lg:py-24 overflow-hidden">
-            {/* Background Elements */}
+        <section className="relative w-full bg-neutral-950 py-16 sm:py-20 lg:py-24 overflow-hidden">
+            {/* Animated Background */}
             <div className="absolute inset-0 overflow-hidden">
-                <div className="absolute -top-12 -right-12 w-48 h-48 sm:w-64 sm:h-64 bg-teal-400/10 rounded-full blur-2xl sm:blur-3xl opacity-100"></div>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] bg-teal-400/5 rounded-full blur-2xl sm:blur-3xl opacity-100"></div>
-                <div className="absolute -bottom-16 -left-16 w-40 h-40 sm:w-60 sm:h-60 bg-teal-400/5 rounded-full blur-2xl sm:blur-3xl opacity-100"></div>
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-r from-teal-500/10 to-emerald-500/10 rounded-full blur-3xl animate-pulse"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-teal-400/5 to-emerald-400/5 rounded-full blur-3xl"></div>
 
-                {/* Grid Pattern Overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.12)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:40px_40px] sm:bg-[size:50px_50px] lg:bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,black,transparent)]"></div>
+                {/* Grid Pattern */}
+                <div className="absolute inset-0 opacity-5">
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,transparent_24px,rgba(255,255,255,0.1)_25px,transparent_26px)] bg-[length:26px_100%]"></div>
+                    <div className="absolute inset-0 bg-[linear-gradient(transparent_24px,rgba(255,255,255,0.1)_25px,transparent_26px)] bg-[length:100%_26px]"></div>
+                </div>
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                 {/* Header */}
-                <div className="text-center mb-12 sm:mb-16">
-                    <div className="overflow-hidden">
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 opacity-100 translate-y-0">
-                            Featured <span className="text-teal-400">Apartments</span>
+                <div className="text-center mb-16">
+                    <div className="inline-block relative mb-6">
+                        <div className="absolute -inset-4 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full blur opacity-30"></div>
+                        <h2 className="relative text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-r from-teal-400 via-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                            Featured Apartments
                         </h2>
                     </div>
-                    <div className="overflow-hidden">
-                        <p className="text-gray-300 text-lg sm:text-xl max-w-2xl mx-auto opacity-100 translate-y-0">
-                            Handpicked apartments for an unforgettable stay
-                        </p>
-                    </div>
+                    <p className="text-gray-300 text-lg sm:text-xl max-w-2xl mx-auto">
+                        Experience luxury living in our handpicked premium apartments
+                    </p>
                 </div>
 
-                {/* Apartment Grid - Always 3 cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                {/* Apartment Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10">
                     {loading || !isClient
                         ? [...Array(3)].map((_, idx) => (
                             <ApartmentCardSkeleton key={`skeleton-${idx}`} />
                         ))
-                        : featuredApartments.map((apartment, index) => (
-                            <div
-                                key={apartment.id}
-                                className="bg-neutral-800/30 backdrop-blur-lg rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-gray-700/50 hover:border-teal-400/50 transition-all duration-500 transform hover:scale-105 cursor-pointer group relative overflow-hidden opacity-100 translate-y-0"
-                            >
-                                {/* Teal Background Effect on Hover */}
-                                <div className="absolute inset-0 bg-teal-400/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                        : featuredApartments.map((apartment, index) => {
+                            const offer = getApartmentOffer(apartment.id);
 
-                                <div className="relative z-10">
-                                    <ApartmentImage
-                                        apartment={apartment}
-                                        index={index}
-                                    />
+                            return (
+                                <div
+                                    key={apartment.id}
+                                    className="group relative"
+                                >
+                                    {/* Glow Effect */}
+                                    <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-2xl blur opacity-0 group-hover:opacity-30 transition duration-500 group-hover:duration-200"></div>
 
-                                    <div className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
-                                        <h3 className="font-bold text-white text-lg sm:text-xl">
-                                            {apartment.title || 'Untitled Apartment'}
-                                        </h3>
+                                    <div className="relative bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-2xl overflow-hidden shadow-2xl border border-neutral-700/50 group-hover:border-teal-400/30 transition-all duration-500 transform group-hover:-translate-y-2">
+                                        <ApartmentImage
+                                            apartment={apartment}
+                                            index={index}
+                                            offer={offer}
+                                        />
 
-                                        <div className="flex items-center text-gray-300">
-                                            <FontAwesomeIcon
-                                                icon={solidIcons.faMapMarkerAlt}
-                                                className="h-4 w-4 mr-2 text-teal-400"
-                                            />
-                                            <span className="text-sm sm:text-base">{apartment.location || 'Location not specified'}</span>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center">
-                                                <FontAwesomeIcon
-                                                    icon={solidIcons.faStar}
-                                                    className="h-4 w-4 text-teal-400"
-                                                />
-                                                <span className="ml-2 text-sm sm:text-base font-semibold text-white">
-                                                    {apartment.reviews?.rating || 0}
-                                                </span>
-                                                <span className="ml-1 text-sm sm:text-base text-gray-400">
-                                                    ({apartment.reviews?.totalReviews || 0})
-                                                </span>
+                                        <div className="p-6">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <h3 className="font-bold text-white text-xl line-clamp-1">
+                                                    {apartment.title || 'Untitled Apartment'}
+                                                </h3>
+                                                {offer && (
+                                                    <div className="flex-shrink-0 ml-2">
+                                                        <div className="relative">
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full blur"></div>
+                                                            <div className="relative bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                                                                SAVE {offer.discount_percentage}%
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-3 pt-3 border-t border-gray-700/50 flex-wrap">
-                                            {Array.isArray(apartment.features) ? apartment.features.slice(0, 4).map((feat, idx) => (
-                                                <div key={idx} className="flex items-center gap-1 text-gray-300">
-                                                    <FontAwesomeIcon
-                                                        icon={solidIcons[feat]}
-                                                        className="w-4 h-4 text-teal-400"
-                                                    />
+                                            <div className="flex items-center text-gray-300 mb-4">
+                                                <FontAwesomeIcon
+                                                    icon={solidIcons.faMapMarkerAlt}
+                                                    className="h-4 w-4 mr-2 text-teal-400"
+                                                />
+                                                <span className="text-sm">{apartment.location || 'Location not specified'}</span>
+                                            </div>
+
+                                            <div className="flex items-center justify-between mb-5">
+                                                <div className="flex items-center">
+                                                    <div className="flex items-center">
+                                                        <div className="relative">
+                                                            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full blur"></div>
+                                                            <div className="relative flex items-center bg-gradient-to-r from-yellow-500 to-orange-500 text-white px-3 py-1 rounded-full">
+                                                                <FontAwesomeIcon
+                                                                    icon={solidIcons.faStar}
+                                                                    className="h-3 w-3 mr-1"
+                                                                />
+                                                                <span className="text-sm font-bold">
+                                                                    {apartment.reviews?.rating || '4.5'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="ml-2 text-sm text-gray-400">
+                                                            ({apartment.reviews?.totalReviews || 0} reviews)
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            )) : null}
-                                        </div>
+                                            </div>
 
-                                        <button
-                                            onClick={() => apartment.id && router.push(`/booking/${apartment.id}`)}
-                                            className="w-full mt-4 sm:mt-6 group relative bg-teal-400 hover:bg-teal-500 text-neutral-900 font-bold py-3 sm:py-4 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center shadow-lg hover:shadow-xl"
-                                            disabled={!apartment.id}
-                                        >
-                                            <div className="absolute inset-0 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                            <span className="relative z-10 font-semibold text-sm sm:text-base">Book Now</span>
-                                        </button>
+                                            {/* Features */}
+                                            <div className="flex flex-wrap gap-2 mb-6">
+                                                {Array.isArray(apartment.feature_texts) ? apartment.feature_texts.slice(0, 3).map((feat, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className="flex items-center gap-1.5 bg-neutral-800/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-neutral-700/50"
+                                                    >
+                                                        <span className="text-xs text-gray-300 capitalize">
+                                                            {feat}
+                                                        </span>
+                                                    </div>
+                                                )) : null}
+                                            </div>
+
+                                            <button
+                                                onClick={() => apartment.id && router.push(`/booking/${apartment.id}`)}
+                                                className="w-full group relative overflow-hidden bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white font-bold py-4 rounded-xl transition-all duration-300 transform hover:scale-[1.02] flex items-center justify-center shadow-lg hover:shadow-xl"
+                                                disabled={!apartment.id}
+                                            >
+                                                <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                                                <span className="relative z-10 font-bold text-black text-lg flex items-center gap-2">
+                                                    Book now
+                                                </span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                 </div>
 
                 {/* View All Apartments Link */}
                 {isClient && !loading && apartments.length >= 3 && (
-                    <div className="text-center mt-12 sm:mt-16 opacity-100 translate-y-0">
+                    <div className="text-center mt-16">
                         <Link
                             href="/apartments"
-                            className="group relative border border-teal-400 hover:border-teal-500 text-teal-400 font-bold py-3 sm:py-4 px-8 sm:px-12 rounded-xl transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2 sm:gap-3 backdrop-blur-sm mx-auto w-fit"
+                            className="group relative inline-flex items-center gap-3 border-2 border-teal-400/20 hover:border-teal-400/40 text-teal-400 font-bold py-4 px-10 rounded-xl transition-all duration-300 transform hover:scale-105 backdrop-blur-sm bg-neutral-900/50"
                         >
-                            <div className="absolute inset-0 bg-teal-400/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                            <span className="relative z-10 text-sm sm:text-base">View All Apartments</span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-teal-500/0 via-teal-500/10 to-teal-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000"></div>
+                            <span className="relative z-10 text-sm font-bold">Explore All Properties</span>
                             <FontAwesomeIcon
-                                icon={solidIcons.faArrowRight}
+                                icon={solidIcons.faChevronRight}
                                 className="relative z-10 w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
                             />
                         </Link>
@@ -232,15 +371,17 @@ export default function FeaturedApartments() {
 
                 {/* No Apartments Message */}
                 {isClient && !loading && featuredApartments.length === 0 && (
-                    <div className="text-center py-12">
-                        <div className="bg-neutral-800/30 backdrop-blur-lg rounded-2xl p-8 border border-gray-700/50">
-                            <FontAwesomeIcon
-                                icon={solidIcons.faHome}
-                                className="h-16 w-16 text-gray-400 mb-4"
-                            />
-                            <h3 className="text-xl font-semibold text-white mb-2">No Featured Apartments</h3>
-                            <p className="text-gray-300">
-                                Check back later for our handpicked featured apartments.
+                    <div className="text-center py-16">
+                        <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 rounded-2xl p-10 border border-neutral-700/50 backdrop-blur-sm max-w-md mx-auto">
+                            <div className="w-20 h-20 bg-gradient-to-r from-teal-500/20 to-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <FontAwesomeIcon
+                                    icon={solidIcons.faHome}
+                                    className="h-10 w-10 text-teal-400"
+                                />
+                            </div>
+                            <h3 className="text-xl font-bold text-white mb-3">No Featured Apartments</h3>
+                            <p className="text-gray-400">
+                                Check back soon for our exclusive collection of premium apartments.
                             </p>
                         </div>
                     </div>

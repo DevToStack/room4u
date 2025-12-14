@@ -6,7 +6,9 @@ import { faEnvelope, faLock, faEye, faEyeSlash, faSignInAlt } from '@fortawesome
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function LoginForm({ isModal = false }) {
+export default function LoginForm({ isModal = false, onSuccess }) {
+
+
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -29,16 +31,28 @@ export default function LoginForm({ isModal = false }) {
             const data = await res.json();
 
             if (res.ok) {
-                setMessage('Login successful! Redirecting...');
+                setMessage('Login successful!');
 
-                // Redirect based on user role or to dashboard
-                setTimeout(() => {
-                    if (data.role === 'admin') {
-                        router.push('/admin');
-                    } else {
-                        router.push('/dashboard');
-                    }
-                }, 100);
+                if (res.ok) {
+                    setMessage('Login successful!');
+
+                    // CLOSE MODAL
+                    if (onSuccess) onSuccess();
+
+                    // OPTIONAL: refresh user data
+                    
+
+                    // Redirect based on role
+                    setTimeout(() => {
+                        if (data.role === 'admin' || data.role === 'staff') {
+                            router.push('/admin');
+                        } else {
+                            router.refresh(); // refresh user session in UI
+
+                        }
+                    }, 100);
+                }
+                
             } else {
                 setMessage(data.error || 'Login failed. Please try again.');
             }

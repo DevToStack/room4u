@@ -10,7 +10,8 @@ import {
     faMoneyBill,
     faMessage,
     faStar,
-    faInfoCircle
+    faInfoCircle,
+    faCommentDots
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function NotificationItem({ item, refresh }) {
@@ -19,7 +20,8 @@ export default function NotificationItem({ item, refresh }) {
     const iconMap = {
         booking: faBell,
         payment: faMoneyBill,
-        feedback: faStar,
+        feedback: faCommentDots,
+        review: faStar,
         message: faMessage,
         system: faInfoCircle,
         default: faInbox,

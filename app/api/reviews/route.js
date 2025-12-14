@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { query } from "@/lib/mysql-wrapper";
 import { verifyToken } from "@/lib/jwt";
+import { createNotification } from "@/lib/notification-service";
+import { cookies } from "next/headers";
 
 export async function GET(req) {
     try {
@@ -87,12 +89,19 @@ export async function GET(req) {
 /* ─────────────────────────────── POST (Submit review) ─────────────────────────────── */
 export async function POST(req) {
     try {
-        const token = req.cookies.get("token")?.value;
+        const cookieStore = await cookies();
+        const token =  cookieStore.get('token')?.value;
+        
         if (!token) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json(
+                { success: false, message: 'Not authenticated' },
+                { status: 401 }
+            );
         }
+        
+        // ✅ Verify JWT
+        const { valid, decoded, error } = verifyToken(token);
 
-        const { valid, decoded } = verifyToken(token);
         if (!valid) {
             return NextResponse.json({ error: "Invalid token" }, { status: 401 });
         }
@@ -128,6 +137,17 @@ export async function POST(req) {
         `,
             [decoded.id, apartment_id, rating, comment]
         );
+
+        await createNotification({
+            type: 'review',
+            title: 'Review Submitted',
+            content: 'User review has been submitted.',
+            userId: decoded.id,
+            meta: {
+                status: 'done',
+            },
+            level: 'info'
+        });
 
         return NextResponse.json(
             {

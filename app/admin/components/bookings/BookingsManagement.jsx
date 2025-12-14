@@ -128,7 +128,7 @@ const BookingsManagement = () => {
             const result = await response.json();
 
             if (!result.success) {
-                return setError(result.message || 'Failed to delete booking');
+                return setError(result.error || 'Failed to delete booking');
             }
 
             setSuccess('Booking deleted successfully!');

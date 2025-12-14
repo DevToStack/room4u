@@ -40,8 +40,6 @@ export default function Header({
     }, [transparentOnScroll])
 
     const handleLogout = () => {
-        // Add your logout logic here
-        console.log('Logging out...')
         setIsProfileDropdownOpen(false)
         setIsMenuOpen(false)
     }
