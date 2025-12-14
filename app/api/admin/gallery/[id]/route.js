@@ -16,7 +16,10 @@ cloudinary.config({
  */
 export async function DELETE(request, { params }) {
     try {
-        const id = parseInt(params.id, 10);
+        // Await params first, then access id
+        const { id } = await params;
+        const parsedId = parseInt(id, 10);
+
         const cookieHeader = request.headers.get('cookie');
         const cookies = parseCookies(cookieHeader);
         const token = cookies.token;
@@ -27,18 +30,18 @@ export async function DELETE(request, { params }) {
 
         const role = (await adminCheck).decoded.role;
 
-        if(role!=='admin')
+        if (role !== 'admin')
             return NextResponse.json({ error: "Access Denied" }, { status: 401 });
 
 
-        if (isNaN(id)) {
+        if (isNaN(parsedId)) {
             return NextResponse.json({ error: "Invalid image ID" }, { status: 400 });
         }
 
         // 1️⃣ Get image info before deletion
         const [rows] = await pool.query(
             "SELECT image_url FROM apartment_gallery WHERE id = ?",
-            [id]
+            [parsedId]
         );
 
         if (rows.length === 0) {
@@ -62,7 +65,7 @@ export async function DELETE(request, { params }) {
         }
 
         // 4️⃣ Delete from database
-        await pool.query("DELETE FROM apartment_gallery WHERE id = ?", [id]);
+        await pool.query("DELETE FROM apartment_gallery WHERE id = ?", [parsedId]);
 
         return NextResponse.json({ success: true });
     } catch (error) {
@@ -76,8 +79,11 @@ export async function DELETE(request, { params }) {
  */
 export async function PATCH(request, { params }) {
     try {
-        const id = parseInt(params.id, 10);
-        if (isNaN(id)) {
+        // Await params first, then access id
+        const { id } = await params;
+        const parsedId = parseInt(id, 10);
+
+        if (isNaN(parsedId)) {
             return NextResponse.json({ error: "Invalid image ID" }, { status: 400 });
         }
 
@@ -101,19 +107,19 @@ export async function PATCH(request, { params }) {
         if (updates.is_primary === true) {
             const [rows] = await pool.query(
                 "SELECT apartment_id FROM apartment_gallery WHERE id = ?",
-                [id]
+                [parsedId]
             );
 
             if (rows.length > 0) {
                 const apartmentId = rows[0].apartment_id;
                 await pool.query(
                     "UPDATE apartment_gallery SET is_primary = FALSE WHERE apartment_id = ? AND id != ?",
-                    [apartmentId, id]
+                    [apartmentId, parsedId]
                 );
             }
         }
 
-        updateValues.push(id);
+        updateValues.push(parsedId);
         await pool.query(
             `UPDATE apartment_gallery SET ${updateFields.join(", ")} WHERE id = ?`,
             updateValues
@@ -122,7 +128,7 @@ export async function PATCH(request, { params }) {
         // Return updated image data
         const [updatedRows] = await pool.query(
             "SELECT * FROM apartment_gallery WHERE id = ?",
-            [id]
+            [parsedId]
         );
 
         return NextResponse.json({ success: true, image: updatedRows[0] });
@@ -137,14 +143,17 @@ export async function PATCH(request, { params }) {
  */
 export async function GET(request, { params }) {
     try {
-        const id = parseInt(params.id, 10);
-        if (isNaN(id)) {
+        // Await params first, then access id
+        const { id } = await params;
+        const parsedId = parseInt(id, 10);
+
+        if (isNaN(parsedId)) {
             return NextResponse.json({ error: "Invalid image ID" }, { status: 400 });
         }
 
         const [rows] = await pool.query(
             "SELECT * FROM apartment_gallery WHERE id = ?",
-            [id]
+            [parsedId]
         );
 
         if (rows.length === 0) {
