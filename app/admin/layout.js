@@ -18,7 +18,7 @@ const navItems = [
     { id: 'bookings', label: 'Bookings', icon: faCalendar, path: '/admin/bookings' },
     { id: 'payments', label: 'Payments', icon: faCreditCard, path: '/admin/payments' },
     { id: 'gallery', label: 'Gallery', icon: faImages, path: '/admin/gallery' },
-    { id: 'notifications', label: 'Notificatins', icon: faBell, path: '/admin/notifications' },
+    { id: 'notifications', label: 'Notifications', icon: faBell, path: '/admin/notifications' },
     { id: 'reviews', label: 'Reviews & Feedbacks', icon: faMessage, path: '/admin/feedback-reviews' },
     { id: 'offers', label: 'Offers', icon: faTags, path: '/admin/offers' },
 ];

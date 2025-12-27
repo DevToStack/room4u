@@ -141,22 +141,55 @@ export default function OffersPage() {
             setSendingEmail(null);
         }
     };
+    const parseApartmentIds = (value) => {
+        if (!value) return '';
 
+        // If already an array
+        if (Array.isArray(value)) {
+            return value.join(', ');
+        }
+
+        // If it's a string, try JSON.parse
+        if (typeof value === 'string') {
+            try {
+                const parsed = JSON.parse(value);
+
+                if (Array.isArray(parsed)) {
+                    return parsed.join(', ');
+                }
+
+                // If it's an object like { ids: [...] }
+                if (parsed?.ids && Array.isArray(parsed.ids)) {
+                    return parsed.ids.join(', ');
+                }
+
+                // Fallback: return as-is
+                return value;
+            } catch {
+                // Not JSON, probably "1,2,3"
+                return value;
+            }
+        }
+
+        return '';
+    };
+    
     const handleEdit = (offer) => {
         setIsEditing(true);
         setEditingId(offer.id);
+
         setFormData({
             title: offer.title,
             description: offer.description || '',
             discount_percentage: offer.discount_percentage.toString(),
-            apartment_ids: offer.apartment_ids
-                ? JSON.parse(offer.apartment_ids).join(', ')
-                : '',
+            apartment_ids: parseApartmentIds(offer.apartment_ids),
             valid_from: new Date(offer.valid_from).toISOString().split('T')[0],
-            valid_until: new Date(offer.valid_until).toISOString().split('T')[0]
+            valid_until: new Date(offer.valid_until).toISOString().split('T')[0],
         });
+
         setShowModal(true);
     };
+    
 
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this offer?')) return;

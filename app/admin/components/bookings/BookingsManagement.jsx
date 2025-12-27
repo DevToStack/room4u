@@ -205,7 +205,9 @@ const BookingsManagement = () => {
                     {openFilters && (
                         <BookingFilters
                             filters={filters}
-                            onFilterChange={handleFilterChange}
+                            onFilterChange={setFilters}
+                            isOpen={openFilters}
+                            onClose={() => setFiltersOpen(false)}
                         />
                     )}
 
@@ -224,7 +226,6 @@ const BookingsManagement = () => {
             {view === 'details' && selectedBooking && (
                 <BookingDetails
                     booking={selectedBooking}
-                    onBack={handleBackToList}
                     onStatusUpdate={handleStatusUpdate}
                     onDeleteBooking={handleDeleteBooking}
                 />

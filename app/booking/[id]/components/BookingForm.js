@@ -470,6 +470,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
                 onClose={() => setShowVerificationModal(false)}
                 onConfirm={handleConfirmBooking}
                 loading={loading}
+                bookingId={id}
             />
             {/* <FeedbackModal
                 isOpen={showFeedbackModal}

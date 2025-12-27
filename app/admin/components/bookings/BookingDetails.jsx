@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Calendar, User, Home, CreditCard, Users, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faAddressCard } from '@fortawesome/free-solid-svg-icons';
 
-const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) => {
+const BookingDetails = ({ booking, onStatusUpdate, onDeleteBooking }) => {
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('');
     const [adminNotes, setAdminNotes] = useState('');
@@ -79,6 +81,12 @@ const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) =>
         }).format(amount);
     };
 
+    const formatDocLabel = (key) => {
+        return key
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, (char) => char.toUpperCase());
+    };
+    
     const calculateStayDuration = () => {
         const start = new Date(booking.start_date);
         const end = new Date(booking.end_date);
@@ -92,15 +100,6 @@ const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) =>
         <div className="bg-neutral-900 text-neutral-200 rounded-xl shadow-lg border border-neutral-800 overflow-y-auto max-h-[700px]">
             {/* Header with Timeline Status */}
             <div className="relative bg-gradient-to-r from-neutral-900 via-neutral-800 to-neutral-900 border-b border-neutral-800">
-                <div className="absolute top-4 left-6">
-                    <button
-                        onClick={onBack}
-                        className="flex items-center gap-2 px-4 py-2 bg-neutral-800/80 hover:bg-neutral-700 text-neutral-200 hover:text-white transition rounded-lg border border-neutral-700 backdrop-blur-sm"
-                    >
-                        ← Back to List
-                    </button>
-                </div>
-
                 <div className="px-6 py-8 pt-16 text-center">
                     <div className="flex flex-col items-center gap-3">
                         <h1 className="text-2xl sm:text-3xl font-bold text-white">
@@ -211,6 +210,153 @@ const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) =>
                             </div>
                         </div>
 
+                        {/* Apartment Details Card */}
+                        <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                                <Home size={20} />
+                                Apartment Details
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h4 className="font-medium text-white">{booking.apartment_title}</h4>
+                                        <p className="text-sm text-neutral-400 mt-1">{booking.apartment_description?.substring(0, 100)}...</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-2xl font-bold text-white">{formatCurrency(booking.price_per_night)}</div>
+                                        <div className="text-sm text-neutral-400">per night</div>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <MapPin size={16} className="text-neutral-500" />
+                                        <span className="text-neutral-400">Location:</span>
+                                        <span className="ml-auto text-white">{booking.apartment_city}, {booking.apartment_state}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Users size={16} className="text-neutral-500" />
+                                        <span className="text-neutral-400">Max Guests:</span>
+                                        <span className="ml-auto text-white">{booking.max_guests || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-neutral-400">Address:</span>
+                                        <span className="ml-auto text-white text-right">{booking.apartment_address}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-neutral-400">Zip Code:</span>
+                                        <span className="ml-auto text-white">{booking.apartment_zip || 'N/A'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {/* Document Details */}
+                        {booking.document?.data && (
+                            <div className="bg-neutral-800/50 p-4 rounded-xl border border-neutral-700">
+                                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-indigo-400">
+                                    <FontAwesomeIcon icon={faAddressCard} />
+                                    Document Details ({booking.document.type.toUpperCase()})
+                                </h3>
+
+                                {/* Status */}
+                                <div className="mb-4 text-sm">
+                                    <span className="text-gray-400">Status: </span>
+                                    <span
+                                        className={`font-semibold ${booking.document.status === "approved"
+                                            ? "text-green-400"
+                                            : booking.document.status === "rejected"
+                                                ? "text-red-400"
+                                                : "text-yellow-400"
+                                            }`}
+                                    >
+                                        {booking.document.status.toUpperCase()}
+                                    </span>
+                                </div>
+
+                                {/* Document Fields */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-300">
+                                    {Object.entries(booking.document.data).map(([key, value]) => {
+                                        if (key.includes("image")) return null;
+
+                                        return (
+                                            <div
+                                                key={key}
+                                                className="p-3 bg-neutral-900/50 border border-neutral-700 rounded-xl"
+                                            >
+                                                <p className="text-xs text-gray-400">{formatDocLabel(key)}</p>
+                                                <p className="text-sm break-all">{value}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+
+                                {/* Images */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
+                                    {booking.document.data.front_image_url && (
+                                        <div className="bg-neutral-900/40 border border-neutral-700 rounded-xl p-3">
+                                            <p className="text-xs text-gray-400 mb-2">Front Image</p>
+                                            <img
+                                                src={booking.document.data.front_image_url}
+                                                alt="Document Front"
+                                                className="rounded-lg w-full object-cover max-h-48"
+                                            />
+                                        </div>
+                                    )}
+
+                                    {booking.document.data.back_image_url && (
+                                        <div className="bg-neutral-900/40 border border-neutral-700 rounded-xl p-3">
+                                            <p className="text-xs text-gray-400 mb-2">Back Image</p>
+                                            <img
+                                                src={booking.document.data.back_image_url}
+                                                alt="Document Back"
+                                                className="rounded-lg w-full object-cover max-h-48"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Reviewer Message */}
+                                {booking.document.reviewMessage && (
+                                    <div className="mt-4 p-3 bg-neutral-900/60 border border-neutral-700 rounded-xl text-sm text-gray-300">
+                                        <p className="text-xs text-gray-400 mb-1">Reviewer Note</p>
+                                        {booking.document.reviewMessage}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Column - User & Payment Info */}
+                    <div className="space-y-8">
+                        {/* User Information Card */}
+                        <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-6">
+                            <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
+                                <User size={20} />
+                                User Information
+                            </h3>
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                        <User size={24} className="text-blue-400" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-medium text-white">{booking.user_name}</h4>
+                                        <p className="text-sm text-neutral-400">User ID: #{booking.user_id}</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <Mail size={16} className="text-neutral-500" />
+                                        <span className="text-neutral-400">Email:</span>
+                                        <span className="ml-auto text-white text-sm">{booking.user_email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Phone size={16} className="text-neutral-500" />
+                                        <span className="text-neutral-400">Phone:</span>
+                                        <span className="ml-auto text-white text-sm">{booking.user_phone || 'Not provided'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         {/* Guest Details Card */}
                         {guestDetails.length > 0 && (
                             <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-6">
@@ -257,81 +403,6 @@ const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) =>
                                 </div>
                             </div>
                         )}
-
-                        {/* Apartment Details Card */}
-                        <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                                <Home size={20} />
-                                Apartment Details
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <h4 className="font-medium text-white">{booking.apartment_title}</h4>
-                                        <p className="text-sm text-neutral-400 mt-1">{booking.apartment_description?.substring(0, 100)}...</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-2xl font-bold text-white">{formatCurrency(booking.price_per_night)}</div>
-                                        <div className="text-sm text-neutral-400">per night</div>
-                                    </div>
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <MapPin size={16} className="text-neutral-500" />
-                                        <span className="text-neutral-400">Location:</span>
-                                        <span className="ml-auto text-white">{booking.apartment_city}, {booking.apartment_state}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Users size={16} className="text-neutral-500" />
-                                        <span className="text-neutral-400">Max Guests:</span>
-                                        <span className="ml-auto text-white">{booking.apartment_max_guests || 'N/A'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-neutral-400">Address:</span>
-                                        <span className="ml-auto text-white text-right">{booking.apartment_address}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-neutral-400">Zip Code:</span>
-                                        <span className="ml-auto text-white">{booking.apartment_zip || 'N/A'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right Column - User & Payment Info */}
-                    <div className="space-y-8">
-                        {/* User Information Card */}
-                        <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-6">
-                            <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
-                                <User size={20} />
-                                User Information
-                            </h3>
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                        <User size={24} className="text-blue-400" />
-                                    </div>
-                                    <div>
-                                        <h4 className="font-medium text-white">{booking.user_name}</h4>
-                                        <p className="text-sm text-neutral-400">User ID: #{booking.user_id}</p>
-                                    </div>
-                                </div>
-                                <div className="space-y-3">
-                                    <div className="flex items-center gap-2">
-                                        <Mail size={16} className="text-neutral-500" />
-                                        <span className="text-neutral-400">Email:</span>
-                                        <span className="ml-auto text-white text-sm">{booking.user_email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Phone size={16} className="text-neutral-500" />
-                                        <span className="text-neutral-400">Phone:</span>
-                                        <span className="ml-auto text-white text-sm">{booking.user_phone || 'Not provided'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Payment Information Card */}
                         <div className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-6">
                             <h3 className="text-lg font-semibold text-white mb-6 flex items-center gap-2">
@@ -425,6 +496,7 @@ const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) =>
                                 </div>
                             </div>
                         </div>
+                        
                     </div>
                 </div>
             </div>
@@ -475,6 +547,7 @@ const BookingDetails = ({ booking, onBack, onStatusUpdate, onDeleteBooking }) =>
                     </div>
                 </div>
             )}
+
         </div>
     );
 };

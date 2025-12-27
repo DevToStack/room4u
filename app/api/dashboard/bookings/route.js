@@ -21,6 +21,13 @@ function safeGuestDetails(value) {
     }
 }
 
+function mapVerificationStatus(dbStatus) {
+    if (!dbStatus || dbStatus === 'pending') return 'in_progress';
+    if (dbStatus === 'approved') return 'verified';
+    if (dbStatus === 'rejected') return 'rejected';
+    return 'in_progress';
+}
+
 export async function GET(request) {
     let connection;
     try {
@@ -88,11 +95,16 @@ export async function GET(request) {
                 b.total_amount AS total,
                 p.status AS paymentStatus,
                 b.created_at,
-                b.guest_details  -- <-- ✅ return guest details JSON
+                b.guest_details,
+                dv.status AS document_status,
+                dv.review_message,
+                dv.verification_notes,
+                dv.updated_at AS verified_at
             FROM bookings b
             JOIN apartments a ON b.apartment_id = a.id
             JOIN users u ON b.user_id = u.id
             LEFT JOIN payments p ON p.booking_id = b.id
+            LEFT JOIN user_documents dv ON dv.booking_id = b.id
             ${whereClause}
             ORDER BY b.created_at DESC
             LIMIT ? OFFSET ?
@@ -103,8 +115,16 @@ export async function GET(request) {
         // Convert guest_details from JSON string → JS object
         const formattedBookings = bookings.map(b => ({
             ...b,
-            guest_details: safeGuestDetails(b.guest_details)
+            guest_details: safeGuestDetails(b.guest_details),
+
+            document_verification: {
+                status: mapVerificationStatus(b.document_status),
+                reviewMessage: b.review_message,
+                notes: b.verification_notes,
+                verifiedAt: b.verified_at
+            }
         }));
+        
         await updateBookingStatus()
         // === COUNT QUERY ===
         const [totalCount] = await connection.query(

@@ -61,15 +61,26 @@ export async function GET(request) {
                 a.title as apartment_title,
                 a.price_per_night,
                 a.location,
+                a.max_guests,
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.address1')) AS apartment_address,
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.city')) AS apartment_city,
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.state')) AS apartment_state,
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.pincode')) AS apartment_zip,
                 p.amount as paid_amount,
                 p.status as payment_status,
                 p.method as payment_method,
                 p.paid_at,
                 p.razorpay_payment_id,
                 DATEDIFF(b.end_date, b.start_date) as total_nights,
-                (DATEDIFF(b.end_date, b.start_date) * a.price_per_night) as total_amount
+                (DATEDIFF(b.end_date, b.start_date) * a.price_per_night) as total_amount,
+                dv.document_type,
+                dv.document_data,
+                dv.status AS document_status,
+                dv.review_message,
+                dv.verification_notes
             FROM bookings b
             LEFT JOIN users u ON b.user_id = u.id
+            LEFT JOIN user_documents dv ON dv.booking_id = b.id
             LEFT JOIN apartments a ON b.apartment_id = a.id
             LEFT JOIN payments p ON b.id = p.booking_id 
               AND p.id = (SELECT MAX(id) FROM payments WHERE booking_id = b.id)
@@ -80,10 +91,24 @@ export async function GET(request) {
         await updateBookingStatus()
         // 👇 Pass ALL params: filters + pagination
         const bookings = await query(bookingsQuery, queryParams);
-
+        const formattedBookings = bookings.map(b => ({
+            ...b,
+            document: b.document_type
+                ? {
+                    type: b.document_type,
+                    status: b.document_status,
+                    data: typeof b.document_data === 'string'
+                        ? JSON.parse(b.document_data)
+                        : b.document_data,
+                    reviewMessage: b.review_message,
+                    notes: b.verification_notes
+                }
+                : null
+        }));
+        
         return NextResponse.json({
             success: true,
-            data: bookings,
+            data: formattedBookings,
             pagination: {
                 page,
                 limit,

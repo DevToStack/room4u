@@ -23,6 +23,7 @@ import {
     faSpinner,
     faChartLine,
     faRupee,
+    faUpload,
     faIndianRupee
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -44,6 +45,22 @@ export default function BookingInfoModal({
         return 0;
     };
 
+    const getVerificationColor = (status) => {
+        return {
+            in_progress: "text-yellow-400",
+            verified: "text-green-400",
+            rejected: "text-red-400",
+        }[status] || "text-gray-400";
+    };
+
+    const getVerificationIcon = (status) => {
+        return {
+            in_progress: faSpinner,
+            verified: faCheckCircle,
+            rejected: faExclamationTriangle,
+        }[status] || faClock;
+    };
+    
     const getStatusColor = (status) => {
         return {
             pending: "text-yellow-400",
@@ -187,6 +204,64 @@ export default function BookingInfoModal({
 
                         </div>
                     </div>
+
+                    {/* Document Verification */}
+                    {booking.document_verification && (
+                        <div className="bg-neutral-800 p-4 rounded-xl border border-neutral-700">
+                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2 text-blue-400">
+                                <FontAwesomeIcon icon={faAddressCard} />
+                                Document Verification
+                            </h3>
+
+                            <div className="flex items-center justify-between gap-4">
+
+                                {/* Status */}
+                                <div className="flex items-center gap-3">
+                                    <FontAwesomeIcon
+                                        icon={getVerificationIcon(booking.document_verification.status)}
+                                        spin={booking.document_verification.status === "in_progress"}
+                                        className={`text-lg ${getVerificationColor(
+                                            booking.document_verification.status
+                                        )}`}
+                                    />
+                                    <div>
+                                        <p className="text-xs text-gray-400">Status</p>
+                                        <p
+                                            className={`text-sm font-semibold ${getVerificationColor(
+                                                booking.document_verification.status
+                                            )}`}
+                                        >
+                                            {booking.document_verification.status
+                                                .replace("_", " ")
+                                                .toUpperCase()}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                {/* Reupload Button — ONLY IF REJECTED */}
+                                {booking.document_verification.status === "rejected" && (
+                                    <button
+                                        onClick={() => {
+                                            // navigate to re-upload page or open upload modal
+                                            window.location.href = `/dashboard/documents/reupload?booking=${booking.id}`;
+                                        }}
+                                        className="px-4 py-2 bg-red-900/40 border border-red-600 text-red-400 rounded-xl hover:bg-red-900/60 transition flex items-center gap-2"
+                                    >
+                                        <FontAwesomeIcon icon={faUpload} />
+                                        Re-upload Document
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Admin Message (If Any) */}
+                            {booking.document_verification.reviewMessage && (
+                                <div className="mt-4 p-3 bg-neutral-900/60 border border-neutral-700 rounded-xl text-sm text-gray-300">
+                                    <p className="text-xs text-gray-400 mb-1">Reviewer Note</p>
+                                    {booking.document_verification.reviewMessage}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Guest Details */}
                     {Array.isArray(booking.guest_details) && booking.guest_details.length > 0 && (

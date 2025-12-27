@@ -28,6 +28,7 @@ export async function POST(req) {
 
         // Parse multipart form data
         const data = await req.formData();
+        console.log(data);
         const files = data.getAll("files[]"); // Get all files
         const documentType = data.get("document_type");
         const sides = data.getAll("sides[]"); // ["front", "back"]
@@ -37,6 +38,15 @@ export async function POST(req) {
                 error: "files, document_type, and sides are required"
             }, { status: 400 });
         }
+        const bookingId = data.get("booking_id");
+
+        if (!bookingId) {
+            return NextResponse.json(
+                { error: "booking_id is required" },
+                { status: 400 }
+            );
+        }
+
 
         // Validate number of files matches sides
         if (files.length !== sides.length) {
@@ -60,7 +70,29 @@ export async function POST(req) {
                 error: "Invalid document type"
             }, { status: 400 });
         }
+        const [bookingRows] = await db.execute(
+            `SELECT end_date FROM bookings WHERE id = ?`,
+            [bookingId]
+        );
+        console.log(bookingId);
+        if (!bookingRows.length) {
+            return NextResponse.json(
+                { error: "Invalid booking ID" },
+                { status: 400 }
+            );
+        }
 
+        const checkoutDate = new Date(bookingRows[0].check_out);
+        
+        let secondsUntilDelete = Math.floor(
+            (checkoutDate.getTime() - Date.now()) / 1000
+        );
+
+        // Safety: minimum 1 hour
+        if (secondsUntilDelete < 3600) {
+            secondsUntilDelete = 3600;
+        }
+        
         // Prepare for batch upload
         const uploadPromises = [];
         const documentData = {};
@@ -98,7 +130,8 @@ export async function POST(req) {
                         type: "authenticated",
                         access_mode: "authenticated",
                         resource_type: "auto",
-                        tags: [dbDocumentType, side]
+                        tags: [dbDocumentType, side],
+                        invalidate_after: secondsUntilDelete
                     },
                     (error, result) => {
                         if (error) reject(error);

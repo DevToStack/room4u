@@ -190,17 +190,16 @@ export default function FeaturedApartments() {
             const validFrom = new Date(offer.valid_from);
             const validUntil = new Date(offer.valid_until);
 
-            // Offer must be within valid date range
+            // Skip if not in date range
             if (now < validFrom || now > validUntil) return false;
 
-            // If null -> offer applies to ALL apartments
+            // SKIP NULL (global offers) - only apply to specific apartments
             if (offer.apartment_ids === null) {
-                return true;
+                return false; // Changed from true to false
             }
 
             let apartmentIds = offer.apartment_ids;
 
-            // If value is a string, parse it
             if (typeof apartmentIds === "string") {
                 try {
                     apartmentIds = JSON.parse(apartmentIds);
@@ -209,7 +208,6 @@ export default function FeaturedApartments() {
                 }
             }
 
-            // Must be an array & include the apartmentId
             return Array.isArray(apartmentIds) && apartmentIds.includes(apartmentId);
         });
     };

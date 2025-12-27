@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Loader2, ShieldCheck, Upload, X, FileText, Image, ChevronDown } from "lucide-react";
 
-export default function VerificationModal({ isOpen, onClose, onConfirm, loading }) {
+export default function VerificationModal({ isOpen, onClose, onConfirm, bookingId }) {
     const DOCUMENTS = {
         "Aadhaar Card": { front: true, back: true },
         "PAN Card": { front: true, back: false },
@@ -10,7 +10,7 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
         "Passport": { front: true, back: false },
         "Voter ID": { front: true, back: true },
     };
-
+    console.log("Booking ID in Modal:", bookingId);
     // States
     const [selectedDoc, setSelectedDoc] = useState(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -104,6 +104,7 @@ export default function VerificationModal({ isOpen, onClose, onConfirm, loading 
 
             // Add document type
             formData.append("document_type", selectedDoc);
+            formData.append("booking_id", bookingId);
 
             // Get token
             const token = localStorage.getItem('token') || getCookie('token');

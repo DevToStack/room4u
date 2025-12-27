@@ -100,6 +100,7 @@ export async function POST(request) {
         // === 6. SUCCESS RESPONSE ===
         return NextResponse.json({
             success: true,
+            bookingId: bookingResult.bookingId,
             message: 'Temporary booking created successfully.Wait for admin Verification.'
         }, { status: 201 });
 

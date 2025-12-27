@@ -93,12 +93,13 @@ export async function GET(request, { params }) {
                 a.id as apartment_id,
                 a.title AS apartment_title,
                 a.description AS apartment_description,
-                a.address AS apartment_address,
-                a.city AS apartment_city,
-                a.state AS apartment_state,
-                a.zip_code AS apartment_zip,
+                -- JSON extracted fields
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.address1')) AS apartment_address,
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.city')) AS apartment_city,
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.state')) AS apartment_state,
+                JSON_UNQUOTE(JSON_EXTRACT(a.location_data, '$.pincode')) AS apartment_zip,
                 a.price_per_night,
-                a.max_guests AS apartment_max_guests,
+                a.max_guests AS max_guests,
                 a.amenities AS apartment_amenities,
                 a.images AS apartment_images,
                 a.status AS apartment_status,
@@ -152,7 +153,6 @@ export async function GET(request, { params }) {
         }
 
         const formattedBooking = formatBookingData(bookings[0]);
-
         return NextResponse.json({
             success: true,
             data: formattedBooking,
