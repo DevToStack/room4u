@@ -164,12 +164,15 @@ export async function POST(req) {
                 uploaded_at: new Date().toISOString()
             };
         });
-
+        await db.execute(
+            `DELETE FROM user_documents WHERE booking_id = ?
+            `,[bookingId]
+        )
         // Save to database
         await db.execute(
-            `INSERT INTO user_documents (user_id, document_type, document_data, status)
-             VALUES (?, ?, ?, 'pending')`,
-            [userId, dbDocumentType, JSON.stringify(documentsJson)]
+            `INSERT INTO user_documents (user_id, document_type, document_data, status, booking_id)
+             VALUES (?, ?, ?, 'pending',?)`,
+            [userId, dbDocumentType, JSON.stringify(documentsJson),bookingId]
         );
 
         return NextResponse.json({

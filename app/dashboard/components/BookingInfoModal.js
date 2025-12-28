@@ -26,6 +26,8 @@ import {
     faUpload,
     faIndianRupee
 } from "@fortawesome/free-solid-svg-icons";
+import VerificationModal from "@/app/booking/[id]/components/VerificationModal";
+import { useState } from "react";
 
 export default function BookingInfoModal({
     booking,
@@ -36,6 +38,8 @@ export default function BookingInfoModal({
 }) {
     if (!isOpen || !booking) return null;
 
+    const [loading, setLoading] = useState(false);
+    const [showVerificationModal, setShowVerificationModal] = useState(false);
     // ---- Progress Logic ----
     const getProgress = () => {
         if (booking.status === "pending") return 50;
@@ -44,7 +48,11 @@ export default function BookingInfoModal({
         if (booking.paymentStatus === "paid") return 100;
         return 0;
     };
-
+    const handleConfirmBooking = () => {
+        // Logic to confirm booking
+        setLoading(true);
+        setShowVerificationModal(false);
+    };
     const getVerificationColor = (status) => {
         return {
             in_progress: "text-yellow-400",
@@ -76,7 +84,7 @@ export default function BookingInfoModal({
             paid: "text-green-400",
         }[status] || "text-gray-400";
     };
-
+    console.log(booking.id);
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-[9999] p-4">
 
@@ -242,8 +250,7 @@ export default function BookingInfoModal({
                                 {booking.document_verification.status === "rejected" && (
                                     <button
                                         onClick={() => {
-                                            // navigate to re-upload page or open upload modal
-                                            window.location.href = `/dashboard/documents/reupload?booking=${booking.id}`;
+                                            setShowVerificationModal(true);
                                         }}
                                         className="px-4 py-2 bg-red-900/40 border border-red-600 text-red-400 rounded-xl hover:bg-red-900/60 transition flex items-center gap-2"
                                     >
@@ -347,6 +354,14 @@ export default function BookingInfoModal({
 
                 </div>
             </div>
+
+            <VerificationModal
+                isOpen={showVerificationModal}
+                onClose={() => setShowVerificationModal(false)}
+                onConfirm={handleConfirmBooking}
+                loading={loading}
+                bookingId={booking.id}
+            />
         </div>
     );
 }
