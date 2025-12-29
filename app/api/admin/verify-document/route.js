@@ -71,14 +71,14 @@ export async function POST(request) {
                 // Update existing record
                 await connection.query(
                     `UPDATE user_documents 
-           SET document_type = ?, 
-               document_data = ?, 
-               status = ?, 
-               reviewer_id = ?, 
-               review_message = ?, 
-               verification_notes = ?, 
-               updated_at = NOW()
-           WHERE user_id = ? AND booking_id = ?`,
+                    SET document_type = ?, 
+                        document_data = ?, 
+                        status = ?, 
+                        reviewer_id = ?, 
+                        review_message = ?, 
+                        verification_notes = ?, 
+                        updated_at = NOW()
+                    WHERE user_id = ? AND booking_id = ?`,
                     [
                         document_type,
                         JSON.stringify(document_data),
@@ -92,23 +92,29 @@ export async function POST(request) {
                 );
                 documentId = existingDoc[0].id;
             } else {
-                // Insert new record
-                const [result] = await connection.query(
-                    `INSERT INTO user_documents 
-           (user_id, booking_id, document_type, document_data, status, reviewer_id, review_message, verification_notes) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+                // Update new record
+                await connection.query(
+                    `UPDATE user_documents 
+                    SET document_type = ?, 
+                        document_data = ?, 
+                        status = ?, 
+                        reviewer_id = ?, 
+                        review_message = ?, 
+                        booking_id = ?,
+                        verification_notes = ?, 
+                        updated_at = NOW()
+                    WHERE user_id = ? AND status = 'pending'`,
                     [
-                        user_id,
-                        booking_id,
                         document_type,
                         JSON.stringify(document_data),
                         status,
                         reviewer_id,
                         review_message,
-                        verification_notes
+                        booking_id,
+                        verification_notes,
+                        user_id
                     ]
                 );
-                documentId = result.insertId;
             }
 
             // 2. Update booking status to confirmed

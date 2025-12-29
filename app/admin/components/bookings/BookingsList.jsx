@@ -94,6 +94,36 @@ const BookingsList = ({
         }
     };
 
+    const getDocumentActionConfig = (documentStatus) => {
+        switch (documentStatus) {
+            case "approved":
+                return {
+                    label: "Verified",
+                    variant: "confirm",
+                    disabled: true,
+                    icon: faCheckCircle,
+                };
+            case "rejected":
+                return {
+                    label: "Verify",
+                    variant: "delete",
+                    disabled: false,
+                    icon: faExclamationTriangle,
+                };
+            default:
+                return {
+                    label: "Verify",
+                    variant: "cancel",
+                    disabled: false,
+                    icon: faExclamationTriangle,
+                };
+        }
+    };
+
+    const canShowCancelButton = (bookingStatus) => {
+        return !["confirmed", "expired", "ongoing","cancelled"].includes(bookingStatus);
+    };
+    
     // Update the handleDocumentTypeChange function
     const handleDocumentTypeChange = (type) => {
         setDocumentType(type);
@@ -641,16 +671,26 @@ const BookingsList = ({
                                                 variant="default"
                                             />
 
-                                            {booking.status === "pending" && (
-                                                <ActionButton
-                                                    onClick={() => handleQuickStatusUpdate(booking.id, "confirmed")}
-                                                    icon={faCheckCircle}
-                                                    label="Confirm"
-                                                    variant="confirm"
-                                                />
-                                            )}
+                                            {/* Document Verify / Verified Button */}
+                                            {(() => {
+                                                const docConfig = getDocumentActionConfig(booking.document_status);
+                                                return (
+                                                    <ActionButton
+                                                        onClick={() => {
+                                                            if (!docConfig.disabled) {
+                                                                handleQuickStatusUpdate(booking.id, "confirmed");
+                                                            }
+                                                        }}
+                                                        icon={docConfig.icon}
+                                                        label={docConfig.label}
+                                                        variant={docConfig.variant}
+                                                        disabled={docConfig.disabled}
+                                                    />
+                                                );
+                                            })()}
 
-                                            {booking.status !== "cancelled" && booking.status !== "confirmed" && (
+                                            {/* Cancel button — fully hidden when not allowed */}
+                                            {canShowCancelButton(booking.status) && (
                                                 <ActionButton
                                                     onClick={() => handleQuickStatusUpdate(booking.id, "cancelled")}
                                                     icon={faBan}
