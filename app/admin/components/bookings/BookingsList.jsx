@@ -28,7 +28,10 @@ const BookingsList = ({
     const [initialDocumentData, setInitialDocumentData] = useState({});
     const [showDuplicateDocModal, setShowDuplicateDocModal] = useState(false);
     const [existingDocData, setExistingDocData] = useState(null);
-
+    // Add this near your other useState declarations
+    const [userDocuments, setUserDocuments] = useState([]);
+    const [showDocumentList, setShowDocumentList] = useState(false);
+    const [selectedDocumentId, setSelectedDocumentId] = useState(null);
     // Add documentSchemas to your component or import it
     const documentSchemas = {
         aadhaar: {
@@ -221,26 +224,42 @@ const BookingsList = ({
             setCancelReason("");
             setShowCancelModal(true);
         } else if (newStatus === "confirmed") {
-            // Get the booking to extract user_id
             const booking = bookings.find(b => b.id === bookingId);
             if (booking && booking.user_id) {
                 setSelectedBooking(bookingId);
-
-                // Check for existing verification history first
-                // This function will automatically fetch images from verify-document API if exists,
-                // or fall back to document API for new verification
-                await fetchDocumentVerificationHistory(booking.user_id);
-
-                // Show the confirm modal (showDuplicateDocModal will show first if existing doc found)
-                if (!showDuplicateDocModal) {
-                    setShowConfirmModal(true);
-                }
+                // First fetch all documents to show the list
+                await fetchAllUserDocuments(booking.user_id);
+                // Don't show confirm modal immediately - let user select from list
             }
         } else {
             await onStatusUpdate(bookingId, newStatus);
         }
     };
 
+    const fetchAllUserDocuments = async (userId) => {
+        try {
+            setLoadingDocuments(true);
+            const response = await fetch(`/api/admin/verify-document?user_id=${userId}`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Sort documents by created_at (latest first)
+                const sortedDocs = data.documents.sort((a, b) =>
+                    new Date(b.created_at) - new Date(a.created_at)
+                );
+                setUserDocuments(sortedDocs);
+                setShowDocumentList(true);
+            } else {
+                setUserDocuments([]);
+                alert('No documents found for this user');
+            }
+        } catch (error) {
+            console.error('Error fetching documents:', error);
+            alert('Failed to fetch documents');
+        } finally {
+            setLoadingDocuments(false);
+        }
+    };
     const handleConfirmBooking = async () => {
         if (!validateDocument()) {
             alert('Please fill all required document fields correctly');
@@ -510,6 +529,7 @@ const BookingsList = ({
         setShowDeleteModal(false);
         setShowConfirmModal(false);
         setShowDuplicateDocModal(false);
+        setShowDocumentList(false);
         setSelectedBooking(null);
         setCancelReason("");
         setActionLoading(false);
@@ -524,7 +544,202 @@ const BookingsList = ({
     // NOTE: We're NOT clearing documentUrls here so they persist between modal openings
     // unless you want a fresh fetch each time
     };
+    const DocumentListModal = () => {
+        if (!showDocumentList) return null;
 
+        const handleDocumentSelect = (doc) => {
+            if (doc.status === 'approved') {
+                // Use existing approved document
+                setDocumentType(doc.document_type);
+                setDocumentData(doc.document_data);
+
+                // Extract image URLs
+                const extractedUrls = {};
+                Object.entries(doc.document_data).forEach(([key, value]) => {
+                    if (key.includes('_image_url') || key.includes('_url')) {
+                        const cleanKey = key.replace('_image_url', '').replace('_url', '');
+                        const tabName = cleanKey === 'front' || cleanKey === 'back' || cleanKey === 'photo'
+                            ? cleanKey
+                            : 'front';
+                        extractedUrls[tabName] = value;
+                    }
+                });
+
+                setDocumentUrls(extractedUrls);
+                setSelectedDocumentId(doc.id);
+
+                // Close list and open confirm modal
+                setShowDocumentList(false);
+                setShowConfirmModal(true);
+            } else if (doc.status === 'pending') {
+                // Use pending document for verification
+                setDocumentType(doc.document_type);
+                setDocumentData(doc.document_data);
+
+                // Try to get images from document API
+                const booking = bookings.find(b => b.id === selectedBooking);
+                if (booking && booking.user_id) {
+                    fetchDocumentImages(booking.user_id);
+                }
+
+                setSelectedDocumentId(doc.id);
+                setShowDocumentList(false);
+                setShowConfirmModal(true);
+            }
+        };
+
+        const handleNewDocument = () => {
+            setShowDocumentList(false);
+            setShowConfirmModal(true);
+        };
+
+        const getStatusBadge = (status) => {
+            const statusConfig = {
+                approved: { class: "bg-green-500/20 text-green-400", label: "Verified" },
+                rejected: { class: "bg-red-500/20 text-red-400", label: "Rejected" },
+                pending: { class: "bg-yellow-500/20 text-yellow-400", label: "Pending" }
+            };
+            const config = statusConfig[status] || { class: "bg-gray-500/20 text-gray-400", label: "Unknown" };
+
+            return (
+                <span className={`px-2 py-1 rounded-full text-xs font-medium ${config.class}`}>
+                    {config.label}
+                </span>
+            );
+        };
+
+        const getDocumentTypeLabel = (type) => {
+            const labels = {
+                aadhaar: "Aadhaar Card",
+                pan: "PAN Card",
+                driving_license: "Driving License",
+                passport: "Passport",
+                voter_id: "Voter ID"
+            };
+            return labels[type] || type;
+        };
+
+        return (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center">
+                            <div className="bg-blue-500/20 p-2 rounded-lg mr-3">
+                                <FontAwesomeIcon icon={faEye} className="w-6 h-6 text-blue-400" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-neutral-200">
+                                Select Document for Verification
+                            </h3>
+                        </div>
+                        <div className="flex items-center space-x-3">
+                            <button
+                                onClick={handleNewDocument}
+                                className="flex items-center px-4 py-2 bg-green-500/10 text-green-400 hover:bg-green-500/20 rounded-lg transition"
+                            >
+                                <FontAwesomeIcon icon={faCheckCircle} className="w-4 h-4 mr-2" />
+                                New Document
+                            </button>
+                            <button
+                                onClick={() => setShowDocumentList(false)}
+                                className="text-neutral-400 hover:text-neutral-300 transition"
+                            >
+                                <FontAwesomeIcon icon={faTimes} className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {loadingDocuments ? (
+                        <div className="flex justify-center items-center py-8">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                        </div>
+                    ) : userDocuments.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-neutral-400">No documents found for this user</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {userDocuments.map((doc) => (
+                                <div
+                                    key={doc.id}
+                                    className={`flex items-center p-4 rounded-lg border transition-all cursor-pointer hover:bg-neutral-800/50 ${selectedDocumentId === doc.id
+                                        ? 'border-blue-500 bg-blue-500/10'
+                                        : 'border-neutral-700'
+                                        }`}
+                                    onClick={() => handleDocumentSelect(doc)}
+                                >
+                                    {/* Document Image Thumbnail */}
+                                    <div className="w-16 h-16 flex-shrink-0 mr-4">
+                                        {doc.document_data?.front_image_url ? (
+                                            <img
+                                                src={doc.document_data.front_image_url}
+                                                alt="Document"
+                                                className="w-full h-full object-cover rounded-lg border border-neutral-700"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23222'/%3E%3Ctext x='32' y='32' text-anchor='middle' fill='%23666' font-family='Arial' font-size='10'%3ENo Image%3C/text%3E%3C/svg%3E";
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-neutral-800 rounded-lg border border-neutral-700 flex items-center justify-center">
+                                                <FontAwesomeIcon icon={faEye} className="w-6 h-6 text-neutral-600" />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Document Details */}
+                                    <div className="flex-grow">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h4 className="text-md font-medium text-neutral-200">
+                                                    {getDocumentTypeLabel(doc.document_type)}
+                                                </h4>
+                                                <p className="text-sm text-neutral-400">
+                                                    {doc.document_data?.name || 'No name available'}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center space-x-3">
+                                                {getStatusBadge(doc.status)}
+                                                <span className="text-xs text-neutral-500">
+                                                    {new Date(doc.created_at).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center justify-between mt-2">
+                                            <div className="text-xs text-neutral-500">
+                                                ID: {doc.document_data?.[`${doc.document_type}_number`] || 'N/A'}
+                                            </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleDocumentSelect(doc);
+                                                }}
+                                                className={`text-sm font-medium px-3 py-1 rounded transition ${doc.status === 'approved'
+                                                    ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                                                    : doc.status === 'pending'
+                                                        ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                                                        : 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20'
+                                                    }`}
+                                            >
+                                                {doc.status === 'approved' ? 'Use Verified' :
+                                                    doc.status === 'pending' ? 'Verify Now' : 'View Details'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="mt-6 pt-4 border-t border-neutral-800 text-sm text-neutral-500">
+                        <p>• Select a document to use for verification</p>
+                        <p>• Click "New Document" to enter fresh information</p>
+                        <p>• Verified documents can be reused for quick confirmation</p>
+                    </div>
+                </div>
+            </div>
+        );
+    };
     const ActionButton = ({
         onClick,
         icon,
@@ -562,6 +777,7 @@ const BookingsList = ({
 
     return (
         <>
+            <DocumentListModal />
             <div className="bg-neutral-800 rounded-xl shadow-sm overflow-hidden border border-neutral-700">
                 {/* Scrollable Table */}
                 <div

@@ -223,13 +223,31 @@ export async function GET(request) {
 
             const [documents] = await connection.query(query, params);
 
-            // Parse JSON document_data
-            const parsedDocuments = documents.map(doc => ({
-                ...doc,
-                document_data: typeof doc.document_data === 'string'
+            // In your GET endpoint, after parsing document_data:
+            const parsedDocuments = documents.map(doc => {
+                const documentData = typeof doc.document_data === 'string'
                     ? JSON.parse(doc.document_data)
-                    : doc.document_data
-            }));
+                    : doc.document_data;
+
+                // Extract image URLs for easy access
+                const imageUrls = {};
+                if (documentData) {
+                    Object.entries(documentData).forEach(([key, value]) => {
+                        if ((key.includes('_image_url') || key.includes('_url')) && value) {
+                            const tabName = key.includes('front') ? 'front' :
+                                key.includes('back') ? 'back' :
+                                    key.includes('photo') ? 'photo' : 'other';
+                            imageUrls[tabName] = value;
+                        }
+                    });
+                }
+
+                return {
+                    ...doc,
+                    document_data: documentData,
+                    image_urls: imageUrls
+                };
+            });
 
             return NextResponse.json({
                 success: true,
