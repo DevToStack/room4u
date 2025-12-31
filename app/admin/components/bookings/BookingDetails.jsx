@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Calendar, User, Home, CreditCard, Users, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faAddressCard } from '@fortawesome/free-solid-svg-icons';
+import { faAddressCard, faList, faListUl } from '@fortawesome/free-solid-svg-icons';
 
-const BookingDetails = ({ booking, onStatusUpdate, onDeleteBooking }) => {
+const BookingDetails = ({ booking, onStatusUpdate, onDeleteBooking, onBack }) => {
     const [showStatusModal, setShowStatusModal] = useState(false);
     const [selectedStatus, setSelectedStatus] = useState('');
     const [adminNotes, setAdminNotes] = useState('');
@@ -126,8 +126,21 @@ const BookingDetails = ({ booking, onStatusUpdate, onDeleteBooking }) => {
             </div>
 
             {/* Action Buttons */}
-            <div className="px-6 py-4 border-b border-neutral-800 bg-neutral-800/50">
-                <div className="flex flex-wrap gap-2 justify-end">
+            <div className="px-6 py-4 border-b border-neutral-800 bg-neutral-800/50 flex justify-between items-center">
+                <div className='flex'>
+                    <button
+                        onClick={() => onBack()}
+                        className="px-6 py-3 bg-neutral-900/40 hover:bg-neutral-800/60 text-neutral-200 hover:text-white rounded-xl transition-all duration-300 font-semibold flex items-center gap-3 border border-neutral-600/30 hover:border-neutral-400/50 shadow-lg hover:shadow-neutral-900/40 backdrop-blur-md group"
+                    >
+                        <FontAwesomeIcon
+                            icon={faListUl}
+                            className="text-neutral-300/80 group-hover:text-neutral-100 transition-all duration-300 group-hover:scale-105"
+                        />
+                        Back to List
+                    </button>
+                </div>
+
+                <div className="flex gap-2 justify-end">
                     {booking.status === 'pending' && (
                         <button
                             onClick={() => openStatusModal('confirmed')}
@@ -150,6 +163,7 @@ const BookingDetails = ({ booking, onStatusUpdate, onDeleteBooking }) => {
                     >
                         🗑️ Delete Booking
                     </button>
+
                 </div>
             </div>
 

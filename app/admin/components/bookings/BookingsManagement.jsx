@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import BookingsList from './BookingsList';
+import BookingsList, { TableSkeleton } from './BookingsList';
 import BookingDetails from './BookingDetails';
 import BookingsStats from './BookingsStats';
-import BookingFilters from './BookingFilters';
 import Toast from '@/components/toast';
+import BookingSearchBar, { BookingFiltersSkeleton } from './BookingFilters';
 
 const BookingsManagement = () => {
     const [bookings, setBookings] = useState([]);
@@ -14,6 +14,8 @@ const BookingsManagement = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [openFilters, setFiltersOpen] = useState(false);
+    // Track if it's initial load or search/filter
+    const [isInitialLoad, setIsInitialLoad] = useState(true);
 
     const [filters, setFilters] = useState({
         page: 1,
@@ -39,7 +41,6 @@ const BookingsManagement = () => {
     const fetchBookings = async () => {
         try {
             setLoading(true);
-
             const queryParams = new URLSearchParams();
             Object.entries(filters).forEach(([key, value]) => {
                 if (value) queryParams.append(key, value);
@@ -58,6 +59,7 @@ const BookingsManagement = () => {
             setError('Error fetching bookings');
         } finally {
             setLoading(false);
+            setIsInitialLoad(false);
         }
     };
 
@@ -81,7 +83,6 @@ const BookingsManagement = () => {
     const handleBackToList = () => {
         setView('list');
         setSelectedBooking(null);
-        fetchBookings(); // only when returning from details
     };
 
     // 🔥 FIXED: Update without full reload
@@ -146,74 +147,30 @@ const BookingsManagement = () => {
         }
     };
 
-    if (loading) {
+    // Loading state
+    if (loading && isInitialLoad) {
         return (
-            <div className="h-screen text-white p-6 flex items-center justify-center"
-                style={{ maxHeight: 'calc(100vh - 96px)' }}
-            >
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            <div className='p-6'>
+                <BookingFiltersSkeleton />
+                <TableSkeleton />
             </div>
         );
     }
 
     return (
-        <div className="h-full p-4 sm:p-6 max-sm:pb-16 bg-neutral-900 text-neutral-200">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-
-                <div className="flex space-x-2">
-                    <button
-                        onClick={() => setView('list')}
-                        className={`px-4 py-2 rounded-lg transition ${view === 'list'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
-                            }`}
-                    >
-                        All Bookings
-                    </button>
-
-                    <button
-                        onClick={() => setView('stats')}
-                        className={`px-4 py-2 rounded-lg transition ${view === 'stats'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
-                            }`}
-                    >
-                        Statistics
-                    </button>
-
-                    {view === 'list' && (
-                        <button
-                            onClick={() => handleOpenFilters()}
-                            className={`px-4 py-2 rounded-lg transition ${openFilters
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-700 text-neutral-200 hover:bg-gray-600'
-                                }`}
-                        >
-                            Filters
-                        </button>
-                    )}
-                </div>
-            </div>
+        <div className="h-full min-h-screen p-4 sm:p-6 max-sm:pb-16 bg-gradient-to-r from-neutral-900 to-neutral-950 text-neutral-200">
 
             {error && <Toast message={error} onClose={() => setError('')} />}
             {success && <Toast message={success} type="success" onClose={() => setSuccess('')} />}
-
-            {view === 'stats' && <BookingsStats onBack={() => setView('list')} />}
-
             {view === 'list' && (
                 <>
-                    {openFilters && (
-                        <BookingFilters
-                            filters={filters}
-                            onFilterChange={setFilters}
-                            isOpen={openFilters}
-                            onClose={() => setFiltersOpen(false)}
-                        />
-                    )}
-
+                    <BookingSearchBar
+                        filters={filters}
+                        onFilterChange={handleFilterChange}
+                    />
                     <BookingsList
                         bookings={bookings}
-                        loading={loading}
+                        loading={loading} // Pass false since we're handling skeleton above
                         pagination={pagination}
                         onPageChange={handlePageChange}
                         onViewBooking={handleViewBooking}
@@ -228,6 +185,7 @@ const BookingsManagement = () => {
                     booking={selectedBooking}
                     onStatusUpdate={handleStatusUpdate}
                     onDeleteBooking={handleDeleteBooking}
+                    onBack={handleBackToList}
                 />
             )}
         </div>

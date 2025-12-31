@@ -172,7 +172,6 @@ export async function POST(request) {
         );
     }
 }
-
 // GET endpoint to fetch document verification history
 export async function GET(request) {
     try {
@@ -193,19 +192,19 @@ export async function GET(request) {
 
         try {
             let query = `
-        SELECT ud.*, 
-               u.name as user_name, 
-               u.email as user_email,
-               b.apartment_id,
-               a.title as apartment_title,
-               admin.name as reviewer_name
-        FROM user_documents ud
-        LEFT JOIN users u ON ud.user_id = u.id
-        LEFT JOIN bookings b ON ud.booking_id = b.id
-        LEFT JOIN apartments a ON b.apartment_id = a.id
-        LEFT JOIN users admin ON ud.reviewer_id = admin.id
-        WHERE 1=1
-      `;
+                SELECT ud.*, 
+                       u.name as user_name, 
+                       u.email as user_email,
+                       b.apartment_id,
+                       a.title as apartment_title,
+                       admin.name as reviewer_name
+                FROM user_documents ud
+                LEFT JOIN users u ON ud.user_id = u.id
+                LEFT JOIN bookings b ON ud.booking_id = b.id
+                LEFT JOIN apartments a ON b.apartment_id = a.id
+                LEFT JOIN users admin ON ud.reviewer_id = admin.id
+                WHERE 1=1
+            `;
 
             const params = [];
 
@@ -223,21 +222,48 @@ export async function GET(request) {
 
             const [documents] = await connection.query(query, params);
 
-            // In your GET endpoint, after parsing document_data:
+            // Parse documents and extract URLs from both formats
             const parsedDocuments = documents.map(doc => {
                 const documentData = typeof doc.document_data === 'string'
                     ? JSON.parse(doc.document_data)
                     : doc.document_data;
 
-                // Extract image URLs for easy access
+                // Extract image URLs from both formats
                 const imageUrls = {};
+
                 if (documentData) {
+                    // Case 1: Check for nested structure (front.url, back.url)
+                    if (documentData.front && documentData.front.url) {
+                        imageUrls.front = documentData.front.url;
+                    }
+                    if (documentData.back && documentData.back.url) {
+                        imageUrls.back = documentData.back.url;
+                    }
+                    if (documentData.photo && documentData.photo.url) {
+                        imageUrls.photo = documentData.photo.url;
+                    }
+
+                    // Case 2: Check for flat structure (front_image_url, back_image_url)
+                    if (documentData.front_image_url) {
+                        imageUrls.front = documentData.front_image_url;
+                    }
+                    if (documentData.back_image_url) {
+                        imageUrls.back = documentData.back_image_url;
+                    }
+                    if (documentData.photo_image_url) {
+                        imageUrls.photo = documentData.photo_image_url;
+                    }
+
+                    // Also check for any other URL fields that might exist
                     Object.entries(documentData).forEach(([key, value]) => {
-                        if ((key.includes('_image_url') || key.includes('_url')) && value) {
+                        if (typeof value === 'string' && value.startsWith('http')) {
                             const tabName = key.includes('front') ? 'front' :
                                 key.includes('back') ? 'back' :
-                                    key.includes('photo') ? 'photo' : 'other';
-                            imageUrls[tabName] = value;
+                                    key.includes('photo') ? 'photo' :
+                                        key.toLowerCase();
+                            if (!imageUrls[tabName]) {
+                                imageUrls[tabName] = value;
+                            }
                         }
                     });
                 }

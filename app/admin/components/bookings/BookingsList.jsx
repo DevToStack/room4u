@@ -1,6 +1,174 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEye, faChevronDown, faCheckCircle, faBan, faTrash, faTimes, faExclamationTriangle } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
+import NoBookingsEmptyState from "./EmptyBooking";
+
+export const TableSkeleton = () => {
+    return (
+        <div className="bg-neutral-900 rounded-xl shadow-xl overflow-hidden border border-neutral-700/50 backdrop-blur-sm animate-pulse">
+            {/* Pagination Skeleton */}
+            <div className="bg-gradient-to-r from-neutral-900 to-neutral-950 px-6 py-4 border-b border-neutral-800/70">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <div className="h-4 bg-neutral-800 rounded w-24 shimmer"></div>
+                        <div className="h-4 bg-neutral-800 rounded w-8 shimmer"></div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        {/* Previous Button Skeleton */}
+                        <div className="h-10 bg-neutral-800 rounded-lg w-16 shimmer"></div>
+
+                        {/* Page Numbers Skeleton */}
+                        <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <div
+                                    key={i}
+                                    className={`h-10 w-10 rounded-lg shimmer ${i === 1 ? "bg-blue-900/50" : "bg-neutral-800"
+                                        }`}
+                                ></div>
+                            ))}
+                        </div>
+
+                        {/* Next Button Skeleton */}
+                        <div className="h-10 bg-neutral-800 rounded-lg w-16 shimmer"></div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Table Skeleton */}
+            <div
+                style={{
+                    maxHeight: "calc(100vh - 320px)",
+                    minHeight: "400px",
+                    overflowY: "auto",
+                    overflowX: "auto"
+                }}
+                className="scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-neutral-900"
+            >
+                <table className="w-full text-left border-collapse text-neutral-50 min-w-[1024px]">
+                    {/* Table Header Skeleton */}
+                    <thead className="bg-gradient-to-r from-neutral-900 to-neutral-950 sticky top-0 z-20 text-sm border-b border-neutral-800/70">
+                        <tr>
+                            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                                <th key={i} className="p-4">
+                                    <div className="h-4 bg-neutral-800 rounded w-20 shimmer"></div>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+
+                    {/* Table Body Skeleton */}
+                    <tbody className="divide-y divide-neutral-700/50">
+                        {Array.from({ length: 10 }).map((_, rowIndex) => (
+                            <tr key={rowIndex} className="group hover:bg-neutral-800/80">
+                                {/* Booking ID */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="flex items-center gap-3">
+                                        <div className="space-y-2">
+                                            <div className="h-4 bg-neutral-800 rounded w-16 shimmer"></div>
+                                            <div className="h-3 bg-neutral-800 rounded w-24 shimmer"></div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                {/* User */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="space-y-2">
+                                        <div className="h-4 bg-neutral-800 rounded w-20 shimmer"></div>
+                                        <div className="h-3 bg-neutral-800 rounded w-32 shimmer"></div>
+                                        <div className="h-3 bg-neutral-800 rounded w-24 shimmer"></div>
+                                        <div className="h-5 bg-neutral-800 rounded w-16 shimmer"></div>
+                                    </div>
+                                </td>
+
+                                {/* Apartment */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="space-y-2">
+                                        <div className="h-4 bg-neutral-800 rounded w-32 shimmer"></div>
+                                        <div className="h-3 bg-neutral-800 rounded w-16 shimmer"></div>
+                                    </div>
+                                </td>
+
+                                {/* Dates */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="space-y-2">
+                                        <div className="h-4 bg-neutral-800 rounded w-24 shimmer"></div>
+                                        <div className="h-3 bg-neutral-800 rounded w-8 mx-auto shimmer"></div>
+                                        <div className="h-4 bg-neutral-800 rounded w-24 shimmer"></div>
+                                    </div>
+                                </td>
+
+                                {/* Status */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="h-8 bg-neutral-800 rounded-full w-20 shimmer"></div>
+                                </td>
+
+                                {/* Payment */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="h-8 bg-neutral-800 rounded-full w-24 shimmer"></div>
+                                </td>
+
+                                {/* Amount */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="space-y-2">
+                                        <div className="h-4 bg-neutral-800 rounded w-16 shimmer"></div>
+                                        <div className="h-3 bg-neutral-800 rounded w-20 shimmer"></div>
+                                    </div>
+                                </td>
+
+                                {/* Actions */}
+                                <td className="p-4 whitespace-nowrap">
+                                    <div className="flex flex-wrap gap-2">
+                                        {[1, 2, 3].map((i) => (
+                                            <div key={i} className="h-8 bg-neutral-800 rounded-lg w-16 shimmer"></div>
+                                        ))}
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            <style jsx>{`
+                @keyframes shimmer {
+                    0% {
+                    background-position: -1000px 0;
+                    }
+                    100% {
+                    background-position: 1000px 0;
+                    }
+                }
+                
+                .shimmer {
+                    background: linear-gradient(
+                    90deg,
+                    rgba(38, 38, 38, 0.4) 25%,
+                    rgba(64, 64, 64, 0.8) 50%,
+                    rgba(38, 38, 38, 0.4) 75%
+                    );
+                    background-size: 1000px 100%;
+                    animation: shimmer 2s infinite linear;
+                }
+                
+                .animate-pulse {
+                    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+                }
+                
+                @keyframes pulse {
+                    0%, 100% {
+                    opacity: 1;
+                    }
+                    50% {
+                    opacity: 0.7;
+                    }
+                }
+                `}
+            </style>
+        </div>
+
+    );
+};
 
 const BookingsList = ({
     bookings,
@@ -312,58 +480,6 @@ const BookingsList = ({
         }
     };
 
-    const fetchDocumentVerificationHistory = async (userId) => {
-        try {
-            const response = await fetch(`/api/admin/verify-document?user_id=${userId}`);
-            const data = await response.json();
-
-            if (data.success && data.documents.length > 0) {
-                // Find the most recent approved document
-                const latestDoc = data.documents.find(doc => doc.status === 'approved');
-
-                if (latestDoc) {
-                    // Store the existing document data for the modal
-                    setExistingDocData(latestDoc);
-
-                    // Extract image URLs from existing verified document
-                    const existingDocUrls = {};
-                    Object.entries(latestDoc.document_data).forEach(([key, value]) => {
-                        if (key.includes('_image_url') || key.includes('_url')) {
-                            const cleanKey = key.replace('_image_url', '').replace('_url', '');
-                            // Map field names to tab names
-                            const tabName = cleanKey === 'front' || cleanKey === 'back' || cleanKey === 'photo'
-                                ? cleanKey
-                                : 'front'; // default to 'front' for other URL fields
-                            existingDocUrls[tabName] = value;
-                        }
-                    });
-
-                    // Store the URLs for display
-                    setDocumentUrls(existingDocUrls);
-
-                    // Show the duplicate document modal
-                    setShowDuplicateDocModal(true);
-
-                    // Auto-select first available tab
-                    const availableTabs = Object.keys(existingDocUrls);
-                    if (availableTabs.length > 0) {
-                        setActiveDocumentTab(availableTabs[0]);
-                    }
-                } else {
-                    // If no existing verified document, fetch document images as usual
-                    await fetchDocumentImages(userId);
-                }
-            } else {
-                // If no verification history, fetch document images as usual
-                await fetchDocumentImages(userId);
-            }
-        } catch (error) {
-            console.error('Error fetching verification history:', error);
-            // Fall back to document images API
-            await fetchDocumentImages(userId);
-        }
-    };
-
     // Update the fetchDocumentImages function again
     const fetchDocumentImages = async (userId) => {
         try {
@@ -548,44 +664,68 @@ const BookingsList = ({
         if (!showDocumentList) return null;
 
         const handleDocumentSelect = (doc) => {
-            if (doc.status === 'approved') {
-                // Use existing approved document
-                setDocumentType(doc.document_type);
-                setDocumentData(doc.document_data);
+            setDocumentType(doc.document_type);
+            setDocumentData(doc.document_data);
+            setSelectedDocumentId(doc.id);
 
-                // Extract image URLs
-                const extractedUrls = {};
-                Object.entries(doc.document_data).forEach(([key, value]) => {
-                    if (key.includes('_image_url') || key.includes('_url')) {
-                        const cleanKey = key.replace('_image_url', '').replace('_url', '');
-                        const tabName = cleanKey === 'front' || cleanKey === 'back' || cleanKey === 'photo'
-                            ? cleanKey
-                            : 'front';
-                        extractedUrls[tabName] = value;
+            // Extract image URLs based on document data structure
+            const extractedUrls = {};
+
+            if (doc.document_data) {
+                const data = typeof doc.document_data === 'string'
+                    ? JSON.parse(doc.document_data)
+                    : doc.document_data;
+
+                // Method 1: Check for nested structure (front.url, back.url)
+                if (data.front && data.front.url) {
+                    extractedUrls.front = data.front.url;
+                }
+                if (data.back && data.back.url) {
+                    extractedUrls.back = data.back.url;
+                }
+                if (data.photo && data.photo.url) {
+                    extractedUrls.photo = data.photo.url;
+                }
+
+                // Method 2: Check for flat structure (front_image_url, back_image_url)
+                if (data.front_image_url) {
+                    extractedUrls.front = data.front_image_url;
+                }
+                if (data.back_image_url) {
+                    extractedUrls.back = data.back_image_url;
+                }
+                if (data.photo_image_url) {
+                    extractedUrls.photo = data.photo_image_url;
+                }
+
+                // Method 3: Generic extraction from any URL fields
+                Object.entries(data).forEach(([key, value]) => {
+                    if (typeof value === 'string' && value.startsWith('http')) {
+                        const tabName = key.includes('front') ? 'front' :
+                            key.includes('back') ? 'back' :
+                                key.includes('photo') ? 'photo' :
+                                    'other';
+                        if (!extractedUrls[tabName]) {
+                            extractedUrls[tabName] = value;
+                        }
                     }
                 });
+            }
 
-                setDocumentUrls(extractedUrls);
-                setSelectedDocumentId(doc.id);
+            setDocumentUrls(extractedUrls);
 
-                // Close list and open confirm modal
-                setShowDocumentList(false);
-                setShowConfirmModal(true);
-            } else if (doc.status === 'pending') {
-                // Use pending document for verification
-                setDocumentType(doc.document_type);
-                setDocumentData(doc.document_data);
+            // Close list and open confirm modal
+            setShowDocumentList(false);
 
-                // Try to get images from document API
+            if (doc.status === 'pending') {
+                // Try to get images from document API for pending documents
                 const booking = bookings.find(b => b.id === selectedBooking);
                 if (booking && booking.user_id) {
                     fetchDocumentImages(booking.user_id);
                 }
-
-                setSelectedDocumentId(doc.id);
-                setShowDocumentList(false);
-                setShowConfirmModal(true);
             }
+
+            setShowConfirmModal(true);
         };
 
         const handleNewDocument = () => {
@@ -617,6 +757,60 @@ const BookingsList = ({
                 voter_id: "Voter ID"
             };
             return labels[type] || type;
+        };
+
+        // Helper function to extract image URL for thumbnail
+        const getThumbnailUrl = (documentData) => {
+            if (!documentData) return null;
+
+            const data = typeof documentData === 'string'
+                ? JSON.parse(documentData)
+                : documentData;
+
+            // Check for front image in various formats
+            if (data.front_image_url) return data.front_image_url;
+            if (data.front && data.front.url) return data.front.url;
+
+            // Check for any image URL
+            for (const [key, value] of Object.entries(data)) {
+                if (typeof value === 'string' && value.startsWith('http')) {
+                    if (key.includes('front') || key.includes('image') || key.includes('url')) {
+                        return value;
+                    }
+                }
+            }
+
+            return null;
+        };
+
+        // Helper function to get document info for display
+        const getDocumentDisplayInfo = (doc) => {
+            if (!doc.document_data) return { name: 'No name available', idNumber: 'N/A' };
+
+            const data = typeof doc.document_data === 'string'
+                ? JSON.parse(doc.document_data)
+                : doc.document_data;
+
+            // Try to get name from various possible fields
+            const name = data.name || data.full_name || data.customer_name || 'No name available';
+
+            // Try to get ID number based on document type
+            let idNumber = 'N/A';
+            if (doc.document_type === 'aadhaar') {
+                idNumber = data.aadhaar_number || data.number || 'N/A';
+            } else if (doc.document_type === 'pan') {
+                idNumber = data.pan_number || data.number || 'N/A';
+            } else if (doc.document_type === 'passport') {
+                idNumber = data.passport_number || data.number || 'N/A';
+            } else if (doc.document_type === 'driving_license') {
+                idNumber = data.license_number || data.number || 'N/A';
+            } else if (doc.document_type === 'voter_id') {
+                idNumber = data.voter_id || data.number || 'N/A';
+            } else {
+                idNumber = data.number || data.id_number || 'N/A';
+            }
+
+            return { name, idNumber };
         };
 
         return (
@@ -658,76 +852,81 @@ const BookingsList = ({
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {userDocuments.map((doc) => (
-                                <div
-                                    key={doc.id}
-                                    className={`flex items-center p-4 rounded-lg border transition-all cursor-pointer hover:bg-neutral-800/50 ${selectedDocumentId === doc.id
-                                        ? 'border-blue-500 bg-blue-500/10'
-                                        : 'border-neutral-700'
-                                        }`}
-                                    onClick={() => handleDocumentSelect(doc)}
-                                >
-                                    {/* Document Image Thumbnail */}
-                                    <div className="w-16 h-16 flex-shrink-0 mr-4">
-                                        {doc.document_data?.front_image_url ? (
-                                            <img
-                                                src={doc.document_data.front_image_url}
-                                                alt="Document"
-                                                className="w-full h-full object-cover rounded-lg border border-neutral-700"
-                                                onError={(e) => {
-                                                    e.target.onerror = null;
-                                                    e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23222'/%3E%3Ctext x='32' y='32' text-anchor='middle' fill='%23666' font-family='Arial' font-size='10'%3ENo Image%3C/text%3E%3C/svg%3E";
-                                                }}
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-neutral-800 rounded-lg border border-neutral-700 flex items-center justify-center">
-                                                <FontAwesomeIcon icon={faEye} className="w-6 h-6 text-neutral-600" />
-                                            </div>
-                                        )}
-                                    </div>
+                            {userDocuments.map((doc) => {
+                                const { name, idNumber } = getDocumentDisplayInfo(doc);
+                                const thumbnailUrl = getThumbnailUrl(doc.document_data);
 
-                                    {/* Document Details */}
-                                    <div className="flex-grow">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <h4 className="text-md font-medium text-neutral-200">
-                                                    {getDocumentTypeLabel(doc.document_type)}
-                                                </h4>
-                                                <p className="text-sm text-neutral-400">
-                                                    {doc.document_data?.name || 'No name available'}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center space-x-3">
-                                                {getStatusBadge(doc.status)}
-                                                <span className="text-xs text-neutral-500">
-                                                    {new Date(doc.created_at).toLocaleString()}
-                                                </span>
-                                            </div>
+                                return (
+                                    <div
+                                        key={doc.id}
+                                        className={`flex items-center p-4 rounded-lg border transition-all cursor-pointer hover:bg-neutral-800/50 ${selectedDocumentId === doc.id
+                                                ? 'border-blue-500 bg-blue-500/10'
+                                                : 'border-neutral-700'
+                                            }`}
+                                        onClick={() => handleDocumentSelect(doc)}
+                                    >
+                                        {/* Document Image Thumbnail */}
+                                        <div className="w-16 h-16 flex-shrink-0 mr-4">
+                                            {thumbnailUrl ? (
+                                                <img
+                                                    src={thumbnailUrl}
+                                                    alt="Document"
+                                                    className="w-full h-full object-cover rounded-lg border border-neutral-700"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23222'/%3E%3Ctext x='32' y='32' text-anchor='middle' fill='%23666' font-family='Arial' font-size='10'%3ENo Image%3C/text%3E%3C/svg%3E";
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-neutral-800 rounded-lg border border-neutral-700 flex items-center justify-center">
+                                                    <FontAwesomeIcon icon={faEye} className="w-6 h-6 text-neutral-600" />
+                                                </div>
+                                            )}
                                         </div>
 
-                                        <div className="flex items-center justify-between mt-2">
-                                            <div className="text-xs text-neutral-500">
-                                                ID: {doc.document_data?.[`${doc.document_type}_number`] || 'N/A'}
+                                        {/* Document Details */}
+                                        <div className="flex-grow">
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h4 className="text-md font-medium text-neutral-200">
+                                                        {getDocumentTypeLabel(doc.document_type)}
+                                                    </h4>
+                                                    <p className="text-sm text-neutral-400">
+                                                        {name}
+                                                    </p>
+                                                </div>
+                                                <div className="flex items-center space-x-3">
+                                                    {getStatusBadge(doc.status)}
+                                                    <span className="text-xs text-neutral-500">
+                                                        {new Date(doc.created_at).toLocaleString()}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleDocumentSelect(doc);
-                                                }}
-                                                className={`text-sm font-medium px-3 py-1 rounded transition ${doc.status === 'approved'
-                                                    ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
-                                                    : doc.status === 'pending'
-                                                        ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
-                                                        : 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20'
-                                                    }`}
-                                            >
-                                                {doc.status === 'approved' ? 'Use Verified' :
-                                                    doc.status === 'pending' ? 'Verify Now' : 'View Details'}
-                                            </button>
+
+                                            <div className="flex items-center justify-between mt-2">
+                                                <div className="text-xs text-neutral-500">
+                                                    ID: {idNumber}
+                                                </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDocumentSelect(doc);
+                                                    }}
+                                                    className={`text-sm font-medium px-3 py-1 rounded transition ${doc.status === 'approved'
+                                                            ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
+                                                            : doc.status === 'pending'
+                                                                ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20'
+                                                                : 'bg-gray-500/10 text-gray-400 hover:bg-gray-500/20'
+                                                        }`}
+                                                >
+                                                    {doc.status === 'approved' ? 'Use Verified' :
+                                                        doc.status === 'pending' ? 'Verify Now' : 'View Details'}
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
 
@@ -768,214 +967,285 @@ const BookingsList = ({
 
     if (bookings.length === 0 && !loading) {
         return (
-            <div className="bg-neutral-900 rounded-xl shadow p-8 text-center border border-neutral-800">
-                <p className="text-neutral-400 text-lg">No bookings found</p>
-                <p className="text-neutral-500 mt-2">Try adjusting your filters</p>
-            </div>
+            <NoBookingsEmptyState/>
         );
     }
-
     return (
         <>
             <DocumentListModal />
-            <div className="bg-neutral-800 rounded-xl shadow-sm overflow-hidden border border-neutral-700">
-                {/* Scrollable Table */}
-                <div
-                    style={{
-                        maxHeight: "calc(100vh - 400px)",
-                        minHeight: "400px",
-                        overflowY: "auto",
-                        overflowX: "auto"
-                      }}
-                >
-                    <table className="w-full text-left border-collapse text-neutral-50 min-w-[1024px]">
-                        <thead className="bg-neutral-700 sticky top-0 z-20 text-sm">
-                            <tr>
-                                {[
-                                    "Booking ID",
-                                    "User",
-                                    "Apartment",
-                                    "Dates",
-                                    "Status",
-                                    "Payment",
-                                    "Amount",
-                                    "Actions",
-                                ].map((th, idx) => (
-                                    <th
-                                        key={idx}
-                                        className="p-4 text-left font-semibold text-neutral-300 uppercase tracking-wide"
-                                    >
-                                        {th}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
+            {loading ? (
+                <TableSkeleton/>
+            ):(
+                    <div className="bg-neutral-900 rounded-xl shadow-xl overflow-hidden border border-neutral-700/50 backdrop-blur-sm">
+                        {/* Enhanced Pagination - Now at the top */}
+                        {pagination?.pages > 1 && (
+                            <div className="bg-gradient-to-r from-neutral-900 to-neutral-950 px-6 py-4 border-b border-neutral-800/70">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm text-neutral-400 font-medium">
+                                            Page {pagination.page} of {pagination.pages}
+                                        </span>
+                                        <span className="text-xs text-neutral-500">•</span>
+                                        <span className="text-sm text-neutral-400">
+                                            {pagination.total || bookings.length} total bookings
+                                        </span>
+                                    </div>
 
-                        <tbody className="divide-y divide-neutral-700">
-                            {bookings.map((booking) => (
-                                <tr
-                                    key={booking.id}
-                                    className="hover:bg-neutral-800 transition duration-150"
-                                >
-                                    <td className="p-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-neutral-200">
-                                            #{booking.id}
-                                        </div>
-                                        <div className="text-xs text-neutral-400">
-                                            {new Date(booking.created_at).toLocaleDateString()}
-                                        </div>
-                                    </td>
-                                    {/* In the table cell for User information, add: */}
-                                    <td className="p-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-neutral-200">
-                                            {booking.user_name}
-                                        </div>
-                                        <div className="text-xs text-neutral-400">
-                                            {booking.user_email}
-                                        </div>
-                                        <div className="text-xs text-neutral-400">
-                                            {booking.user_phone}
-                                        </div>
-                                        {/* Add document verification status indicator */}
-                                        {booking.document_status && (
-                                            <div className={`text-xs mt-1 px-2 py-0.5 rounded-full inline-block ${booking.document_status === 'approved' ? 'bg-green-500/20 text-green-400' : booking.document_status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                                                Doc: {booking.document_status}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="p-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-neutral-200">
-                                            {booking.apartment_title}
-                                        </div>
-                                        <div className="text-xs text-neutral-400">
-                                            {booking.total_nights} nights
-                                        </div>
-                                    </td>
-                                    <td className="p-4 whitespace-nowrap">
-                                        <div className="text-sm text-neutral-200">
-                                            {new Date(booking.start_date).toLocaleDateString()}
-                                        </div>
-                                        <div className="text-xs text-neutral-500 text-center">
-                                            to
-                                        </div>
-                                        <div className="text-sm text-neutral-200">
-                                            {new Date(booking.end_date).toLocaleDateString()}
-                                        </div>
-                                    </td>
-                                    <td className="p-4 whitespace-nowrap">
-                                        {getStatusBadge(booking.status)}
-                                    </td>
-                                    <td className="p-4 whitespace-nowrap">
-                                        {getPaymentBadge(booking.payment_status)}
-                                    </td>
-                                    <td className="p-4 whitespace-nowrap">
-                                        <div className="text-sm font-medium text-neutral-200">
-                                            ₹{booking.total_amount || booking.paid_amount || "0"}
-                                        </div>
-                                        {booking.paid_amount && (
-                                            <div className="text-xs text-neutral-400">
-                                                Paid: ₹{booking.paid_amount}
-                                            </div>
-                                        )}
-                                    </td>
-                                    <td className="p-4 whitespace-nowrap">
-                                        <div className="flex flex-wrap gap-2">
-                                            <ActionButton
-                                                onClick={() => onViewBooking(booking)}
-                                                icon={faEye}
-                                                label="View"
-                                                variant="default"
-                                            />
-
-                                            {/* Document Verify / Verified Button */}
-                                            {(() => {
-                                                const docConfig = getDocumentActionConfig(booking.document_status);
-                                                return (
-                                                    <ActionButton
-                                                        onClick={() => {
-                                                            if (!docConfig.disabled) {
-                                                                handleQuickStatusUpdate(booking.id, "confirmed");
-                                                            }
-                                                        }}
-                                                        icon={docConfig.icon}
-                                                        label={docConfig.label}
-                                                        variant={docConfig.variant}
-                                                        disabled={docConfig.disabled}
-                                                    />
-                                                );
-                                            })()}
-
-                                            {/* Cancel button — fully hidden when not allowed */}
-                                            {canShowCancelButton(booking.status) && (
-                                                <ActionButton
-                                                    onClick={() => handleQuickStatusUpdate(booking.id, "cancelled")}
-                                                    icon={faBan}
-                                                    label="Cancel"
-                                                    variant="cancel"
-                                                />
-                                            )}
-
-                                            <ActionButton
-                                                onClick={() => handleDeleteClick(booking.id)}
-                                                icon={faTrash}
-                                                label="Delete"
-                                                variant="delete"
-                                            />
-                                        </div>
-                                    </td>
-
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                {/* Pagination */}
-                {pagination?.pages > 1 && (
-                    <div className="bg-neutral-900 px-4 py-3 flex items-center justify-between border-t border-neutral-800 sm:px-6">
-                        <div className="flex justify-between sm:justify-start space-x-2 w-full">
-                            <button
-                                onClick={() => onPageChange(pagination.page - 1)}
-                                disabled={pagination.page === 1}
-                                className="relative inline-flex items-center px-4 py-2 border border-neutral-700 text-sm font-medium rounded-md text-neutral-400 hover:bg-neutral-800 disabled:opacity-50 transition"
-                            >
-                                Previous
-                            </button>
-
-                            <div className="flex space-x-1">
-                                {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(
-                                    (pageNum) => (
+                                    <div className="flex items-center gap-2">
+                                        {/* Previous Button */}
                                         <button
-                                            key={pageNum}
-                                            onClick={() => onPageChange(pageNum)}
-                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md ${pageNum === pagination.page
-                                                ? "bg-blue-600/20 border-blue-500 text-blue-400"
-                                                : "bg-neutral-900 border-neutral-700 text-neutral-400 hover:bg-neutral-800"
-                                                } transition`}
+                                            onClick={() => onPageChange(pagination.page - 1)}
+                                            disabled={pagination.page === 1}
+                                            className="relative group inline-flex items-center px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm font-medium text-neutral-400 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 transform hover:-translate-x-0.5 disabled:hover:translate-x-0"
                                         >
-                                            {pageNum}
+                                            <svg className="w-4 h-4 mr-1 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                            Prev
                                         </button>
-                                    )
-                                )}
-                            </div>
 
-                            <button
-                                onClick={() => onPageChange(pagination.page + 1)}
-                                disabled={pagination.page === pagination.pages}
-                                className="relative inline-flex items-center px-4 py-2 border border-neutral-700 text-sm font-medium rounded-md text-neutral-400 hover:bg-neutral-800 disabled:opacity-50 transition"
-                            >
-                                Next
-                            </button>
+                                        {/* Page Numbers with Animation */}
+                                        <div className="flex items-center gap-1">
+                                            {(() => {
+                                                const pages = Array.from({ length: pagination.pages }, (_, i) => i + 1);
+                                                const maxVisible = 5;
+                                                let visiblePages = pages;
+
+                                                if (pagination.pages > maxVisible) {
+                                                    const current = pagination.page;
+                                                    let start = Math.max(1, current - 2);
+                                                    let end = Math.min(pagination.pages, current + 2);
+
+                                                    if (current <= 3) {
+                                                        end = maxVisible;
+                                                    } else if (current >= pagination.pages - 2) {
+                                                        start = pagination.pages - maxVisible + 1;
+                                                    }
+
+                                                    visiblePages = pages.slice(start - 1, end);
+
+                                                    if (start > 1) {
+                                                        visiblePages = [1, '...', ...visiblePages.slice(1)];
+                                                    }
+                                                    if (end < pagination.pages) {
+                                                        visiblePages = [...visiblePages.slice(0, -1), '...', pagination.pages];
+                                                    }
+                                                }
+
+                                                return visiblePages.map((pageNum, idx) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => typeof pageNum === 'number' && onPageChange(pageNum)}
+                                                        disabled={typeof pageNum !== 'number'}
+                                                        className={`relative min-w-[2.5rem] h-10 flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105 ${typeof pageNum === 'number'
+                                                            ? pageNum === pagination.page
+                                                                ? "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/20 scale-105"
+                                                                : "bg-neutral-900 border border-neutral-800 text-neutral-400 hover:bg-neutral-800 hover:text-white hover:border-neutral-700"
+                                                            : "text-neutral-600 cursor-default"
+                                                            }`}
+                                                    >
+                                                        {pageNum}
+                                                    </button>
+                                                ));
+                                            })()}
+                                        </div>
+
+                                        {/* Next Button */}
+                                        <button
+                                            onClick={() => onPageChange(pagination.page + 1)}
+                                            disabled={pagination.page === pagination.pages}
+                                            className="relative group inline-flex items-center px-3 py-2 rounded-lg border border-neutral-800 bg-neutral-900 text-sm font-medium text-neutral-400 hover:text-white hover:border-neutral-700 hover:bg-neutral-800/50 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 transform hover:translate-x-0.5 disabled:hover:translate-x-0"
+                                        >
+                                            Next
+                                            <svg className="w-4 h-4 ml-1 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Scrollable Table with Enhanced Styling */}
+                        <div
+                            style={{
+                                maxHeight: "calc(100vh - 320px)",
+                                overflowY: "auto",
+                                overflowX: "auto"
+                            }}
+                            className="scrollbar-thin scrollbar-thumb-neutral-700 scrollbar-track-neutral-900 hover:scrollbar-thumb-neutral-600"
+                        >
+                            <table className="w-full text-left border-collapse text-neutral-50 min-w-[1024px]">
+                                <thead className="bg-gradient-to-r from-neutral-900 to-neutral-950 sticky top-0 z-20 text-sm border-b border-neutral-800/70">
+                                    <tr>
+                                        {[
+                                            "Booking ID",
+                                            "User",
+                                            "Apartment",
+                                            "Dates",
+                                            "Status",
+                                            "Payment",
+                                            "Amount",
+                                            "Actions",
+                                        ].map((th, idx) => (
+                                            <th
+                                                key={idx}
+                                                className="p-4 text-left font-semibold text-neutral-300 uppercase tracking-wide group"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    {th}
+                                                    <svg className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                                                    </svg>
+                                                </div>
+                                            </th>
+                                        ))}
+                                    </tr>
+                                </thead>
+
+                                <tbody className="divide-y divide-neutral-700/50 bg-gradient-to-r from-neutral-900 to-neutral-950">
+                                    {bookings.map((booking, index) => (
+                                        <tr
+                                            key={booking.id}
+                                            className="group hover:bg-neutral-800/80 transition-all duration-300 animate-fadeIn"
+                                            style={{ animationDelay: `${index * 0.05}s` }}
+                                        >
+                                            <td className="p-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-3">
+                                                    <div>
+                                                        <div className="text-sm font-medium text-neutral-200 group-hover:text-white transition-colors">
+                                                            #{booking.id}
+                                                        </div>
+                                                        <div className="text-xs text-neutral-500 group-hover:text-neutral-400 transition-colors">
+                                                            {new Date(booking.created_at).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            {/* User Column */}
+                                            <td className="p-4 whitespace-nowrap">
+                                                <div className="space-y-1">
+                                                    <div className="text-sm font-medium text-neutral-200 group-hover:text-white transition-colors">
+                                                        {booking.user_name}
+                                                    </div>
+                                                    <div className="text-xs text-neutral-500 group-hover:text-neutral-400 transition-colors">
+                                                        {booking.user_email}
+                                                    </div>
+                                                    <div className="text-xs text-neutral-500 group-hover:text-neutral-400 transition-colors">
+                                                        {booking.user_phone}
+                                                    </div>
+                                                    {(() => {
+                                                        const docStatus = booking.document_status || "pending";
+
+                                                        const statusStyles = {
+                                                            approved:
+                                                                "bg-gradient-to-r from-green-500/20 to-green-600/10 text-green-400 border border-green-500/30",
+                                                            rejected:
+                                                                "bg-gradient-to-r from-red-500/20 to-red-600/10 text-red-400 border border-red-500/30",
+                                                            pending:
+                                                                "bg-gradient-to-r from-yellow-500/20 to-yellow-600/10 text-yellow-400 border border-yellow-500/30",
+                                                        };
+
+                                                        return (
+                                                            <div
+                                                                className={`text-xs mt-1 px-2 py-0.5 rounded-full inline-block transition-all duration-300 hover:scale-105 ${statusStyles[docStatus]}`}
+                                                            >
+                                                                Doc: {docStatus.charAt(0).toUpperCase() + docStatus.slice(1)}
+                                                            </div>
+                                                        );
+                                                    })()}
+
+                                                </div>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-neutral-200">
+                                                    {booking.apartment_title}
+                                                </div>
+                                                <div className="text-xs text-neutral-400">
+                                                    {booking.total_nights} nights
+                                                </div>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap">
+                                                <div className="text-sm text-neutral-200">
+                                                    {new Date(booking.start_date).toLocaleDateString()}
+                                                </div>
+                                                <div className="text-xs text-neutral-500 text-center">
+                                                    to
+                                                </div>
+                                                <div className="text-sm text-neutral-200">
+                                                    {new Date(booking.end_date).toLocaleDateString()}
+                                                </div>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap">
+                                                {getStatusBadge(booking.status)}
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap">
+                                                {getPaymentBadge(booking.payment_status)}
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap">
+                                                <div className="text-sm font-medium text-neutral-200">
+                                                    ₹{booking.total_amount || booking.paid_amount || "0"}
+                                                </div>
+                                                {booking.paid_amount && (
+                                                    <div className="text-xs text-neutral-400">
+                                                        Paid: ₹{booking.paid_amount}
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap">
+                                                <div className="flex flex-wrap gap-2">
+                                                    <ActionButton
+                                                        onClick={() => onViewBooking(booking)}
+                                                        icon={faEye}
+                                                        label="View"
+                                                        variant="default"
+                                                    />
+
+                                                    {/* Document Verify / Verified Button */}
+                                                    {(() => {
+                                                        const docConfig = getDocumentActionConfig(booking.document_status);
+                                                        return (
+                                                            <ActionButton
+                                                                onClick={() => {
+                                                                    if (!docConfig.disabled) {
+                                                                        handleQuickStatusUpdate(booking.id, "confirmed");
+                                                                    }
+                                                                }}
+                                                                icon={docConfig.icon}
+                                                                label={docConfig.label}
+                                                                variant={docConfig.variant}
+                                                                disabled={docConfig.disabled}
+                                                            />
+                                                        );
+                                                    })()}
+
+                                                    {/* Cancel button — fully hidden when not allowed */}
+                                                    {canShowCancelButton(booking.status) && (
+                                                        <ActionButton
+                                                            onClick={() => handleQuickStatusUpdate(booking.id, "cancelled")}
+                                                            icon={faBan}
+                                                            label="Cancel"
+                                                            variant="cancel"
+                                                        />
+                                                    )}
+
+                                                    <ActionButton
+                                                        onClick={() => handleDeleteClick(booking.id)}
+                                                        icon={faTrash}
+                                                        label="Delete"
+                                                        variant="delete"
+                                                    />
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                )}
-
-                {loading && (
-                    <div className="flex justify-center items-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                    </div>
-                )}
-            </div>
+            )}
 
             {showConfirmModal && (
                 <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
