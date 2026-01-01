@@ -1,26 +1,31 @@
 import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 
-// Helper function to extract all URLs
-function extractUrls(obj, result = {}) {
-    if (!obj || typeof obj !== 'object') return result;
+// ✅ Strict extractor: exactly one URL per side
+function extractUrls(documentData) {
+    const urls = {};
 
-    if (obj.url && typeof obj.url === 'string') {
-        const key = Object.keys(result).length === 0 ? 'main' : `url_${Object.keys(result).length}`;
-        result[key] = obj.url;
+    if (!documentData || typeof documentData !== 'object') {
+        return urls;
     }
 
-    if (obj.front?.url) result.front = obj.front.url;
-    if (obj.back?.url) result.back = obj.back.url;
-
-    for (const key in obj) {
-        if (typeof obj[key] === 'object') {
-            extractUrls(obj[key], result);
-        }
+    // Preferred structure
+    if (documentData.front?.url) {
+        urls.front = documentData.front.url;
     }
 
-    return result;
+    if (documentData.back?.url) {
+        urls.back = documentData.back.url;
+    }
+
+    // Fallback: single-image documents
+    if (!urls.front && documentData.url) {
+        urls.front = documentData.url;
+    }
+
+    return urls;
 }
+
 
 export async function GET(request) {
     try {

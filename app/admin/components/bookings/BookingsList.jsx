@@ -490,7 +490,6 @@ const BookingsList = ({
             if (data.success && data.documents.length > 0) {
                 // Find the most recent document with images
                 const documentWithImages = data.documents.find(doc => doc.urls && Object.keys(doc.urls).length > 0);
-
                 if (documentWithImages) {
                     setDocumentUrls(documentWithImages.urls);
 
@@ -665,68 +664,73 @@ const BookingsList = ({
 
         const handleDocumentSelect = (doc) => {
             setDocumentType(doc.document_type);
-            setDocumentData(doc.document_data);
             setSelectedDocumentId(doc.id);
 
-            // Extract image URLs based on document data structure
+            let data = {};
+
+            try {
+                data = typeof doc.document_data === 'string'
+                    ? JSON.parse(doc.document_data)
+                    : { ...doc.document_data };
+            } catch {
+                data = {};
+            }
+
+            // ==============================
+            // 🔥 NORMALIZE IMAGE URL FIELDS
+            // ==============================
+
+            // FRONT
+            if (!data.front_image_url && data.front?.url) {
+                data.front_image_url = data.front.url;
+            }
+
+            // BACK
+            if (!data.back_image_url && data.back?.url) {
+                data.back_image_url = data.back.url;
+            }
+
+            // PHOTO (optional / future-proof)
+            if (!data.photo_image_url && data.photo?.url) {
+                data.photo_image_url = data.photo.url;
+            }
+
+            // ❌ Remove nested objects once flat keys exist
+            if (data.front_image_url) delete data.front;
+            if (data.back_image_url) delete data.back;
+            if (data.photo_image_url) delete data.photo;
+
+            // ==============================
+            // ✅ SET FORM DATA (SCHEMA SAFE)
+            // ==============================
+            setDocumentData(data);
+            
+            // ==============================
+            // ✅ SET IMAGE URL TABS
+            // ==============================
             const extractedUrls = {};
 
-            if (doc.document_data) {
-                const data = typeof doc.document_data === 'string'
-                    ? JSON.parse(doc.document_data)
-                    : doc.document_data;
-
-                // Method 1: Check for nested structure (front.url, back.url)
-                if (data.front && data.front.url) {
-                    extractedUrls.front = data.front.url;
-                }
-                if (data.back && data.back.url) {
-                    extractedUrls.back = data.back.url;
-                }
-                if (data.photo && data.photo.url) {
-                    extractedUrls.photo = data.photo.url;
-                }
-
-                // Method 2: Check for flat structure (front_image_url, back_image_url)
-                if (data.front_image_url) {
-                    extractedUrls.front = data.front_image_url;
-                }
-                if (data.back_image_url) {
-                    extractedUrls.back = data.back_image_url;
-                }
-                if (data.photo_image_url) {
-                    extractedUrls.photo = data.photo_image_url;
-                }
-
-                // Method 3: Generic extraction from any URL fields
-                Object.entries(data).forEach(([key, value]) => {
-                    if (typeof value === 'string' && value.startsWith('http')) {
-                        const tabName = key.includes('front') ? 'front' :
-                            key.includes('back') ? 'back' :
-                                key.includes('photo') ? 'photo' :
-                                    'other';
-                        if (!extractedUrls[tabName]) {
-                            extractedUrls[tabName] = value;
-                        }
-                    }
-                });
-            }
+            if (data.front_image_url) extractedUrls.front = data.front_image_url;
+            if (data.back_image_url) extractedUrls.back = data.back_image_url;
+            if (data.photo_image_url) extractedUrls.photo = data.photo_image_url;
 
             setDocumentUrls(extractedUrls);
 
-            // Close list and open confirm modal
+            // ==============================
+            // UI FLOW
+            // ==============================
             setShowDocumentList(false);
 
             if (doc.status === 'pending') {
-                // Try to get images from document API for pending documents
                 const booking = bookings.find(b => b.id === selectedBooking);
-                if (booking && booking.user_id) {
+                if (booking?.user_id) {
                     fetchDocumentImages(booking.user_id);
                 }
             }
 
             setShowConfirmModal(true);
         };
+        
 
         const handleNewDocument = () => {
             setShowDocumentList(false);
@@ -1405,9 +1409,6 @@ const BookingsList = ({
                                                 )}
                                             </div>
                                         ))}
-                                        {/* <div>
-                                            hhi
-                                        </div> */}
                                     </div>
                                 )}
 
@@ -1454,106 +1455,6 @@ const BookingsList = ({
             )}
 
             {/* Duplicate Document Modal */}
-            {showDuplicateDocModal && existingDocData && (
-                <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                    <div className="bg-neutral-900 rounded-xl border border-neutral-800 p-6 w-full max-w-lg">
-                        <div className="flex items-center mb-4">
-                            <div className="bg-blue-500/20 p-2 rounded-lg mr-3">
-                                <FontAwesomeIcon icon={faExclamationTriangle} className="w-6 h-6 text-blue-400" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-neutral-200">
-                                Existing Verified Document Found
-                            </h3>
-                        </div>
-
-                        <div className="mb-6">
-                            <div className="flex items-center mb-4 p-3 bg-neutral-800/50 rounded-lg border border-neutral-700">
-                                <FontAwesomeIcon icon={faCheckCircle} className="w-5 h-5 text-green-400 mr-3" />
-                                <div>
-                                    <p className="text-sm font-medium text-neutral-200">
-                                        Previously verified {existingDocData.document_type} document found
-                                    </p>
-                                    <p className="text-xs text-neutral-400 mt-1">
-                                        Verified on: {new Date(existingDocData.verified_at).toLocaleDateString()}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* Add image preview section */}
-                            {Object.keys(documentUrls).length > 0 && (
-                                <div className="mb-4 p-3 bg-neutral-800/30 rounded-lg border border-neutral-700">
-                                    <p className="text-sm font-medium text-neutral-300 mb-2">Document Images Available:</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {Object.keys(documentUrls).slice(0, 3).map((tab) => (
-                                            <div key={tab} className="flex flex-col items-center">
-                                                <div className="w-16 h-16 bg-neutral-800 rounded border border-neutral-700 overflow-hidden">
-                                                    <img
-                                                        src={documentUrls[tab]}
-                                                        alt={tab}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23222'/%3E%3Ctext x='32' y='32' text-anchor='middle' fill='%23666' font-family='Arial' font-size='10'%3EImage%3C/text%3E%3C/svg%3E";
-                                                        }}
-                                                    />
-                                                </div>
-                                                <span className="text-xs text-neutral-400 mt-1 capitalize">{tab}</span>
-                                            </div>
-                                        ))}
-                                        {Object.keys(documentUrls).length > 3 && (
-                                            <div className="flex items-center justify-center w-16 h-16 bg-neutral-800 rounded border border-neutral-700">
-                                                <span className="text-xs text-neutral-400">+{Object.keys(documentUrls).length - 3} more</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            <p className="text-neutral-400 mb-4">
-                                Would you like to use the existing verified document or enter new information?
-                                {Object.keys(documentUrls).length > 0 && " Document images are already loaded and will be visible in both cases."}
-                            </p>
-
-                            <div className="space-y-3">
-                                <div className="p-3 bg-neutral-800/30 rounded-lg border border-neutral-700">
-                                    <p className="text-xs text-neutral-400 mb-1">Document Type:</p>
-                                    <p className="text-sm text-neutral-200 capitalize">{existingDocData.document_type.replace('_', ' ')}</p>
-                                </div>
-
-                                <div className="p-3 bg-neutral-800/30 rounded-lg border border-neutral-700">
-                                    <p className="text-xs text-neutral-400 mb-1">Verification Status:</p>
-                                    <span className={`text-xs px-2 py-1 rounded-full ${existingDocData.status === 'approved' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
-                                        {existingDocData.status.charAt(0).toUpperCase() + existingDocData.status.slice(1)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-between items-center pt-4 border-t border-neutral-800">
-                            <div className="text-xs text-neutral-500">
-                                <FontAwesomeIcon icon={faEye} className="w-3 h-3 mr-1" />
-                                Images will remain visible
-                            </div>
-                            <div className="flex space-x-3">
-                                <button
-                                    onClick={handleUseNewDocument}
-                                    className="flex items-center px-4 py-2 text-neutral-400 hover:text-neutral-300 transition hover:bg-neutral-800/50 rounded-lg"
-                                >
-                                    <FontAwesomeIcon icon={faTimes} className="w-4 h-4 mr-2" />
-                                    Use New Document
-                                </button>
-                                <button
-                                    onClick={handleUseExistingDocument}
-                                    className="flex items-center px-4 py-2 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 rounded-lg transition"
-                                >
-                                    <FontAwesomeIcon icon={faCheckCircle} className="w-4 h-4 mr-2" />
-                                    Use Existing
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Cancel Modal */}
             {showCancelModal && (

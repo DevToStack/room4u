@@ -172,6 +172,35 @@ export async function POST(request) {
         );
     }
 }
+
+function normalizeDocumentData(documentData) {
+    if (!documentData || typeof documentData !== 'object') {
+        return { data: {}, images: {} };
+    }
+
+    const images = {
+        front:
+            documentData.front_image_url ||
+            documentData.front?.url ||
+            null,
+
+        back:
+            documentData.back_image_url ||
+            documentData.back?.url ||
+            null,
+
+        photo:
+            documentData.photo_image_url ||
+            documentData.photo?.url ||
+            null
+    };
+
+    return {
+        data: documentData,
+        images
+    };
+}
+
 // GET endpoint to fetch document verification history
 export async function GET(request) {
     try {
@@ -224,56 +253,20 @@ export async function GET(request) {
 
             // Parse documents and extract URLs from both formats
             const parsedDocuments = documents.map(doc => {
-                const documentData = typeof doc.document_data === 'string'
-                    ? JSON.parse(doc.document_data)
-                    : doc.document_data;
+                const rawData =
+                    typeof doc.document_data === 'string'
+                        ? JSON.parse(doc.document_data)
+                        : doc.document_data;
 
-                // Extract image URLs from both formats
-                const imageUrls = {};
-
-                if (documentData) {
-                    // Case 1: Check for nested structure (front.url, back.url)
-                    if (documentData.front && documentData.front.url) {
-                        imageUrls.front = documentData.front.url;
-                    }
-                    if (documentData.back && documentData.back.url) {
-                        imageUrls.back = documentData.back.url;
-                    }
-                    if (documentData.photo && documentData.photo.url) {
-                        imageUrls.photo = documentData.photo.url;
-                    }
-
-                    // Case 2: Check for flat structure (front_image_url, back_image_url)
-                    if (documentData.front_image_url) {
-                        imageUrls.front = documentData.front_image_url;
-                    }
-                    if (documentData.back_image_url) {
-                        imageUrls.back = documentData.back_image_url;
-                    }
-                    if (documentData.photo_image_url) {
-                        imageUrls.photo = documentData.photo_image_url;
-                    }
-
-                    // Also check for any other URL fields that might exist
-                    Object.entries(documentData).forEach(([key, value]) => {
-                        if (typeof value === 'string' && value.startsWith('http')) {
-                            const tabName = key.includes('front') ? 'front' :
-                                key.includes('back') ? 'back' :
-                                    key.includes('photo') ? 'photo' :
-                                        key.toLowerCase();
-                            if (!imageUrls[tabName]) {
-                                imageUrls[tabName] = value;
-                            }
-                        }
-                    });
-                }
+                const { data, images } = normalizeDocumentData(rawData);
 
                 return {
                     ...doc,
-                    document_data: documentData,
-                    image_urls: imageUrls
+                    document_data: data,
+                    image_urls: images
                 };
             });
+            
 
             return NextResponse.json({
                 success: true,
