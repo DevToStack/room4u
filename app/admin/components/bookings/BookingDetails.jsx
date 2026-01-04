@@ -141,14 +141,6 @@ const BookingDetails = ({ booking, onStatusUpdate, onDeleteBooking, onBack }) =>
                 </div>
 
                 <div className="flex gap-2 justify-end">
-                    {booking.status === 'pending' && (
-                        <button
-                            onClick={() => openStatusModal('confirmed')}
-                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition font-medium flex items-center gap-2"
-                        >
-                            ✓ Confirm Booking
-                        </button>
-                    )}
                     {booking.status !== 'cancelled' && booking.status !== 'expired' && (
                         <button
                             onClick={() => openStatusModal('cancelled')}

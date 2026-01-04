@@ -418,7 +418,7 @@ export default function Bookings() {
     }
 
     return (
-        <div className="space-y-6 bg-neutral-900 min-h-screen">
+        <div className="space-y-6 bg-neutral-900 min-h-screen p-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <h1 className="text-2xl font-bold text-gray-100 mb-4 lg:mb-0 hover:translate-x-1 transition-transform duration-300">

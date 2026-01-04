@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import pool from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import next from 'next';
 
 export async function GET() {
   let connection;
@@ -64,10 +65,9 @@ export async function GET() {
         b.end_date AS checkOut,
         b.status,
         b.guests,
-        p.amount
+        b.total_amount AS total
       FROM bookings b
       JOIN apartments a ON b.apartment_id = a.id
-      LEFT JOIN payments p ON p.booking_id = b.id
       WHERE b.user_id = ?
       ORDER BY b.created_at DESC
       LIMIT 1
@@ -93,7 +93,6 @@ export async function GET() {
       `,
       [userId]
     );
-
     // 🟪 Upcoming check-ins (next 7 days)
     const [upcomingCheckins] = await connection.execute(
       `
@@ -127,7 +126,7 @@ export async function GET() {
       refundedPayments: paymentStats[0]?.refunded || 0,
       lastBooking: lastBooking[0] || null,
       nextBooking: nextBooking[0] || {
-        daysUntil: 0,
+        daysUntil: null,
         apartment: 'No upcoming bookings',
       },
       upcomingCheckins: upcomingCheckins || [],

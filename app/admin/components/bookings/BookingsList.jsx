@@ -530,82 +530,82 @@ const BookingsList = ({
         }
     };
 
-    const handleUseExistingDocument = () => {
-        if (existingDocData) {
-            // Auto-fill the form with existing verified data
-            setDocumentType(existingDocData.document_type);
-            setDocumentData(existingDocData.document_data);
+    // const handleUseExistingDocument = () => {
+    //     if (existingDocData) {
+    //         // Auto-fill the form with existing verified data
+    //         setDocumentType(existingDocData.document_type);
+    //         setDocumentData(existingDocData.document_data);
 
-            // IMPORTANT: Make sure documentUrls already contains images from verify-document API
-            // (they were set in fetchDocumentVerificationHistory)
+    //         // IMPORTANT: Make sure documentUrls already contains images from verify-document API
+    //         // (they were set in fetchDocumentVerificationHistory)
 
-            // Close the modal
-            setShowDuplicateDocModal(false);
-            setExistingDocData(null);
-        }
-    };
+    //         // Close the modal
+    //         setShowDuplicateDocModal(false);
+    //         setExistingDocData(null);
+    //     }
+    // };
 
-    const handleUseNewDocument = () => {
-        // Clear the form
-        setDocumentType('');
-        setDocumentData({});
-        setDocumentErrors({});
+    // const handleUseNewDocument = () => {
+    //     // Clear the form
+    //     setDocumentType('');
+    //     setDocumentData({});
+    //     setDocumentErrors({});
 
-        // IMPORTANT: Re-fetch images from document API for new verification
-        const booking = bookings.find(b => b.id === selectedBooking);
-        if (booking && booking.user_id) {
-            fetchDocumentImages(booking.user_id);
-        }
+    //     // IMPORTANT: Re-fetch images from document API for new verification
+    //     const booking = bookings.find(b => b.id === selectedBooking);
+    //     if (booking && booking.user_id) {
+    //         fetchDocumentImages(booking.user_id);
+    //     }
 
-        // Clear existing data
-        setExistingDocData(null);
-        setShowDuplicateDocModal(false);
+    //     // Clear existing data
+    //     setExistingDocData(null);
+    //     setShowDuplicateDocModal(false);
 
-        // Optionally show a message
-        alert('You can now enter new document information. Loading fresh document images...');
-    };
+    //     // Optionally show a message
+    //     alert('You can now enter new document information. Loading fresh document images...');
+    // };
 
-    const handleRejectDocument = async () => {
-        if (!window.confirm('Are you sure you want to reject this document? This will mark the document as rejected but you can still proceed with booking confirmation.')) {
-            return;
-        }
+    // const handleRejectDocument = async () => {
+    //     if (!window.confirm('Are you sure you want to reject this document? This will mark the document as rejected but you can still proceed with booking confirmation.')) {
+    //         return;
+    //     }
 
-        setActionLoading(true);
-        try {
-            const booking = bookings.find(b => b.id === selectedBooking);
+    //     setActionLoading(true);
+    //     try {
+    //         const booking = bookings.find(b => b.id === selectedBooking);
 
-            if (booking && booking.user_id) {
-                const verificationResponse = await fetch('/api/admin/verify-document', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        user_id: booking.user_id,
-                        booking_id: selectedBooking,
-                        document_type: documentType,
-                        document_data: documentData,
-                        status: 'rejected',
-                        verification_notes: 'Document rejected by admin',
-                        review_message: 'Document verification failed'
-                    })
-                });
+    //         if (booking && booking.user_id) {
+    //             const verificationResponse = await fetch('/api/admin/verify-document', {
+    //                 method: 'POST',
+    //                 headers: {
+    //                     'Content-Type': 'application/json',
+    //                 },
+    //                 body: JSON.stringify({
+    //                     user_id: booking.user_id,
+    //                     booking_id: selectedBooking,
+    //                     document_type: documentType,
+    //                     document_data: documentData,
+    //                     status: 'rejected',
+    //                     verification_notes: 'Document rejected by admin',
+    //                     review_message: 'Document verification failed'
+    //                 })
+    //             });
 
-                const verificationData = await verificationResponse.json();
+    //             const verificationData = await verificationResponse.json();
 
-                if (!verificationData.success) {
-                    throw new Error(verificationData.message || 'Failed to reject document');
-                }
+    //             if (!verificationData.success) {
+    //                 throw new Error(verificationData.message || 'Failed to reject document');
+    //             }
 
-                alert('Document marked as rejected. You can still confirm the booking.');
-            }
-        } catch (error) {
-            console.error('Error rejecting document:', error);
-            alert(`Failed to reject document: ${error.message}`);
-        } finally {
-            setActionLoading(false);
-        }
-    };
+    //             alert('Document marked as rejected. You can still confirm the booking.');
+    //         }
+    //     } catch (error) {
+    //         console.error('Error rejecting document:', error);
+    //         alert(`Failed to reject document: ${error.message}`);
+    //     } finally {
+    //         setActionLoading(false);
+    //     }
+    // };
 
     const handleConfirmCancel = async () => {
         if (selectedBooking && cancelReason.trim()) {
@@ -731,7 +731,53 @@ const BookingsList = ({
             setShowConfirmModal(true);
         };
         
+        const handleRejectBooking = async () => {
+            if (!validateDocument()) {
+                return;
+            }
 
+            setActionLoading(true);
+            try {
+                const response = await fetch('/api/admin/verify-document', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user_id: selectedBooking?.user_id,
+                        booking_id: selectedBooking?.id,
+                        document_type: documentType,
+                        document_data: documentData,
+                        status: 'rejected',
+                        review_message: rejectionReason || 'Document verification failed',
+                        verification_notes: `Booking rejected. Reason: ${rejectionReason || 'Document verification failed'}`
+                    }),
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Failed to reject booking');
+                }
+
+                toast.success('Booking rejected successfully');
+
+                // Refresh bookings list
+                if (onBookingUpdate) {
+                    onBookingUpdate();
+                }
+
+                closeModals();
+                setRejectionReason('');
+                resetDocumentForm();
+            } catch (error) {
+                console.error('Error rejecting booking:', error);
+                toast.error(error.message || 'Failed to reject booking');
+            } finally {
+                setActionLoading(false);
+            }
+        };
+        
         const handleNewDocument = () => {
             setShowDocumentList(false);
             setShowConfirmModal(true);
@@ -1409,11 +1455,25 @@ const BookingsList = ({
                                                 )}
                                             </div>
                                         ))}
+
+                                        {/* Rejection Reason (only shown for rejection) */}
+                                        <div className="space-y-2">
+                                            <label className="block text-sm font-medium text-neutral-300">
+                                                Rejection Reason (Optional)
+                                            </label>
+                                            <textarea
+                                                value={rejectionReason}
+                                                onChange={(e) => setRejectionReason(e.target.value)}
+                                                placeholder="Enter reason for rejection"
+                                                className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-3 text-neutral-200 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/30 resize-none"
+                                                rows="3"
+                                            />
+                                        </div>
                                     </div>
                                 )}
 
                                 <p className="text-neutral-400 text-sm pt-4 border-t border-neutral-800">
-                                    Compare the document details with the images before confirming the booking.
+                                    Compare the document details with the images before confirming or rejecting the booking.
                                 </p>
                             </div>
                         </div>
@@ -1426,6 +1486,28 @@ const BookingsList = ({
                             >
                                 <FontAwesomeIcon icon={faTimes} className="w-4 h-4 mr-2" />
                                 Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (validateDocument()) {
+                                        handleRejectBooking();
+                                    }
+                                }}
+                                disabled={actionLoading || Object.keys(documentUrls).length === 0}
+                                className="flex items-center px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition disabled:opacity-50"
+                                title={Object.keys(documentUrls).length === 0 ? "No document images available" : ""}
+                            >
+                                {actionLoading ? (
+                                    <>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2"></div>
+                                        Rejecting...
+                                    </>
+                                ) : (
+                                    <>
+                                        <FontAwesomeIcon icon={faTimesCircle} className="w-4 h-4 mr-2" />
+                                        Reject Booking
+                                    </>
+                                )}
                             </button>
                             <button
                                 onClick={() => {

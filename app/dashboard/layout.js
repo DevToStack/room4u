@@ -13,7 +13,7 @@ export default function DashboardLayout({ children }) {
             />
 
             <main className="flex-1 overflow-auto">
-                <div className="p-6 max-sm:pt-16">
+                <div className="max-sm:pt-16 bg-neutral-950">
                     {children}
                 </div>
             </main>

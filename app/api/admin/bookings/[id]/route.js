@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { query } from '@/lib/mysql-wrapper';
 import { verifyAdmin } from '@/lib/adminAuth';
 import { createNotification } from '@/lib/notification-service';
+import pool from '@/lib/db';
 
 // ✅ Cookie parser
 function parseCookies(cookieHeader) {
@@ -179,50 +180,81 @@ export async function GET(request, { params }) {
 }
 
 export async function DELETE(request, { params }) {
-    try {
-        const { id } = params;
+    let connection;
 
+    try {
+        // ✅ Correct params usage
+        const { id } = await params;
+
+        if (!id) {
+            return NextResponse.json(
+                { success: false, message: 'Booking ID is required' },
+                { status: 400 }
+            );
+        }
+
+        // ✅ Parse cookies
         const cookieHeader = request.headers.get('cookie');
         const cookies = parseCookies(cookieHeader);
-        const token = cookies.token;
+        const token = cookies?.token;
 
-        // Verify admin access
-        const adminCheck = verifyAdmin(token);
+        if (!token) {
+            return NextResponse.json(
+                { error: 'Unauthorized' },
+                { status: 401 }
+            );
+        }
+
+        // ✅ Verify admin
+        const adminCheck = await verifyAdmin(token);
         if (adminCheck.error) {
-            return NextResponse.json({ error: adminCheck.error }, { status: 401 });
+            return NextResponse.json(
+                { error: adminCheck.error },
+                { status: 401 }
+            );
         }
 
-        // Check if user is admin
-        const decoded = await adminCheck;
-        if (decoded.decoded?.role !== "admin") {
-            return NextResponse.json({ error: "Access Denied" }, { status: 401 });
+        const { decoded } = adminCheck;
+        console.log('Token:', decoded.role);
+        if (decoded?.role !== 'admin') {
+            return NextResponse.json(
+                { error: 'Access denied' },
+                { status: 403 }
+            );
         }
 
-        // Get booking details before deletion for logging/reference
-        const bookingDetails = await query(`
+        // ✅ Get DB connection
+        connection = await pool.getConnection();
+
+        // ✅ Fetch booking details
+        const [bookingRows] = await connection.execute(
+            `
             SELECT 
                 b.*,
-                u.email as user_email,
-                a.title as apartment_title,
+                u.email AS user_email,
+                u.name AS user_name,
+                a.title AS apartment_title,
                 p.razorpay_payment_id,
-                p.status as payment_status
+                p.status AS payment_status
             FROM bookings b
             LEFT JOIN users u ON b.user_id = u.id
             LEFT JOIN apartments a ON b.apartment_id = a.id
             LEFT JOIN payments p ON b.id = p.booking_id
             WHERE b.id = ?
-        `, [id]);
+            `,
+            [id]
+        );
 
-        if (bookingDetails.length === 0) {
+        if (!bookingRows.length) {
             return NextResponse.json(
                 { success: false, message: 'Booking not found' },
                 { status: 404 }
             );
         }
 
-        const booking = bookingDetails[0];
+        const booking = bookingRows[0];
 
-        // Check if booking can be deleted (business rules)
+        // ❌ Business rule check
         if (booking.booking_status === 'ongoing') {
             return NextResponse.json(
                 {
@@ -233,73 +265,79 @@ export async function DELETE(request, { params }) {
             );
         }
 
-        // If payment was successful, consider refund logic
-        if (booking.payment_status === 'success' || booking.payment_status === 'completed') {
-            // You might want to handle refunds here or prevent deletion
-            // For now, we'll just log this information
-            console.log(`Deleting booking with successful payment: ${booking.razorpay_payment_id}`);
+        // ⚠️ Log paid booking deletion
+        if (['success', 'completed'].includes(booking.payment_status)) {
+            console.warn(
+                `Deleting PAID booking ${id} | Payment ID: ${booking.razorpay_payment_id}`
+            );
         }
 
-        // Start transaction for data integrity
-        await query('START TRANSACTION');
+        // ✅ Start transaction (CORRECT WAY)
+        await connection.beginTransaction();
 
-        try {
-            // Delete related payments first (foreign key constraints)
-            await query('DELETE FROM payments WHERE booking_id = ?', [id]);
+        // ✅ Delete payments first (FK safe)
+        await connection.execute(
+            'DELETE FROM payments WHERE booking_id = ?',
+            [id]
+        );
 
-            // Delete booking
-            const deleteResult = await query('DELETE FROM bookings WHERE id = ?', [id]);
+        // ✅ Delete booking
+        await connection.execute(
+            'DELETE FROM bookings WHERE id = ?',
+            [id]
+        );
 
-            // Log the deletion (you could insert into an audit_log table here)
-            console.log(`Booking ${id} deleted by admin. Details:`, {
-                user_email: booking.user_email,
-                apartment_title: booking.apartment_title,
-                guest_details: parseJSONColumn(booking.guest_details),
-                total_amount: booking.total_amount,
-                status: booking.status
-            });
+        // ✅ Commit transaction
+        await connection.commit();
 
-            await createNotification({
-                type: 'booking',
-                title: 'Document Approved',
-                content: `The user ${user.name} has been cancelled booking during booking confirmation.`,
-                userId: adminId,
-                bookingId: id,
-                meta: {
-                    status: 'done',
-                },
-                level: 'info'
-            });
+        // ✅ Optional: create admin notification
+        await createNotification({
+            type: 'booking',
+            title: 'Booking Deleted',
+            content: `Booking #${id} was deleted by admin.`,
+            userId: decoded.id,
+            meta: {
+                apartment: booking.apartment_title,
+                user_email: booking.user_email
+            },
+            level: 'info'
+        });
 
-            await query('COMMIT');
 
-            return NextResponse.json({
-                success: true,
-                message: 'Booking deleted successfully',
-                deleted_booking_id: id,
-                meta: {
-                    had_payment: !!booking.razorpay_payment_id,
-                    payment_status: booking.payment_status,
-                    guest_count: booking.guests,
-                    total_amount: booking.total_amount
-                }
-            });
 
-        } catch (transactionError) {
-            await query('ROLLBACK');
-            throw transactionError;
-        }
+        return NextResponse.json({
+            success: true,
+            message: 'Booking deleted successfully',
+            deleted_booking_id: id,
+            meta: {
+                had_payment: !!booking.razorpay_payment_id,
+                payment_status: booking.payment_status,
+                total_amount: booking.total_amount
+            }
+        });
 
     } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+
         console.error('Error deleting booking:', error);
+
         return NextResponse.json(
             {
                 success: false,
                 message: 'Error deleting booking',
-                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+                error:
+                    process.env.NODE_ENV === 'development'
+                        ? error.message
+                        : undefined
             },
             { status: 500 }
         );
+    } finally {
+        if (connection) {
+            connection.release();
+        }
     }
 }
 

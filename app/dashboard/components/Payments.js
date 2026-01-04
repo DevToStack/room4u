@@ -587,7 +587,7 @@ export default function Payments() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
             {/* Header */}
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
                 <h1 className="text-2xl font-bold text-white mb-4 lg:mb-0">Payments</h1>

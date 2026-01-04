@@ -345,7 +345,7 @@ export default function Settings() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
             <div className="flex items-center justify-between gap-4 max-sm:hidden">
                 <h1 className="text-2xl font-semibold text-neutral-100">Settings</h1>
             </div>

@@ -68,54 +68,48 @@ export async function POST(request) {
             let documentId;
 
             if (existingDoc.length > 0) {
-                // Update existing record
-                await connection.query(
-                    `UPDATE user_documents 
-                    SET document_type = ?, 
-                        document_data = ?, 
-                        status = ?, 
-                        reviewer_id = ?, 
-                        review_message = ?, 
-                        verification_notes = ?, 
-                        updated_at = NOW()
-                    WHERE user_id = ? AND booking_id = ?`,
-                    [
-                        document_type,
-                        JSON.stringify(document_data),
-                        status,
-                        reviewer_id,
-                        review_message,
-                        verification_notes,
-                        user_id,
-                        booking_id
-                    ]
-                );
                 documentId = existingDoc[0].id;
-            } else {
-                // Update new record
-                await connection.query(
-                    `UPDATE user_documents 
-                    SET document_type = ?, 
-                        document_data = ?, 
-                        status = ?, 
-                        reviewer_id = ?, 
-                        review_message = ?, 
-                        booking_id = ?,
-                        verification_notes = ?, 
-                        updated_at = NOW()
-                    WHERE user_id = ? AND status = 'pending'`,
+
+                await connection.execute(
+                    `UPDATE user_documents
+                     SET document_type = ?,
+                         document_data = ?,
+                         status = ?,
+                         reviewer_id = ?,
+                         review_message = ?,
+                         verification_notes = ?,
+                         updated_at = NOW()
+                     WHERE id = ?`,
                     [
                         document_type,
                         JSON.stringify(document_data),
                         status,
                         reviewer_id,
                         review_message,
-                        booking_id,
                         verification_notes,
-                        user_id
+                        documentId
                     ]
                 );
+            } else {
+                const [result] = await connection.execute(
+                    `INSERT INTO user_documents
+                     (user_id, booking_id, document_type, document_data, status, reviewer_id, review_message, verification_notes, created_at)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                    [
+                        user_id,
+                        booking_id,
+                        document_type,
+                        JSON.stringify(document_data),
+                        status,
+                        reviewer_id,
+                        review_message,
+                        verification_notes
+                    ]
+                );
+
+                documentId = result.insertId;
             }
+            
 
             // 2. Update booking status to confirmed
             await connection.query(

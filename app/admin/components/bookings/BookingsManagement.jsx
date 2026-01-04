@@ -123,7 +123,8 @@ const BookingsManagement = () => {
     const handleDeleteBooking = async (bookingId) => {
         try {
             const response = await fetch(`/api/admin/bookings/${bookingId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                credentials: 'include',
             });
 
             const result = await response.json();
@@ -131,7 +132,7 @@ const BookingsManagement = () => {
             if (!result.success) {
                 return setError(result.error || 'Failed to delete booking');
             }
-
+            fetchBookings();
             setSuccess('Booking deleted successfully!');
 
             // 🔵 Remove only the deleted booking

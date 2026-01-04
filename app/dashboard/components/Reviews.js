@@ -157,7 +157,7 @@ export default function UserReviews() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-6">
             <h1 className="text-2xl font-bold text-white mb-4">Reviews</h1>
             {/* Search and Filter Bar */}
             <div className="bg-white/5 border border-white/10 p-4 rounded-xl backdrop-blur-sm">
