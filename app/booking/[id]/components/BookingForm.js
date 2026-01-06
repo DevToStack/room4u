@@ -103,7 +103,7 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
         }
     }, [formData.checkin, formData.checkout, formData.guests, dailyRate, cleaningFee, apartmentId, applicableOffers]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Check if there's an adult guest
@@ -137,9 +137,39 @@ function BookingForm({ apartmentId, disabledRanges, lockedRanges, dailyRate = 20
             return;
         }
 
-        setFormError("");
-        setError("");
-        setShowVerificationModal(true);
+        try {
+            // Call API to check for existing bookings
+            const response = await fetch('/api/bookings/check-dates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    checkin: formData.checkin,
+                    checkout: formData.checkout,
+                    apartment_id: Number(apartmentId),
+                }),
+                credentials: 'include',
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || 'Failed to check booking dates');
+            }
+            if (result.success === false) {
+                setFormError("The selected dates are not available. Please choose different dates.");
+                return;
+            }
+            // If no existing booking, proceed with verification
+            setFormError("");
+            setError("");
+            setShowVerificationModal(true);
+
+        } catch (err) {
+            console.error('Error checking booking dates:', err);
+            setFormError("Unable to verify booking availability. Please try again.");
+        }
     };
 
     const handleConfirmBooking = async () => {
