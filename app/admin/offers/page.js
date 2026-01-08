@@ -141,6 +141,7 @@ export default function OffersPage() {
             setSendingEmail(null);
         }
     };
+
     const parseApartmentIds = (value) => {
         if (!value) return '';
 
@@ -173,7 +174,7 @@ export default function OffersPage() {
 
         return '';
     };
-    
+
     const handleEdit = (offer) => {
         setIsEditing(true);
         setEditingId(offer.id);
@@ -189,7 +190,6 @@ export default function OffersPage() {
 
         setShowModal(true);
     };
-    
 
     const handleDelete = async (id) => {
         if (!confirm('Are you sure you want to delete this offer?')) return;
@@ -248,10 +248,91 @@ export default function OffersPage() {
         setShowModal(true);
     };
 
+    // Skeleton Loading Components
+    const SkeletonCard = () => (
+        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden animate-pulse">
+            <div className="p-6 border-b dark:border-neutral-700">
+                <div className="h-6 bg-gray-200 dark:bg-neutral-700 rounded w-1/4"></div>
+            </div>
+            <div className="p-6">
+                <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center justify-between py-4 border-b dark:border-neutral-700 last:border-0">
+                            <div className="space-y-2 flex-1">
+                                <div className="h-4 bg-gray-200 dark:bg-neutral-700 rounded w-3/4"></div>
+                                <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-1/2"></div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="h-8 bg-gray-200 dark:bg-neutral-700 rounded w-20"></div>
+                                <div className="h-8 bg-gray-200 dark:bg-neutral-700 rounded w-20"></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+
+    const SkeletonTable = () => (
+        <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden animate-pulse">
+            <div className="p-6 border-b dark:border-neutral-700">
+                <div className="h-6 bg-gray-200 dark:bg-neutral-700 rounded w-1/4"></div>
+            </div>
+            <div className="overflow-x-auto p-6">
+                <table className="w-full">
+                    <thead className="bg-gray-50 dark:bg-neutral-700">
+                        <tr>
+                            {['Title', 'Discount', 'Validity', 'Actions'].map((header) => (
+                                <th key={header} className="py-4 px-6 text-left">
+                                    <div className="h-4 bg-gray-300 dark:bg-neutral-600 rounded w-24"></div>
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
+                        {[1, 2, 3, 4].map((row) => (
+                            <tr key={row} className="hover:bg-gray-50 dark:hover:bg-neutral-750 transition-colors">
+                                {[1, 2, 3, 4].map((col) => (
+                                    <td key={col} className="py-4 px-6">
+                                        <div className="space-y-2">
+                                            <div className="h-4 bg-gray-200 dark:bg-neutral-700 rounded w-3/4"></div>
+                                            {col === 1 && (
+                                                <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-1/2"></div>
+                                            )}
+                                            {col === 3 && (
+                                                <div className="h-3 bg-gray-200 dark:bg-neutral-700 rounded w-2/3"></div>
+                                            )}
+                                        </div>
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+
+    const SkeletonButton = () => (
+        <div className="bg-gradient-to-r from-gray-300 to-gray-400 dark:from-neutral-700 dark:to-neutral-600 rounded-lg h-12 w-40 animate-pulse"></div>
+    );
+
     if (loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            <div className="container mx-auto px-4 py-8">
+                {/* Header Skeleton */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 animate-pulse">
+                    <div className="space-y-3">
+                        <div className="h-8 bg-gray-300 dark:bg-neutral-700 rounded w-48"></div>
+                        <div className="h-4 bg-gray-200 dark:bg-neutral-700 rounded w-64"></div>
+                    </div>
+                    <div className="mt-4 md:mt-0">
+                        <SkeletonButton />
+                    </div>
+                </div>
+
+                {/* Offers List Skeleton */}
+                <SkeletonTable />
             </div>
         );
     }
@@ -261,12 +342,14 @@ export default function OffersPage() {
             {/* Header with Add Button */}
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Special Offers</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                        Special Offers
+                    </h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-2">Create and manage promotional offers for your apartments</p>
                 </div>
                 <button
                     onClick={openCreateModal}
-                    className="mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                    className="mt-4 md:mt-0 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-0.5"
                 >
                     <i className="fas fa-plus-circle"></i>
                     Add New Offer
@@ -274,155 +357,215 @@ export default function OffersPage() {
             </div>
 
             {/* Offers List */}
-            <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-lg overflow-hidden">
-                <div className="p-6 border-b dark:border-neutral-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        <i className="fas fa-tags text-blue-500"></i>
-                        Current Offers ({offers.length})
-                    </h2>
+            <div className="bg-gradient-to-br from-white to-gray-50 dark:from-neutral-800 dark:to-neutral-900 rounded-2xl shadow-xl overflow-hidden border border-gray-200 dark:border-neutral-700">
+                <div className="p-6 border-b dark:border-neutral-700 bg-gradient-to-r from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-900">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg">
+                                <i className="fas fa-tags text-white"></i>
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                                    Current Offers
+                                </h2>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">
+                                    {offers.length} offer{offers.length !== 1 ? 's' : ''} • {offers.filter(o => new Date(o.valid_until) >= new Date()).length} active
+                                </p>
+                            </div>
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                            <i className="fas fa-sync-alt mr-2"></i>
+                            Updated just now
+                        </div>
+                    </div>
                 </div>
 
                 {offers.length === 0 ? (
-                    <div className="text-center py-12">
-                        <i className="fas fa-tag text-gray-400 text-5xl mb-4"></i>
-                        <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">No offers yet</h3>
-                        <p className="text-gray-600 dark:text-gray-400 mb-6">Create your first offer to attract more customers</p>
+                    <div className="text-center py-16 px-4">
+                        <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-neutral-800 dark:to-neutral-700 flex items-center justify-center">
+                            <i className="fas fa-tag text-gray-400 text-3xl"></i>
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">No offers yet</h3>
+                        <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
+                            Create your first special offer to attract more customers and boost your bookings
+                        </p>
                         <button
                             onClick={openCreateModal}
-                            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg inline-flex items-center gap-2"
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 inline-flex items-center gap-3 transform hover:-translate-y-0.5"
                         >
-                            <i className="fas fa-plus"></i>
-                            Create First Offer
+                            <i className="fas fa-magic"></i>
+                            Create Your First Offer
                         </button>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-gray-50 dark:bg-neutral-700">
+                            <thead className="bg-gradient-to-r from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-900">
                                 <tr>
-                                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                        <i className="fas fa-heading mr-2"></i>
-                                        Title
+                                    <th className="py-5 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+                                        <i className="fas fa-gift mr-3 text-blue-500"></i>
+                                        Offer Details
                                     </th>
-                                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                        <i className="fas fa-percentage mr-2"></i>
+                                    <th className="py-5 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+                                        <i className="fas fa-percentage mr-3 text-green-500"></i>
                                         Discount
                                     </th>
-                                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                        <i className="fas fa-calendar-alt mr-2"></i>
-                                        Validity
+                                    <th className="py-5 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+                                        <i className="fas fa-calendar-alt mr-3 text-purple-500"></i>
+                                        Validity Period
                                     </th>
-                                    <th className="py-4 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                                        <i className="fas fa-cogs mr-2"></i>
+                                    <th className="py-5 px-6 text-left text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
+                                        <i className="fas fa-cogs mr-3 text-yellow-500"></i>
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-neutral-700">
+                            <tbody className="divide-y divide-gray-100 dark:divide-neutral-700">
                                 {offers.map((offer) => {
                                     const isExpired = new Date(offer.valid_until) < new Date();
                                     const isActive = new Date(offer.valid_from) <= new Date() && !isExpired;
                                     const canSendEmail = isActive;
+                                    const daysLeft = Math.ceil((new Date(offer.valid_until) - new Date()) / (1000 * 60 * 60 * 24));
 
                                     return (
-                                        <tr key={offer.id} className="">
-                                            <td className="py-4 px-6">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-medium text-gray-900 dark:text-white">{offer.title}</p>
-                                                        {isExpired && (
-                                                            <span className="px-2 py-1 text-xs bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 rounded">
-                                                                Expired
-                                                            </span>
-                                                        )}
-                                                        {isActive && (
-                                                            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 rounded">
-                                                                Active
-                                                            </span>
-                                                        )}
+                                        <tr key={offer.id} className="group hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 dark:hover:from-neutral-800 dark:hover:to-neutral-800 transition-all duration-200">
+                                            <td className="py-5 px-6">
+                                                <div className="flex items-start gap-4">
+                                                    <div className="flex-shrink-0">
+                                                        <div className={`p-3 rounded-xl ${isExpired ? 'bg-gradient-to-br from-gray-100 to-gray-200 dark:from-neutral-800 dark:to-neutral-700' : 'bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30'}`}>
+                                                            <i className={`fas fa-tag ${isExpired ? 'text-gray-400' : 'text-blue-500'}`}></i>
+                                                        </div>
                                                     </div>
-                                                    {offer.description && (
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                                            <i className="fas fa-align-left mr-2 text-xs"></i>
-                                                            {offer.description}
-                                                        </p>
-                                                    )}
-                                                    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                        <span>
-                                                            <i className="fas fa-clock mr-1"></i>
-                                                            Created: {new Date(offer.created_at).toLocaleDateString()}
-                                                        </span>
-                                                        {offer.last_sent_at && (
-                                                            <span className="text-green-600 dark:text-green-400">
-                                                                <i className="fas fa-paper-plane mr-1"></i>
-                                                                Sent: {new Date(offer.last_sent_at).toLocaleDateString()}
-                                                            </span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <p className="font-bold text-lg text-gray-900 dark:text-white truncate">
+                                                                {offer.title}
+                                                            </p>
+                                                            {isExpired && (
+                                                                <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-red-100 to-red-200 text-red-800 dark:from-red-900/30 dark:to-red-800/30 dark:text-red-300 rounded-full">
+                                                                    <i className="fas fa-clock mr-1"></i>
+                                                                    Expired
+                                                                </span>
+                                                            )}
+                                                            {isActive && (
+                                                                <span className="px-3 py-1 text-xs font-semibold bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 dark:from-green-900/30 dark:to-emerald-900/30 dark:text-green-300 rounded-full">
+                                                                    <i className="fas fa-bolt mr-1"></i>
+                                                                    Active • {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        {offer.description && (
+                                                            <p className="text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
+                                                                <i className="fas fa-align-left mr-2 text-gray-400"></i>
+                                                                {offer.description}
+                                                            </p>
                                                         )}
+                                                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                                                            <span className="flex items-center gap-2">
+                                                                <i className="fas fa-clock text-blue-400"></i>
+                                                                Created: {new Date(offer.created_at).toLocaleDateString('en-US', {
+                                                                    month: 'short',
+                                                                    day: 'numeric',
+                                                                    year: 'numeric'
+                                                                })}
+                                                            </span>
+                                                            {offer.last_sent_at && (
+                                                                <span className="flex items-center gap-2 text-green-600 dark:text-green-400">
+                                                                    <i className="fas fa-paper-plane"></i>
+                                                                    Sent: {new Date(offer.last_sent_at).toLocaleDateString('en-US', {
+                                                                        month: 'short',
+                                                                        day: 'numeric'
+                                                                    })}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-6">
-                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 dark:from-green-900 dark:to-emerald-900 dark:text-green-200">
-                                                    <i className="fas fa-tag mr-2"></i>
-                                                    {offer.discount_percentage}% OFF
-                                                </span>
-                                            </td>
-                                            <td className="py-4 px-6">
-                                                <div className="flex flex-col">
-                                                    <div className="flex items-center gap-2 text-sm">
-                                                        <i className="fas fa-play-circle text-blue-500"></i>
-                                                        <span className="text-gray-700 dark:text-gray-300">
-                                                            {new Date(offer.valid_from).toLocaleDateString()}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-sm mt-1">
-                                                        <i className="fas fa-stop-circle text-red-500"></i>
-                                                        <span className={`${isExpired ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                                                            {new Date(offer.valid_until).toLocaleDateString()}
-                                                        </span>
+                                            <td className="py-5 px-6">
+                                                <div className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl">
+                                                    <span className="text-2xl font-bold text-green-700 dark:text-green-300">
+                                                        {offer.discount_percentage}%
+                                                    </span>
+                                                    <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                                                        OFF
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="py-4 px-6">
+                                            <td className="py-5 px-6">
+                                                <div className="space-y-2">
+                                                    <div className="flex items-center gap-3 p-2 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg">
+                                                        <div className="p-2 bg-blue-100 dark:bg-blue-800/30 rounded-lg">
+                                                            <i className="fas fa-play text-blue-500 dark:text-blue-400"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400">Starts</div>
+                                                            <div className="font-medium text-gray-900 dark:text-white">
+                                                                {new Date(offer.valid_from).toLocaleDateString('en-US', {
+                                                                    weekday: 'short',
+                                                                    month: 'short',
+                                                                    day: 'numeric'
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-3 p-2 bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg">
+                                                        <div className="p-2 bg-red-100 dark:bg-red-800/30 rounded-lg">
+                                                            <i className="fas fa-stop text-red-500 dark:text-red-400"></i>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs text-gray-500 dark:text-gray-400">Ends</div>
+                                                            <div className={`font-medium ${isExpired ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
+                                                                {new Date(offer.valid_until).toLocaleDateString('en-US', {
+                                                                    weekday: 'short',
+                                                                    month: 'short',
+                                                                    day: 'numeric'
+                                                                })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="py-5 px-6">
                                                 <div className="flex items-center gap-2">
                                                     <button
                                                         onClick={() => handleEdit(offer)}
-                                                        className="text-blue-300 flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-900/60"
+                                                        className="p-3 bg-gradient-to-r from-blue-100 to-blue-200 dark:from-blue-900/30 dark:to-blue-800/30 text-blue-600 dark:text-blue-300 rounded-xl hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 flex items-center gap-2"
                                                         title="Edit Offer"
                                                     >
                                                         <i className="fas fa-edit"></i>
-                                                        <span className="hidden md:inline">Edit</span>
+                                                        <span className="hidden lg:inline text-sm font-medium">Edit</span>
                                                     </button>
 
                                                     <button
                                                         onClick={() => handleSendEmail(offer.id)}
                                                         disabled={sendingEmail === offer.id || !canSendEmail}
-                                                        className={`${canSendEmail
-                                                            ? 'text-green-600 dark:text-green-400 dark:text-green-300 bg-green-900/60'
-                                                            : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                                                            } transition-colors flex items-center gap-2 px-3 py-2 rounded-lg`}
-                                                        title={canSendEmail ? "Send Email to All Users" : "Cannot send email for expired offers"}
+                                                        className={`p-3 rounded-xl hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 flex items-center gap-2 ${canSendEmail
+                                                            ? 'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-600 dark:text-green-300 hover:from-green-200 hover:to-emerald-200'
+                                                            : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-neutral-700 dark:to-neutral-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                                                            }`}
+                                                        title={canSendEmail ? "Send Email to All Users" : isExpired ? "Cannot send email for expired offers" : "Offer not yet active"}
                                                     >
                                                         {sendingEmail === offer.id ? (
                                                             <>
                                                                 <i className="fas fa-spinner fa-spin"></i>
-                                                                <span className="hidden md:inline">Sending...</span>
+                                                                <span className="hidden lg:inline text-sm font-medium">Sending...</span>
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <i className="fas fa-paper-plane"></i>
-                                                                <span className="hidden md:inline">Send Email</span>
+                                                                <span className="hidden lg:inline text-sm font-medium">Send</span>
                                                             </>
                                                         )}
                                                     </button>
 
                                                     <button
                                                         onClick={() => handleDelete(offer.id)}
-                                                        className="text-red-600 dark:text-red-400 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-900/60"
+                                                        className="p-3 bg-gradient-to-r from-red-100 to-red-200 dark:from-red-900/30 dark:to-red-800/30 text-red-600 dark:text-red-300 rounded-xl hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 flex items-center gap-2"
                                                         title="Delete Offer"
                                                     >
                                                         <i className="fas fa-trash-alt"></i>
-                                                        <span className="hidden md:inline">Delete</span>
+                                                        <span className="hidden lg:inline text-sm font-medium">Delete</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -437,33 +580,39 @@ export default function OffersPage() {
 
             {/* Modal for Create/Edit Offer Form */}
             {showModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white dark:bg-neutral-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+                    <div className="bg-gradient-to-br from-white to-gray-50 dark:from-neutral-800 dark:to-neutral-900 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-neutral-700 animate-slideUp">
                         {/* Modal Header */}
-                        <div className="p-6 border-b dark:border-neutral-700 flex items-center justify-between">
-                            <div>
-                                <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                                    <i className={`fas ${isEditing ? 'fa-edit' : 'fa-gift'} text-blue-500`}></i>
-                                    {isEditing ? 'Edit Offer' : 'Create New Offer'}
-                                </h2>
-                                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                                    {isEditing ? 'Update the offer details below' : 'Fill in the details below to create a promotional offer'}
-                                </p>
+                        <div className="p-6 border-b dark:border-neutral-700 bg-gradient-to-r from-gray-50 to-white dark:from-neutral-800 dark:to-neutral-900">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className={`p-3 rounded-xl bg-gradient-to-br ${isEditing ? 'from-yellow-400 to-orange-400' : 'from-blue-400 to-indigo-400'}`}>
+                                        <i className={`fas ${isEditing ? 'fa-edit' : 'fa-gift'} text-white`}></i>
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                            {isEditing ? 'Edit Offer' : 'Create New Offer'}
+                                        </h2>
+                                        <p className="text-gray-600 dark:text-gray-400">
+                                            {isEditing ? 'Update your offer details' : 'Create an amazing offer for your customers'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={resetFormAndCloseModal}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-neutral-700 rounded-lg transition-colors"
+                                >
+                                    <i className="fas fa-times text-xl text-gray-500 dark:text-gray-400"></i>
+                                </button>
                             </div>
-                            <button
-                                onClick={resetFormAndCloseModal}
-                                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-2xl"
-                            >
-                                <i className="fas fa-times"></i>
-                            </button>
                         </div>
 
                         {/* Modal Body */}
                         <div className="p-6">
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-900 dark:text-white">
                                             <i className="fas fa-heading mr-2 text-blue-500"></i>
                                             Title *
                                         </label>
@@ -472,14 +621,14 @@ export default function OffersPage() {
                                             name="title"
                                             value={formData.title}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:text-white transition"
-                                            placeholder="Summer Special"
+                                            className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-neutral-800 dark:text-white transition-all duration-200"
+                                            placeholder="e.g., Summer Special 2024"
                                             required
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-900 dark:text-white">
                                             <i className="fas fa-percentage mr-2 text-green-500"></i>
                                             Discount Percentage *
                                         </label>
@@ -492,19 +641,22 @@ export default function OffersPage() {
                                                 min="1"
                                                 max="100"
                                                 step="0.01"
-                                                className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 dark:bg-neutral-700 dark:text-white transition"
+                                                className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-neutral-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-neutral-800 dark:text-white transition-all duration-200"
                                                 placeholder="20"
                                                 required
                                             />
-                                            <div className="absolute right-3 top-3 text-gray-500">
+                                            <div className="absolute left-4 top-3 text-gray-500">
                                                 <i className="fas fa-percent"></i>
+                                            </div>
+                                            <div className="absolute right-4 top-3 text-gray-500 text-sm">
+                                                % OFF
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+                                <div className="space-y-2">
+                                    <label className="block text-sm font-medium text-gray-900 dark:text-white">
                                         <i className="fas fa-align-left mr-2 text-purple-500"></i>
                                         Description
                                     </label>
@@ -512,45 +664,45 @@ export default function OffersPage() {
                                         name="description"
                                         value={formData.description}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-neutral-700 dark:text-white transition"
+                                        className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent dark:bg-neutral-800 dark:text-white transition-all duration-200 resize-none"
                                         rows="3"
-                                        placeholder="Describe the offer details..."
+                                        placeholder="Describe what makes this offer special and any terms & conditions..."
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-900 dark:text-white">
                                             <i className="fas fa-calendar-start mr-2 text-blue-500"></i>
-                                            Valid From *
+                                            Start Date *
                                         </label>
                                         <input
                                             type="date"
                                             name="valid_from"
                                             value={formData.valid_from}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-700 dark:text-white transition"
+                                            className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-neutral-800 dark:text-white transition-all duration-200"
                                             required
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-900 dark:text-white">
                                             <i className="fas fa-calendar-times mr-2 text-red-500"></i>
-                                            Valid Until *
+                                            End Date *
                                         </label>
                                         <input
                                             type="date"
                                             name="valid_until"
                                             value={formData.valid_until}
                                             onChange={handleChange}
-                                            className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-neutral-700 dark:text-white transition"
+                                            className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent dark:bg-neutral-800 dark:text-white transition-all duration-200"
                                             required
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+                                    <div className="space-y-2">
+                                        <label className="block text-sm font-medium text-gray-900 dark:text-white">
                                             <i className="fas fa-building mr-2 text-yellow-500"></i>
                                             Apartment IDs
                                         </label>
@@ -560,28 +712,31 @@ export default function OffersPage() {
                                                 name="apartment_ids"
                                                 value={formData.apartment_ids}
                                                 onChange={handleChange}
-                                                placeholder="e.g., 101, 205, 307"
-                                                className="w-full px-4 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 dark:bg-neutral-700 dark:text-white transition"
+                                                placeholder="101, 205, 307"
+                                                className="w-full px-4 py-3 pl-12 border border-gray-300 dark:border-neutral-600 rounded-xl focus:ring-2 focus:ring-yellow-500 focus:border-transparent dark:bg-neutral-800 dark:text-white transition-all duration-200"
                                             />
-                                            <div className="absolute right-3 top-3 text-gray-500">
-                                                <i className="fas fa-info-circle" title="Leave empty to apply to all apartments"></i>
+                                            <div className="absolute left-4 top-3 text-gray-500">
+                                                <i className="fas fa-hashtag"></i>
                                             </div>
                                         </div>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                                            Leave empty to apply offer to all apartments
+                                            <i className="fas fa-info-circle mr-1"></i>
+                                            Leave empty to apply to all apartments
                                         </p>
                                     </div>
                                 </div>
 
                                 {/* Email Notice */}
                                 {!isEditing && (
-                                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                                         <div className="flex items-start gap-3">
-                                            <i className="fas fa-envelope text-blue-500 text-lg mt-1"></i>
+                                            <div className="p-2 bg-blue-100 dark:bg-blue-800/30 rounded-lg">
+                                                <i className="fas fa-bell text-blue-500"></i>
+                                            </div>
                                             <div>
-                                                <h4 className="font-medium text-blue-800 dark:text-blue-300">Email Notification</h4>
+                                                <h4 className="font-bold text-blue-800 dark:text-blue-300">Email Notification</h4>
                                                 <p className="text-sm text-blue-700 dark:text-blue-400 mt-1">
-                                                    After creating this offer, you&apos;ll be prompted to send email notifications to all registered users.
+                                                    After creating this offer, we'll ask if you want to notify all registered users via email immediately.
                                                 </p>
                                             </div>
                                         </div>
@@ -593,14 +748,14 @@ export default function OffersPage() {
                                     <button
                                         type="button"
                                         onClick={resetFormAndCloseModal}
-                                        className="px-6 py-3 border border-gray-300 dark:border-neutral-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-700 transition-colors flex items-center gap-2"
+                                        className="px-6 py-3 border border-gray-300 dark:border-neutral-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-neutral-700 transition-all duration-200 flex items-center gap-2"
                                     >
                                         <i className="fas fa-times"></i>
                                         Cancel
                                     </button>
                                     <button
                                         type="submit"
-                                        className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2"
+                                        className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 transform hover:-translate-y-0.5"
                                     >
                                         <i className={`fas ${isEditing ? 'fa-save' : 'fa-plus-circle'}`}></i>
                                         {isEditing ? 'Update Offer' : 'Create Offer'}

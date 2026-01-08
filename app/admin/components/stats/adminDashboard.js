@@ -25,8 +25,8 @@ import {
     faMoneyBillWave,
     faChartLine,
     faBed,
-    faUserCheck,
-    faClock
+    faArrowTrendUp,
+    faArrowTrendDown
 } from "@fortawesome/free-solid-svg-icons";
 import CustomSelect from "../../../../components/select";
 import { useRouter } from "next/navigation";
@@ -49,10 +49,10 @@ const chartStyles = `
 const CustomTooltip = ({ active, payload, label, chartKey }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-neutral-800/95 backdrop-blur-sm border border-neutral-600 rounded-lg p-3 shadow-xl">
-                <p className="text-neutral-200 font-medium mb-1">{`${label}`}</p>
+            <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 backdrop-blur-sm border border-neutral-700 rounded-xl p-4 shadow-2xl">
+                <p className="text-neutral-100 font-semibold mb-2">{`${label}`}</p>
                 {payload.map((entry, index) => (
-                    <p key={index} className="text-sm" style={{ color: entry.color }}>
+                    <p key={index} className="text-sm font-medium" style={{ color: entry.color }}>
                         {`${entry.name}: ${chartKey === 'revenue' ? '₹' : ''}${entry.value.toLocaleString()}`}
                     </p>
                 ))}
@@ -66,12 +66,12 @@ const CustomTooltip = ({ active, payload, label, chartKey }) => {
 const PieChartTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-neutral-800/95 backdrop-blur-sm border border-neutral-600 rounded-lg p-3 shadow-xl">
-                <p className="text-neutral-200 font-medium mb-1">{payload[0].name}</p>
-                <p className="text-sm" style={{ color: payload[0].color }}>
+            <div className="bg-gradient-to-br from-neutral-900 to-neutral-800 backdrop-blur-sm border border-neutral-700 rounded-xl p-4 shadow-2xl">
+                <p className="text-neutral-100 font-semibold mb-2">{payload[0].name}</p>
+                <p className="text-sm font-medium" style={{ color: payload[0].color }}>
                     {`Count: ${payload[0].value}`}
                 </p>
-                <p className="text-sm" style={{ color: payload[0].color }}>
+                <p className="text-sm font-medium" style={{ color: payload[0].color }}>
                     {`Percentage: ${payload[0].payload.percentage}%`}
                 </p>
             </div>
@@ -79,6 +79,85 @@ const PieChartTooltip = ({ active, payload }) => {
     }
     return null;
 };
+
+// Skeleton components
+const StatCardSkeleton = () => (
+    <div className="p-4 rounded-2xl bg-gradient-to-br from-neutral-900/50 to-neutral-800/30 border border-neutral-700/50 animate-pulse">
+        <div className="flex items-center gap-3">
+            <div className="p-3 rounded-xl bg-neutral-700/50">
+                <div className="w-6 h-6 rounded-lg bg-neutral-700/50"></div>
+            </div>
+            <div className="flex-1">
+                <div className="h-4 w-24 bg-neutral-700/50 rounded-lg mb-2"></div>
+                <div className="h-8 w-20 bg-neutral-700/50 rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+);
+
+const ChartCardSkeleton = () => (
+    <div className="p-6 rounded-2xl bg-gradient-to-br from-neutral-900/50 to-neutral-800/30 border border-neutral-700/50 animate-pulse">
+        <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-neutral-700/50">
+                    <div className="w-6 h-6 rounded-lg bg-neutral-700/50"></div>
+                </div>
+                <div className="space-y-2">
+                    <div className="h-6 w-32 bg-neutral-700/50 rounded-lg"></div>
+                    <div className="h-4 w-24 bg-neutral-700/50 rounded-lg"></div>
+                </div>
+            </div>
+            <div className="h-10 w-24 bg-neutral-700/50 rounded-lg"></div>
+        </div>
+        <div className="w-full h-[300px] bg-neutral-800/30 rounded-lg"></div>
+    </div>
+);
+
+const PieChartSkeleton = () => (
+    <div className="p-6 rounded-2xl bg-gradient-to-br from-neutral-900/50 to-neutral-800/30 border border-neutral-700/50 animate-pulse">
+        <div className="h-7 w-48 bg-neutral-700/50 rounded-lg mb-4"></div>
+        <div className="flex flex-col items-center">
+            <div className="w-full h-48 mb-4 relative">
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-40 h-40 rounded-full bg-neutral-900/30"></div>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 w-full">
+                {[1, 2, 3, 4, 5].map((item) => (
+                    <div key={item} className="flex items-center justify-between p-3 rounded-xl bg-neutral-900/30 border border-neutral-700/50">
+                        <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 rounded-full bg-neutral-700/50"></div>
+                            <div className="h-4 w-20 bg-neutral-700/50 rounded-lg"></div>
+                        </div>
+                        <div className="text-right">
+                            <div className="h-6 w-8 bg-neutral-700/50 rounded-lg mb-1"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
+const BookingCardSkeleton = () => (
+    <div className="p-4 rounded-xl bg-gradient-to-br from-neutral-900/30 to-neutral-800/20 border border-neutral-700/50 animate-pulse">
+        <div className="flex justify-between items-start mb-3">
+            <div className="space-y-2">
+                <div className="h-4 w-28 bg-neutral-700/50 rounded-lg"></div>
+                <div className="h-3 w-20 bg-neutral-700/50 rounded-lg"></div>
+            </div>
+            <div className="h-6 w-16 bg-neutral-700/50 rounded-full"></div>
+        </div>
+        <div className="space-y-3">
+            {[1, 2, 3, 4].map((line) => (
+                <div key={line} className="flex justify-between items-center">
+                    <div className="h-3 w-16 bg-neutral-700/50 rounded-lg"></div>
+                    <div className="h-4 w-20 bg-neutral-700/50 rounded-lg"></div>
+                </div>
+            ))}
+        </div>
+    </div>
+);
 
 export default function AdminDashboardStats() {
     const router = useRouter();
@@ -99,6 +178,8 @@ export default function AdminDashboardStats() {
             pendingBookings: 0,
             confirmedBookings: 0,
             cancelledBookings: 0,
+            ongoingBookings: 0,
+            expiredBookings: 0,
         },
         graphs: {
             users: [],
@@ -115,6 +196,7 @@ export default function AdminDashboardStats() {
             },
             upcoming: [],
             recent: [],
+            ongoing: [],
             statusDistribution: {}
         }
     });
@@ -127,45 +209,53 @@ export default function AdminDashboardStats() {
         revenue: false,
     });
 
-    // Chart configurations for different styles
+    // Chart configurations with subtle gradients
     const chartConfigs = {
         users: {
             type: "area",
             color: "#4ade80",
             gradient: true,
             stroke: "#4ade80",
-            fill: "url(#usersGradient)"
+            fill: "url(#usersGradient)",
+            bgGradient: "from-emerald-900/10 to-emerald-900/5",
+            borderColor: "border-emerald-800/30"
         },
         bookings: {
             type: "bar",
             color: "#60a5fa",
             gradient: false,
             stroke: "#60a5fa",
-            fill: "#60a5fa"
+            fill: "#60a5fa",
+            bgGradient: "from-blue-900/10 to-blue-900/5",
+            borderColor: "border-blue-800/30"
         },
         payments: {
             type: "line",
             color: "#fbbf24",
             gradient: false,
             stroke: "#fbbf24",
-            fill: "none"
+            fill: "none",
+            bgGradient: "from-amber-900/10 to-amber-900/5",
+            borderColor: "border-amber-800/30"
         },
         revenue: {
             type: "composed",
             color: "#f87171",
             gradient: true,
             stroke: "#f87171",
-            fill: "url(#revenueGradient)"
+            fill: "url(#revenueGradient)",
+            bgGradient: "from-rose-900/10 to-rose-900/5",
+            borderColor: "border-rose-800/30"
         }
     };
 
-    // Colors for pie chart
+    // Enhanced colors for pie chart with subtle shades
     const PIE_CHART_COLORS = {
         pending: "#fbbf24",
         confirmed: "#4ade80",
         cancelled: "#f87171",
-        ongoing:"#04f0ff",
-        expired: "#4a4d4aff"
+        ongoing: "#04f0ff",
+        expired: "#8b5cf6"
     };
 
     // Prepare data for pie chart
@@ -176,7 +266,8 @@ export default function AdminDashboardStats() {
             percentage: dashboardData.totals.totalBookings > 0
                 ? Math.round((dashboardData.totals.confirmedBookings / dashboardData.totals.totalBookings) * 100)
                 : 0,
-            color: PIE_CHART_COLORS.confirmed
+            color: PIE_CHART_COLORS.confirmed,
+            gradient: "bg-gradient-to-r from-emerald-500/20 to-emerald-500/5"
         },
         {
             name: "Pending Bookings",
@@ -184,7 +275,8 @@ export default function AdminDashboardStats() {
             percentage: dashboardData.totals.totalBookings > 0
                 ? Math.round((dashboardData.totals.pendingBookings / dashboardData.totals.totalBookings) * 100)
                 : 0,
-            color: PIE_CHART_COLORS.pending
+            color: PIE_CHART_COLORS.pending,
+            gradient: "bg-gradient-to-r from-amber-500/20 to-amber-500/5"
         },
         {
             name: "Cancelled Bookings",
@@ -192,7 +284,8 @@ export default function AdminDashboardStats() {
             percentage: dashboardData.totals.totalBookings > 0
                 ? Math.round((dashboardData.totals.cancelledBookings / dashboardData.totals.totalBookings) * 100)
                 : 0,
-            color: PIE_CHART_COLORS.cancelled
+            color: PIE_CHART_COLORS.cancelled,
+            gradient: "bg-gradient-to-r from-rose-500/20 to-rose-500/5"
         },
         {
             name: "Ongoing Bookings",
@@ -200,7 +293,8 @@ export default function AdminDashboardStats() {
             percentage: dashboardData.totals.totalBookings > 0
                 ? Math.round((dashboardData.totals.ongoingBookings / dashboardData.totals.totalBookings) * 100)
                 : 0,
-            color: PIE_CHART_COLORS.ongoing
+            color: PIE_CHART_COLORS.ongoing,
+            gradient: "bg-gradient-to-r from-cyan-500/20 to-cyan-500/5"
         },
         {
             name: "Expired Bookings",
@@ -208,11 +302,14 @@ export default function AdminDashboardStats() {
             percentage: dashboardData.totals.totalBookings > 0
                 ? Math.round((dashboardData.totals.expiredBookings / dashboardData.totals.totalBookings) * 100)
                 : 0,
-            color: PIE_CHART_COLORS.expired
+            color: PIE_CHART_COLORS.expired,
+            gradient: "bg-gradient-to-r from-violet-500/20 to-violet-500/5"
         }
     ];
+
     const formatNumber = (num) =>
-        num >= 1000 ? `${(num / 1000).toFixed(1)}K` : num;      
+        num >= 1000 ? `${(num / 1000).toFixed(1)}K` : num;
+
     // Apply recharts focus fix
     useEffect(() => {
         const styleSheet = document.createElement("style");
@@ -239,6 +336,8 @@ export default function AdminDashboardStats() {
                             pendingBookings: 0,
                             confirmedBookings: 0,
                             cancelledBookings: 0,
+                            ongoingBookings: 0,
+                            expiredBookings: 0,
                         },
                         graphs: data.graphs || {
                             users: [],
@@ -255,6 +354,7 @@ export default function AdminDashboardStats() {
                             },
                             upcoming: [],
                             recent: [],
+                            ongoing: [],
                             statusDistribution: {}
                         }
                     });
@@ -301,10 +401,10 @@ export default function AdminDashboardStats() {
     };
 
     const chartOptions = [
-        { key: "users", label: "Users", color: "#4ade80" },
-        { key: "bookings", label: "Bookings", color: "#60a5fa" },
-        { key: "payments", label: "Payments", color: "#fbbf24" },
-        { key: "revenue", label: "Revenue (₹)", color: "#f87171" },
+        { key: "users", label: "Users", color: "#4ade80", icon: faUsers },
+        { key: "bookings", label: "Bookings", color: "#60a5fa", icon: faCalendarCheck },
+        { key: "payments", label: "Payments", color: "#fbbf24", icon: faMoneyBillWave },
+        { key: "revenue", label: "Revenue (₹)", color: "#f87171", icon: faChartLine },
     ];
 
     // Render different chart types based on configuration
@@ -320,11 +420,11 @@ export default function AdminDashboardStats() {
                     <AreaChart {...commonProps}>
                         <defs>
                             <linearGradient id="usersGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#4ade80" stopOpacity={0.8} />
-                                <stop offset="95%" stopColor="#4ade80" stopOpacity={0.1} />
+                                <stop offset="0%" stopColor={config.color} stopOpacity={0.4} />
+                                <stop offset="100%" stopColor={config.color} stopOpacity={0.1} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} opacity={0.3} />
                         <XAxis
                             dataKey="label"
                             stroke="#a3a3a3"
@@ -345,9 +445,9 @@ export default function AdminDashboardStats() {
                             dataKey="value"
                             stroke={config.stroke}
                             fill={config.fill}
-                            strokeWidth={2}
+                            strokeWidth={3}
                             dot={{ fill: config.stroke, strokeWidth: 2, r: 4 }}
-                            activeDot={{ r: 6, fill: config.stroke }}
+                            activeDot={{ r: 8, fill: "#ffffff", stroke: config.stroke, strokeWidth: 2 }}
                         />
                     </AreaChart>
                 );
@@ -355,7 +455,7 @@ export default function AdminDashboardStats() {
             case "bar":
                 return (
                     <BarChart {...commonProps}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} opacity={0.3} />
                         <XAxis
                             dataKey="label"
                             stroke="#a3a3a3"
@@ -374,8 +474,8 @@ export default function AdminDashboardStats() {
                         <Bar
                             dataKey="value"
                             fill={config.fill}
-                            radius={[4, 4, 0, 0]}
-                            opacity={0.8}
+                            radius={[8, 8, 0, 0]}
+                            opacity={0.9}
                         />
                     </BarChart>
                 );
@@ -383,7 +483,7 @@ export default function AdminDashboardStats() {
             case "line":
                 return (
                     <LineChart {...commonProps}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} opacity={0.3} />
                         <XAxis
                             dataKey="label"
                             stroke="#a3a3a3"
@@ -405,7 +505,7 @@ export default function AdminDashboardStats() {
                             stroke={config.stroke}
                             strokeWidth={3}
                             dot={{ fill: config.stroke, strokeWidth: 2, r: 4 }}
-                            activeDot={{ r: 6, fill: config.stroke }}
+                            activeDot={{ r: 8, fill: "#ffffff", stroke: config.stroke, strokeWidth: 2 }}
                         />
                     </LineChart>
                 );
@@ -415,11 +515,11 @@ export default function AdminDashboardStats() {
                     <ComposedChart {...commonProps}>
                         <defs>
                             <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#f87171" stopOpacity={0.8} />
-                                <stop offset="95%" stopColor="#f87171" stopOpacity={0.1} />
+                                <stop offset="0%" stopColor={config.color} stopOpacity={0.4} />
+                                <stop offset="100%" stopColor={config.color} stopOpacity={0.1} />
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="#404040" vertical={false} opacity={0.3} />
                         <XAxis
                             dataKey="label"
                             stroke="#a3a3a3"
@@ -471,71 +571,83 @@ export default function AdminDashboardStats() {
 
     if (loading) {
         return (
-            <div className="h-screen text-white p-6 flex items-center justify-center"
+            <section className="overflow-y-auto p-4 sm:p-6 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950"
                 style={{ maxHeight: 'calc(100vh - 96px)' }}
             >
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
-            </div>
+                <div className="space-y-6">
+                    {/* Main Summary Cards Skeleton */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                        {[1, 2, 3, 4].map((item) => (
+                            <StatCardSkeleton key={item} />
+                        ))}
+                    </div>
+
+                    {/* Booking Status Overview Section Skeleton */}
+                    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6">
+                        <PieChartSkeleton />
+
+                        <div className="p-6 rounded-2xl bg-gradient-to-br from-neutral-900/50 to-neutral-800/30 border border-neutral-800/50 animate-pulse xl:col-span-3 lg:col-span-1">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="h-7 w-40 bg-neutral-800/50 rounded-lg"></div>
+                                <div className="flex gap-1 bg-neutral-900/50 rounded-xl p-1">
+                                    {[1, 2, 3].map((item) => (
+                                        <div key={item} className="px-4 py-2 rounded-lg bg-neutral-800/50 w-24"></div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                                {[1, 2, 3, 4].map((item) => (
+                                    <BookingCardSkeleton key={item} />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Graph Cards Skeleton */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {[1, 2, 3, 4].map((item) => (
+                            <ChartCardSkeleton key={item} />
+                        ))}
+                    </div>
+                </div>
+            </section>
         );
     }
 
     return (
-        <section className="overflow-y-auto p-4 sm:p-6 bg-neutral-900"
+        <section className="overflow-y-auto p-4 sm:p-6 bg-gradient-to-br from-neutral-950 via-neutral-900 to-neutral-950"
             style={{ maxHeight: 'calc(100vh - 96px)' }}
         >
-            <style jsx>{`
-                .recharts-wrapper:focus {
-                    outline: none !important;
-                }
-                .recharts-surface:focus {
-                    outline: none !important;
-                }
-                .recharts-wrapper *:focus {
-                    outline: none !important;
-                }
-                .chart-card {
-                    backdrop-filter: blur(10px);
-                    background: rgb(38 38 38);
-                    border: 1px solid rgb(64 64 64);
-                    transition: all 0.3s ease;
-                }
-                .chart-card:hover {
-                    background: rgb(51 51 51);
-                    border-color: rgb(82 82 82);
-                    transform: translateY(-2px);
-                }
-                .summary-card {
-                    background: rgb(38 38 38);
-                    border: 1px solid rgb(64 64 64);
-                    transition: all 0.3s ease;
-                }
-                .summary-card:hover {
-                    background: rgb(41 41 41);
-                    border-color: rgb(82 82 82);
-                    transform: translateY(-1px);
-                }
-            `}</style>
-
             {/* Main Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mb-6 max-sm:gap-4">
-                {chartOptions.map(({ key, label, color }) => (
-                    <div key={key} className="summary-card p-4 max-sm:p-3 rounded-xl shadow-lg">
-                        <div className="flex items-center gap-3">
+                {chartOptions.map(({ key, label, color, icon }) => (
+                    <div key={key}
+                        className={`summary-card p-5 max-sm:p-4 rounded-2xl shadow-xl border ${chartConfigs[key].borderColor} 
+                                     bg-gradient-to-br from-neutral-900/60 to-neutral-800/40 backdrop-blur-sm`}>
+                        <div className="flex items-center gap-4">
                             <div
-                                className="p-3 rounded-xl flex items-center justify-center"
-                                style={{ backgroundColor: `${color}15` }}
+                                className="p-3 rounded-xl flex items-center justify-center backdrop-blur-sm"
+                                style={{
+                                    background: `linear-gradient(135deg, ${color}20, ${color}10)`,
+                                    boxShadow: `0 4px 15px ${color}10`
+                                }}
                             >
                                 <FontAwesomeIcon
-                                    icon={chartIcons[key]}
+                                    icon={icon}
                                     style={{ color }}
-                                    className="text-lg"
+                                    className="text-xl"
                                 />
                             </div>
                             <div>
-                                <p className="text-neutral-400 text-sm">{label}</p>
+                                <p className="text-neutral-300 text-sm font-medium mb-1">{label}</p>
                                 <p className="text-2xl max-sm:text-xl font-bold text-white">
                                     {key === 'revenue' ? '₹' : ''}{dashboardData.totals[`total${key.charAt(0).toUpperCase() + key.slice(1)}`]?.toLocaleString() || 0}
                                 </p>
+                                {/* <div className="flex items-center gap-1 mt-1">
+                                    <FontAwesomeIcon icon={faArrowTrendUp} className="text-xs text-emerald-400" />
+                                    <span className="text-xs text-emerald-400 font-medium">+12%</span>
+                                    <span className="text-xs text-neutral-500 ml-2">vs last month</span>
+                                </div> */}
                             </div>
                         </div>
                     </div>
@@ -544,9 +656,10 @@ export default function AdminDashboardStats() {
 
             {/* Booking Status Overview Section */}
             <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-                {/* Pie Chart Card with Half-Circle Design */}
-                <div className="chart-card flex flex-col p-6 rounded-xl shadow-lg xl:col-span-1 lg:col-span-1">
-                    <h2 className="text-xl font-bold text-white mb-2">Booking Status Distribution</h2>
+                {/* Pie Chart Card with Enhanced Design */}
+                <div className={`chart-card flex flex-col p-6 rounded-2xl shadow-xl border border-neutral-800/30 
+                                bg-gradient-to-br from-neutral-900/60 to-neutral-800/40 backdrop-blur-sm xl:col-span-1 lg:col-span-1`}>
+                    <h2 className="text-xl font-bold text-white mb-4">Booking Status</h2>
                     <div className="flex flex-col items-center">
                         <div className="w-full h-48 mb-2 relative">
                             <ResponsiveContainer width="100%" height="100%">
@@ -557,8 +670,8 @@ export default function AdminDashboardStats() {
                                         cy="90%"
                                         startAngle={180}
                                         endAngle={0}
-                                        innerRadius={60}
-                                        outerRadius={100}
+                                        innerRadius={70}
+                                        outerRadius={110}
                                         paddingAngle={2}
                                         dataKey="value"
                                         label={({ percentage }) => `${percentage}%`}
@@ -568,8 +681,8 @@ export default function AdminDashboardStats() {
                                             <Cell
                                                 key={`cell-${index}`}
                                                 fill={entry.color}
-                                                stroke="rgb(38 38 38)"
-                                                strokeWidth={2}
+                                                stroke="rgb(23 23 23)"
+                                                strokeWidth={3}
                                             />
                                         ))}
                                     </Pie>
@@ -579,29 +692,29 @@ export default function AdminDashboardStats() {
 
                             {/* Center summary */}
                             <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center">
-                                <p className="text-neutral-400 text-sm">Total</p>
-                                <p className="text-2xl font-bold text-white">
+                                <p className="text-neutral-400 text-sm font-medium">Total</p>
+                                <p className="text-3xl font-bold text-white">
                                     {dashboardData.totals.totalBookings}
                                 </p>
                                 <p className="text-xs text-neutral-500">Bookings</p>
                             </div>
                         </div>
 
-                        {/* Legend with improved styling */}
-                        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-2 w-full">
+                        {/* Legend with gradient backgrounds */}
+                        <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-3 w-full mt-4">
                             {pieChartData.map((item, index) => (
                                 <div
                                     key={index}
-                                    className={`flex items-center justify-between p-3 rounded-lg bg-neutral-800/50 border border-neutral-700 
+                                    className={`flex items-center justify-between p-3 rounded-xl ${item.gradient} border border-neutral-800/50 
                 ${index >= 2 && index <= 3 ? "col-span-1 " : "max-sm:col-span-1 col-span-2"}
             `}
                                 >
                                     <div className="flex items-center gap-3">
                                         <div
-                                            className="w-4 h-4 rounded-full"
+                                            className="w-3 h-3 rounded-full"
                                             style={{ backgroundColor: item.color }}
                                         ></div>
-                                        <span className="text-sm text-neutral-300 font-medium">
+                                        <span className="text-sm text-neutral-200 font-medium">
                                             {item.name}
                                         </span>
                                     </div>
@@ -609,250 +722,130 @@ export default function AdminDashboardStats() {
                                         <p className="text-lg font-bold text-white">
                                             {formatNumber(item.value)}
                                         </p>
-                                        <p className="text-xs text-neutral-400">{item.percentage}%</p>
+                                        <p className="text-xs text-neutral-300 font-medium">{item.percentage}%</p>
                                     </div>
                                 </div>
                             ))}
                         </div>
-
                     </div>
                 </div>
 
                 {/* Recent Bookings & Upcoming Check-ins Section */}
-                <div className="chart-card p-6 rounded-xl shadow-lg xl:col-span-3 lg:col-span-1 max-h-[600px]">
+                <div className={`chart-card p-6 rounded-2xl shadow-xl border border-neutral-800/30 
+                                bg-gradient-to-br from-neutral-900/60 to-neutral-800/40 backdrop-blur-sm xl:col-span-3 lg:col-span-1`}>
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-xl font-bold text-white">Bookings Overview</h2>
-                        <div className="flex bg-neutral-800 rounded-lg p-1">
-                            <button
-                                onClick={() => setActiveBookingTab('recent')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeBookingTab === 'recent'
-                                        ? 'bg-neutral-700 text-white shadow'
-                                        : 'text-neutral-400 hover:text-white'
-                                    }`}
-                            >
-                                Recent Bookings
-                            </button>
-                            <button
-                                onClick={() => setActiveBookingTab('upcoming')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeBookingTab === 'upcoming'
-                                        ? 'bg-neutral-700 text-white shadow'
-                                        : 'text-neutral-400 hover:text-white'
-                                    }`}
-                            >
-                                Upcoming Check-ins
-                            </button>
-                            <button
-                                onClick={() => setActiveBookingTab('ongoing')}
-                                className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${activeBookingTab === 'ongoing'
-                                    ? 'bg-neutral-700 text-white shadow'
-                                    : 'text-neutral-400 hover:text-white'
-                                    }`}
-                            >
-                                Ongoing
-                            </button>
+                        <div className="flex gap-1 bg-neutral-900/50 rounded-xl p-1">
+                            {['recent', 'upcoming', 'ongoing'].map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveBookingTab(tab)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeBookingTab === tab
+                                        ? 'bg-gradient-to-r from-blue-600/20 to-cyan-600/20 text-white shadow-lg border border-blue-500/30'
+                                        : 'text-neutral-400 hover:text-white hover:bg-neutral-800/50'
+                                        }`}
+                                >
+                                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                </button>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Recent Bookings Tab */}
-                    {activeBookingTab === 'recent' && (
-                        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
-                            {dashboardData.bookings.recent?.slice(0, 4).map((booking) => (
-                                <div key={booking.id} className="summary-card p-4 rounded-lg border border-neutral-700 hover:border-neutral-100 transition-colors">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p className="font-medium text-white text-sm">
-                                                {booking.bookingReference || `#${booking.id}`}
-                                            </p>
-                                            <p className="text-xs text-neutral-400">
-                                                {booking.customer?.name || 'N/A'}
-                                            </p>
-                                        </div>
-                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
-                                                booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                    'bg-red-500/20 text-red-400'
-                                            }`}>
-                                            {booking.status}
-                                        </span>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Check-in</span>
-                                            <span className="text-sm text-white">
-                                                {new Date(booking.checkInDate).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Check-out</span>
-                                            <span className="text-sm text-white">
-                                                {new Date(booking.checkOutDate).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Amount</span>
-                                            <span className="text-sm font-medium text-white">
-                                                ₹{booking.totalAmount?.toLocaleString() || '0'}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center pt-2 border-t border-neutral-700">
-                                            <span className="text-xs text-neutral-400">Booked on</span>
-                                            <span className="text-xs text-neutral-400">
-                                                {new Date(booking.createdAt).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!dashboardData.bookings.recent || dashboardData.bookings.recent.length === 0) && (
-                                <div className="col-span-2 flex flex-col items-center justify-center py-8 text-neutral-500">
-                                    <FontAwesomeIcon icon={faBed} className="text-4xl mb-2 opacity-50" />
-                                    <p>No recent bookings found</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Upcoming Check-ins Tab */}
-                    {activeBookingTab === 'upcoming' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {dashboardData.bookings.upcoming?.slice(0, 4).map((booking) => (
-                                <div key={booking.id} className="summary-card p-4 rounded-lg border border-neutral-700 hover:border-neutral-100 transition-colors">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p className="font-medium text-white text-sm">
-                                                {booking.bookingReference || `#${booking.id}`}
-                                            </p>
-                                            <p className="text-xs text-neutral-400">
-                                                {booking.customer?.name || 'N/A'}
-                                            </p>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${booking.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
-                                                    booking.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
-                                                        'bg-red-500/20 text-red-400'
-                                                }`}>
-                                                {booking.status}
-                                            </span>
-                                            <span className="text-xs text-blue-400 bg-blue-500/20 px-2 py-1 rounded-full">
-                                                {new Date(booking.checkInDate).toLocaleDateString() === new Date().toLocaleDateString()
-                                                    ? 'Today'
-                                                    : 'Upcoming'
-                                                }
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Check-in</span>
-                                            <span className="text-sm text-white font-medium">
-                                                {new Date(booking.checkInDate).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Check-out</span>
-                                            <span className="text-sm text-white">
-                                                {new Date(booking.checkOutDate).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Nights</span>
-                                            <span className="text-sm text-white">
-                                                {Math.ceil((new Date(booking.checkOutDate) - new Date(booking.checkInDate)) / (1000 * 60 * 60 * 24))} nights
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Amount</span>
-                                            <span className="text-sm font-medium text-white">
-                                                ₹{booking.totalAmount?.toLocaleString() || '0'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                            {(!dashboardData.bookings.upcoming || dashboardData.bookings.upcoming.length === 0) && (
-                                <div className="col-span-2 flex flex-col items-center justify-center py-8 text-neutral-500">
-                                    <FontAwesomeIcon icon={faCalendarCheck} className="text-4xl mb-2 opacity-50" />
-                                    <p>No upcoming check-ins found</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                    {/* Upcoming Check-ins Tab */}
-                    {activeBookingTab === 'ongoing' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {dashboardData.bookings.ongoing?.slice(0, 4).map((booking) => (
-                                <div key={booking.id} className="summary-card p-4 rounded-lg border border-neutral-700 hover:border-neutral-100 transition-colors">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
-                                            <p className="font-medium text-white text-sm">
-                                                {booking.bookingReference || `#${booking.id}`}
-                                            </p>
-                                            <p className="text-xs text-neutral-400">
-                                                {booking.customer?.name || 'N/A'}
-                                            </p>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-1">
-                                            <span className={`px-2 py-1 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400`}>
+                    {/* Bookings Content */}
+                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 overflow-y-auto pr-2">
+                        {(activeBookingTab === 'recent' ? dashboardData.bookings.recent :
+                            activeBookingTab === 'upcoming' ? dashboardData.bookings.upcoming :
+                                dashboardData.bookings.ongoing)?.slice(0, 4).map((booking) => (
+                                    <div key={booking.id}
+                                        className="summary-card p-4 rounded-xl border border-neutral-800/50 hover:border-neutral-600/50 transition-all duration-300
+                                           bg-gradient-to-br from-neutral-900/30 to-neutral-800/20 backdrop-blur-sm">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <p className="font-semibold text-white text-sm">
+                                                    {booking.bookingReference || `#${booking.id}`}
+                                                </p>
+                                                <p className="text-xs text-neutral-400 mt-1">
+                                                    {booking.customer?.name || 'N/A'}
+                                                </p>
+                                            </div>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm
+                                        ${booking.status === 'confirmed' ? 'bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 text-emerald-300 border border-emerald-500/30' :
+                                                    booking.status === 'pending' ? 'bg-gradient-to-r from-amber-500/20 to-amber-500/10 text-amber-300 border border-amber-500/30' :
+                                                        booking.status === 'cancelled' ? 'bg-gradient-to-r from-rose-500/20 to-rose-500/10 text-rose-300 border border-rose-500/30' :
+                                                            'bg-gradient-to-r from-blue-500/20 to-cyan-500/10 text-cyan-300 border border-cyan-500/30'}`}>
                                                 {booking.status}
                                             </span>
                                         </div>
-                                    </div>
 
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Check-in</span>
-                                            <span className="text-sm text-white font-medium">
-                                                {new Date(booking.checkInDate).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Check-out</span>
-                                            <span className="text-sm text-white">
-                                                {new Date(booking.checkOutDate).toLocaleDateString()}
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Nights</span>
-                                            <span className="text-sm text-white">
-                                                {Math.ceil((new Date(booking.checkOutDate) - new Date(booking.checkInDate)) / (1000 * 60 * 60 * 24))} nights
-                                            </span>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-xs text-neutral-400">Amount</span>
-                                            <span className="text-sm font-medium text-white">
-                                                ₹{booking.totalAmount?.toLocaleString() || '0'}
-                                            </span>
+                                        <div className="space-y-3">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs text-neutral-400">Check-in</span>
+                                                <span className="text-sm font-medium text-white">
+                                                    {new Date(booking.checkInDate).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs text-neutral-400">Check-out</span>
+                                                <span className="text-sm text-white">
+                                                    {new Date(booking.checkOutDate).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-xs text-neutral-400">Amount</span>
+                                                <span className="text-sm font-bold text-white">
+                                                    ₹{booking.totalAmount?.toLocaleString() || '0'}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-3 border-t border-neutral-800/50">
+                                                <span className="text-xs text-neutral-400">Booked on</span>
+                                                <span className="text-xs text-neutral-400">
+                                                    {new Date(booking.createdAt).toLocaleDateString()}
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                            {(!dashboardData.bookings.ongoing || dashboardData.bookings.ongoing.length === 0) && (
-                                <div className="col-span-2 flex flex-col items-center justify-center py-8 text-neutral-500">
-                                    <FontAwesomeIcon icon={faCalendarCheck} className="text-4xl mb-2 opacity-50" />
-                                    <p>No Ongoing bookings found</p>
+                                ))}
+                        {(!(activeBookingTab === 'recent' ? dashboardData.bookings.recent :
+                            activeBookingTab === 'upcoming' ? dashboardData.bookings.upcoming :
+                                dashboardData.bookings.ongoing) ||
+                            (activeBookingTab === 'recent' ? dashboardData.bookings.recent.length :
+                                activeBookingTab === 'upcoming' ? dashboardData.bookings.upcoming.length :
+                                    dashboardData.bookings.ongoing.length) === 0) && (
+                                <div className="col-span-2 flex flex-col items-center justify-center py-8">
+                                    <div className="p-4 rounded-full bg-gradient-to-br from-neutral-800/50 to-neutral-800/30 mb-4">
+                                        <FontAwesomeIcon
+                                            icon={activeBookingTab === 'upcoming' ? faCalendarCheck : faBed}
+                                            className="text-3xl text-neutral-500"
+                                        />
+                                    </div>
+                                    <p className="text-neutral-400 font-medium">No {activeBookingTab} bookings found</p>
                                 </div>
                             )}
-                        </div>
-                    )}
+                    </div>
                 </div>
             </div>
 
             {/* Graph Cards */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {chartOptions.map(({ key, label, color }) => {
+                {chartOptions.map(({ key, label, color, icon }) => {
                     const config = chartConfigs[key];
                     return (
-                        <div key={key} className="chart-card p-6 rounded-xl shadow-lg flex flex-col">
+                        <div key={key}
+                            className={`chart-card p-6 rounded-2xl shadow-xl border ${config.borderColor} 
+                                         bg-gradient-to-br ${config.bgGradient} backdrop-blur-sm flex flex-col`}>
                             <div className="flex items-center justify-between mb-6">
                                 <div className="flex items-center gap-3">
                                     <div
-                                        className="p-3 rounded-xl flex items-center justify-center"
-                                        style={{ backgroundColor: `${color}15` }}
+                                        className="p-3 rounded-xl flex items-center justify-center backdrop-blur-sm"
+                                        style={{
+                                            background: `linear-gradient(135deg, ${color}20, ${color}10)`,
+                                            boxShadow: `0 4px 15px ${color}10`
+                                        }}
                                     >
                                         <FontAwesomeIcon
-                                            icon={chartIcons[key]}
+                                            icon={icon}
                                             style={{ color }}
+                                            className="text-lg"
                                         />
                                     </div>
                                     <div>
@@ -862,16 +855,23 @@ export default function AdminDashboardStats() {
                                         </p>
                                     </div>
                                 </div>
-                                <CustomSelect
-                                    value={timeRanges[key]}
-                                    onChange={(val) => handleRangeChange(key, val)}
-                                />
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-lg blur-sm"></div>
+                                    <CustomSelect
+                                        value={timeRanges[key]}
+                                        onChange={(val) => handleRangeChange(key, val)}
+                                        className="relative"
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex-1">
                                 {loadingGraphs[key] ? (
                                     <div className="flex justify-center items-center h-[300px]">
-                                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neutral-400"></div>
+                                        <div className="relative">
+                                            <div className="absolute inset-0 animate-spin rounded-full h-12 w-12 border-b-2 border-t-2 border-neutral-800"></div>
+                                            <div className="relative animate-spin rounded-full h-12 w-12 border-b-2 border-t-2" style={{ borderColor: color }}></div>
+                                        </div>
                                     </div>
                                 ) : dashboardData.graphs[key]?.length > 0 ? (
                                     <div className="w-full h-[300px] focus:outline-none">
@@ -880,8 +880,11 @@ export default function AdminDashboardStats() {
                                         </ResponsiveContainer>
                                     </div>
                                 ) : (
-                                    <div className="flex justify-center items-center h-[300px] text-neutral-400">
-                                        No data available for this period
+                                    <div className="flex flex-col justify-center items-center h-[300px] text-neutral-400">
+                                        <div className="p-4 rounded-full bg-neutral-900/50 mb-4">
+                                            <FontAwesomeIcon icon={faChartLine} className="text-2xl" />
+                                        </div>
+                                        <p className="font-medium">No data available for this period</p>
                                     </div>
                                 )}
                             </div>
